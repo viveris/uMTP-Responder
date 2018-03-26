@@ -1,0 +1,81 @@
+/*
+ * uMTP Responder
+ * Copyright (c) 2018 Viveris Technologies
+ *
+ * uMTP Responder is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3.0 of the License, or (at your option) any later version.
+ *
+ * uMTP Responder is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 3 for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with uMTP Responder; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
+/**
+ * @file   fs_handles_db.h
+ * @brief  Local file system helpers and handles database management.
+ * @author Jean-François DEL NERO <Jean-Francois.DELNERO@viveris.fr>
+ */
+
+typedef struct fs_entry fs_entry;
+
+struct fs_entry
+{
+	uint32_t handle;
+	uint32_t parent;
+	uint32_t storage_id;
+	char * name;
+	uint32_t flags;
+	uint32_t size;
+	uint32_t date;
+
+	fs_entry * next;
+};
+
+#define ENTRY_IS_DIR 0x00000001
+#define ENTRY_IS_DELETED 0x00000002
+
+#define _DEF_FS_HANDLES_ 1
+
+typedef struct fs_handles_db_
+{
+	fs_entry * entry_list;
+	uint32_t next_handle;
+
+	fs_entry * search_entry;
+	uint32_t handle_search;
+	uint32_t storage_search;
+
+	void * mtp_ctx;
+}fs_handles_db;
+
+
+typedef struct filefoundinfo_
+{
+	int isdirectory;
+	char filename[256];
+	int size;
+}filefoundinfo;
+
+
+fs_handles_db * init_fs_db(void * mtp_ctx);
+void deinit_fs_db(fs_handles_db * fsh);
+int scan_and_add_folder(fs_handles_db * db, char * base, uint32_t parent, uint32_t storage_id);
+fs_entry * init_search_handle(fs_handles_db * db, uint32_t parent, uint32_t storage_id);
+fs_entry * get_next_child_handle(fs_handles_db * db);
+fs_entry * get_entry_by_handle(fs_handles_db * db, uint32_t handle);
+fs_entry * get_entry_by_handle_and_storageid(fs_handles_db * db, uint32_t handle, uint32_t storage_id);
+fs_entry * add_entry(fs_handles_db * db, filefoundinfo *fileinfo, uint32_t parent, uint32_t storage_id);
+fs_entry * alloc_root_entry(fs_handles_db * db, uint32_t storage_id);
+
+FILE * entry_open(fs_handles_db * db, fs_entry * entry);
+int entry_read(fs_handles_db * db, FILE * f, unsigned char * buffer_out, int offset, int size);
+void entry_close(FILE * f);
+
+char * build_full_path(fs_handles_db * db,char * root_path,fs_entry * entry);

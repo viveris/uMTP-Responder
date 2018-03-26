@@ -1,0 +1,37 @@
+#!/bin/sh
+
+GADGETFS_PATH=/dev/gadget
+UMTPRD_DAEMON_NAME=uMTPrd
+UMTPRD_DAEMON_PATH=/usr/bin/umtprd.sh
+UMTPRD_DAEMON_OPTS=
+UMTPRD_DAEMON_USER=root
+
+case "$1" in
+  start)
+    echo -n "Start uMTPrd deamon :"
+    if [ ! -f "$GADGETFS_PATH" ]; then
+      mkdir $GADGETFS_PATH
+    fi
+    mount -t gadgetfs gadgetfs $GADGETFS_PATH
+    start-stop-daemon -S --background --name $UMTPRD_DAEMON_NAME \
+                                      --chuid $UMTPRD_DAEMON_USER \
+                                      --exec $UMTPRD_DAEMON_PATH \
+                                      -- $UMTPRD_DAEMON_OPTS
+    echo "DONE"
+  ;;
+  stop)
+    printf -n "Stop uMTPrd deamon :"
+    start-stop-daemon --name $UMTPRD_DAEMON_NAME --K -s 9
+    echo " DONE"
+    ;;
+  restart|reload)
+    "$0" stop
+    "$0" start
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|restart}"
+    exit 1
+esac
+
+exit $?
+
