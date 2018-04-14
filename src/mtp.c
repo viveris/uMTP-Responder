@@ -334,6 +334,22 @@ int parse_incomming_dataset(mtp_ctx * ctx,void * datain,int size,uint32_t * newh
 
 }
 
+int check_and_send_USB_ZLP(mtp_ctx * ctx , int size)
+{
+	// USB ZLP needed ?
+	if( (size >= ctx->max_packet_size) && !(size % ctx->max_packet_size) )
+	{
+		PRINT_DEBUG("%d bytes transfert ended - ZLP packet needed\n");
+
+		// Yes - Send zero lenght packet.
+		write_usb(ctx->usb_ctx,ctx->wrbuffer,0);
+
+		return 1;
+	}
+
+	return 0;
+}
+
 int send_file_data( mtp_ctx * ctx, fs_entry * entry,uint32_t offset, uint32_t maxsize )
 {
 	int actualsize;
@@ -360,7 +376,7 @@ int send_file_data( mtp_ctx * ctx, fs_entry * entry,uint32_t offset, uint32_t ma
 
 	k = ctx->max_packet_size;
 
-	PRINT_DEBUG("send_file_data : Offset 0x%.8X - Maxsize 0x%.8X - Size 0x%.8X - ActualSize 0x%.8X \n", offset,maxsize,entry->size,actualsize);
+	PRINT_DEBUG("send_file_data : Offset 0x%.8X - Maxsize 0x%.8X - Size 0x%.8X - ActualSize 0x%.8X\n", offset,maxsize,entry->size,actualsize);
 
 	f = entry_open(ctx->fs_db, entry);
 	if( f )
@@ -384,6 +400,8 @@ int send_file_data( mtp_ctx * ctx, fs_entry * entry,uint32_t offset, uint32_t ma
 			ofs = 0;
 
 		}while( j < actualsize );
+
+		check_and_send_USB_ZLP(ctx , sizeof(MTP_PACKET_HEADER) + actualsize );
 
 		entry_close( f );
 	}
@@ -458,6 +476,8 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 			write_usb(ctx->usb_ctx,ctx->wrbuffer,size);
 
+			check_and_send_USB_ZLP(ctx , size );
+
 			response_code = MTP_RESPONSE_OK;
 
 		break;
@@ -482,6 +502,8 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 			write_usb(ctx->usb_ctx,ctx->wrbuffer,size);
 
+			check_and_send_USB_ZLP(ctx , size );
+
 			response_code = MTP_RESPONSE_OK;
 
 		break;
@@ -500,6 +522,8 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 				poke(ctx->wrbuffer, &ofs, 4, size);
 
 				write_usb(ctx->usb_ctx,ctx->wrbuffer,size);
+
+				check_and_send_USB_ZLP(ctx , size );
 
 				response_code = MTP_RESPONSE_OK;
 			}
@@ -591,6 +615,8 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 			}while( handle_index < nb_of_handles);
 
+			check_and_send_USB_ZLP(ctx , (nb_of_handles * sizeof(uint32_t)) + sizeof(MTP_PACKET_HEADER) );
+
 			response_code = MTP_RESPONSE_OK;
 
 		break;
@@ -607,6 +633,8 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 				i = 0;
 				poke(ctx->wrbuffer, &i, 4, size);
 				write_usb(ctx->usb_ctx,ctx->wrbuffer,size);
+
+				check_and_send_USB_ZLP(ctx , size );
 
 				response_code = MTP_RESPONSE_OK;
 			}
