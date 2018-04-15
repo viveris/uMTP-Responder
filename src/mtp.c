@@ -615,7 +615,8 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 			}while( handle_index < nb_of_handles);
 
-			check_and_send_USB_ZLP(ctx , (nb_of_handles * sizeof(uint32_t)) + sizeof(MTP_PACKET_HEADER) );
+			// Total size = Header size + nb of handles field (uint32_t) + all handles 
+			check_and_send_USB_ZLP(ctx , sizeof(MTP_PACKET_HEADER) + sizeof(uint32_t) + (nb_of_handles * sizeof(uint32_t)) );
 
 			response_code = MTP_RESPONSE_OK;
 
