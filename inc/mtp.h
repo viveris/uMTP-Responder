@@ -110,4 +110,4 @@ uint32_t mtp_add_storage(mtp_ctx * ctx, char * path, char * description);
 char * mtp_get_storage_description(mtp_ctx * ctx, uint32_t storage_id);
 char * mtp_get_storage_root(mtp_ctx * ctx, uint32_t storage_id);
 
-#define APP_VERSION "v0.7.2"
+#define APP_VERSION "v0.8.0"

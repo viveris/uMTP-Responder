@@ -168,9 +168,13 @@ int parse_incomming_dataset(mtp_ctx * ctx,void * datain,int size,uint32_t * newh
 	char tmp_str[256+1];
 	char * parent_folder;
 	char * tmp_path;
-	int i;
+	int i,ret_code;
 	fs_entry * entry;
+	FILE * f;
 	filefoundinfo tmp_file_entry;
+
+
+	ret_code = MTP_RESPONSE_GENERAL_ERROR;
 
 	tmp_hdr = (MTP_PACKET_HEADER *)datain;
 
@@ -230,7 +234,20 @@ int parse_incomming_dataset(mtp_ctx * ctx,void * datain,int size,uint32_t * newh
 							sprintf(tmp_path,"%s/%s",parent_folder,tmp_str);
 							PRINT_DEBUG("MTP_OPERATION_SEND_OBJECT_INFO : Creating %s ...\n",tmp_path);
 
-							mkdir(tmp_path, 0700);
+							if( mkdir(tmp_path, 0700) )
+							{
+								PRINT_WARN("MTP_OPERATION_SEND_OBJECT_INFO : Can't create %s ...\n",tmp_path);
+
+								if(parent_folder)
+									free(parent_folder);
+
+								free(tmp_path);
+
+								ret_code = MTP_RESPONSE_ACCESS_DENIED;
+
+								return ret_code;
+							}
+
 							tmp_file_entry.isdirectory = 1;
 							strcpy(tmp_file_entry.filename,tmp_str);
 							tmp_file_entry.size = 0;
@@ -243,6 +260,8 @@ int parse_incomming_dataset(mtp_ctx * ctx,void * datain,int size,uint32_t * newh
 							}
 
 							free(tmp_path);
+
+							ret_code = MTP_RESPONSE_OK;
 						}
 
 						if(parent_folder)
@@ -257,10 +276,10 @@ int parse_incomming_dataset(mtp_ctx * ctx,void * datain,int size,uint32_t * newh
 #ifdef DEBUG
 				type = peek(dataset_ptr,0x2A, 2);          // Association Type
 #else
-				peek(dataset_ptr,0x2A, 2);          // Association Type
+				peek(dataset_ptr,0x2A, 2);                 // Association Type
 #endif
 
-				string_len = peek(dataset_ptr,0x34, 1);	// File name
+				string_len = peek(dataset_ptr,0x34, 1);    // File name
 
 				memset(tmp_str,0,sizeof(tmp_str));
 
@@ -296,6 +315,22 @@ int parse_incomming_dataset(mtp_ctx * ctx,void * datain,int size,uint32_t * newh
 							strcpy(tmp_file_entry.filename,tmp_str);
 							tmp_file_entry.size = objectsize;
 
+							f = fopen(tmp_path,"wb");
+							if(!f)
+							{
+								PRINT_WARN("MTP_OPERATION_SEND_OBJECT_INFO : Can't create %s ...\n",tmp_path);
+
+								if(parent_folder)
+									free(parent_folder);
+
+								free(tmp_path);
+
+								ret_code = MTP_RESPONSE_ACCESS_DENIED;
+
+								return ret_code;
+							}
+							fclose(f);
+
 							entry = add_entry(ctx->fs_db, &tmp_file_entry, parent_handle, storage_id);
 
 							free(tmp_path);
@@ -315,6 +350,8 @@ int parse_incomming_dataset(mtp_ctx * ctx,void * datain,int size,uint32_t * newh
 
 						if( parent_folder )
 							free(parent_folder);
+
+						ret_code = MTP_RESPONSE_OK;
 					}
 				}
 			}
@@ -325,8 +362,7 @@ int parse_incomming_dataset(mtp_ctx * ctx,void * datain,int size,uint32_t * newh
 		break;
 	}
 
-	return 0;
-
+	return MTP_RESPONSE_OK;
 }
 
 int check_and_send_USB_ZLP(mtp_ctx * ctx , int size)
@@ -530,7 +566,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 		case MTP_OPERATION_GET_OBJECT_HANDLES:
 
-			storageid = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER) + 0, 4); // Get param 1 - Storage ID
+			storageid = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER) + 0, 4);        // Get param 1 - Storage ID
 
 			i = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer,0,0);
 
@@ -610,7 +646,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 			}while( handle_index < nb_of_handles);
 
-			// Total size = Header size + nb of handles field (uint32_t) + all handles 
+			// Total size = Header size + nb of handles field (uint32_t) + all handles
 			check_and_send_USB_ZLP(ctx , sizeof(MTP_PACKET_HEADER) + sizeof(uint32_t) + (nb_of_handles * sizeof(uint32_t)) );
 
 			response_code = MTP_RESPONSE_OK;
@@ -703,14 +739,15 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 			size = read_usb(ctx->usb_ctx, ctx->rdbuffer2, MAX_RX_BUFFER_SIZE);
 			PRINT_DEBUG_BUF(ctx->rdbuffer2, size);
-			parse_incomming_dataset(ctx,ctx->rdbuffer2,size,&new_handle,parent_handle,storageid);
 
-			PRINT_DEBUG("MTP_OPERATION_SEND_OBJECT_INFO : Response - storageid: 0x%.8X, parent_handle: 0x%.8X, new_handle: 0x%.8X \n",storageid,parent_handle,new_handle);
-			params[0] = storageid;
-			params[1] = parent_handle;
-			params[2] = new_handle;
-
-			response_code = MTP_RESPONSE_OK;
+			response_code = parse_incomming_dataset(ctx,ctx->rdbuffer2,size,&new_handle,parent_handle,storageid);
+			if( response_code == MTP_RESPONSE_OK )
+			{
+				PRINT_DEBUG("MTP_OPERATION_SEND_OBJECT_INFO : Response - storageid: 0x%.8X, parent_handle: 0x%.8X, new_handle: 0x%.8X \n",storageid,parent_handle,new_handle);
+				params[0] = storageid;
+				params[1] = parent_handle;
+				params[2] = new_handle;
+			}
 
 		break;
 
