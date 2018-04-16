@@ -297,7 +297,7 @@ static void handle_setup_request(usb_gadget * ctx, struct usb_ctrlrequest* setup
 				else
 				{
 					PRINT_DEBUG("Found %d bytes", status);
-                    PRINT_DEBUG_BUF(buffer, status);
+					PRINT_DEBUG_BUF(buffer, status);
 				}
 				write (ctx->usb_device, buffer, status);
 				return;
@@ -418,7 +418,9 @@ int handle_ep0(usb_gadget * ctx)
 				break;
 			case GADGETFS_DISCONNECT:
 				PRINT_DEBUG("EP0 DISCONNECT");
-				ctx->stop = 1;
+				// Set timeout for a reconnection during the enumeration...
+				timeout.tv_sec = 1;
+				timeout.tv_usec = 0;
 				break;
 			case GADGETFS_SETUP:
 				PRINT_DEBUG("EP0 SETUP");
