@@ -29,6 +29,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <sys/statvfs.h>
 
 #include <time.h>
 
@@ -78,22 +79,32 @@ int build_storageinfo_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uint32_t 
 	int ofs;
 	char * storage_description;
 	char volumeident[16];
+	char * storage_path = NULL;
+	struct statvfs fsbuf;
+	unsigned long long freespace = 0x4000000000000000U;
+	unsigned long long totalspace = 0x8000000000000000U;
 
 	ofs = 0;
 
 	storage_description = mtp_get_storage_description(ctx,storageid);
-	if(storage_description)
+	storage_path = mtp_get_storage_root(ctx, storageid);
+	if(storage_description && storage_path)
 	{
 		poke(buffer, &ofs, 2, MTP_STORAGE_FIXED_RAM);                               // Storage Type
 		poke(buffer, &ofs, 2, MTP_STORAGE_FILESYSTEM_HIERARCHICAL);                 // Filesystem Type
 		poke(buffer, &ofs, 2, MTP_STORAGE_READ_WRITE);                              // Access Capability
 
-		// TODO : return total and free space
-		poke(buffer, &ofs, 4, 0x80000000);                                          // Max Capacity
-		poke(buffer, &ofs, 4, 0x00000000);                                          //
+		if(statvfs(storage_path, &fsbuf) == 0)
+		{
+			totalspace = (unsigned long long)fsbuf.f_bsize * (unsigned long long)fsbuf.f_blocks;
+			freespace = (unsigned long long)fsbuf.f_bsize * (unsigned long long)fsbuf.f_bavail;
+		}
 
-		poke(buffer, &ofs, 4, 0x40000000);                                          // Free space
-		poke(buffer, &ofs, 4, 0x00000000);                                          //
+		poke(buffer, &ofs, 4, totalspace&0x00000000FFFFFFFF);                       // Max Capacity
+		poke(buffer, &ofs, 4, (totalspace>>32));                                    //
+
+		poke(buffer, &ofs, 4, freespace&0x00000000FFFFFFFF);                        // Free space in Bytes
+		poke(buffer, &ofs, 4, (freespace>>32));                                     //
 
 		poke(buffer, &ofs, 4, 0xFFFFFFFF);                                          // Free Space In Objects
 
