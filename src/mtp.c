@@ -32,12 +32,7 @@
 
 #include <sys/stat.h>
 
-#ifdef XMLCFG_SUPPORT
-#include <libxml/xmlreader.h>
-#endif
-
 #include <sys/types.h>
-#include <dirent.h>
 
 #include "logs_out.h"
 
