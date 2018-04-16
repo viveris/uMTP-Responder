@@ -81,8 +81,8 @@ int build_storageinfo_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uint32_t 
 	char volumeident[16];
 	char * storage_path = NULL;
 	struct statvfs fsbuf;
-	unsigned long long freespace = 0x4000000000000000U;
-	unsigned long long totalspace = 0x8000000000000000U;
+	uint64_t freespace = 0x4000000000000000U;
+	uint64_t totalspace = 0x8000000000000000U;
 
 	ofs = 0;
 
@@ -90,14 +90,21 @@ int build_storageinfo_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uint32_t 
 	storage_path = mtp_get_storage_root(ctx, storageid);
 	if(storage_description && storage_path)
 	{
+		PRINT_DEBUG("Add storageinfo for %s", storage_path);
 		poke(buffer, &ofs, 2, MTP_STORAGE_FIXED_RAM);                               // Storage Type
 		poke(buffer, &ofs, 2, MTP_STORAGE_FILESYSTEM_HIERARCHICAL);                 // Filesystem Type
 		poke(buffer, &ofs, 2, MTP_STORAGE_READ_WRITE);                              // Access Capability
 
 		if(statvfs(storage_path, &fsbuf) == 0)
 		{
-			totalspace = (unsigned long long)fsbuf.f_bsize * (unsigned long long)fsbuf.f_blocks;
-			freespace = (unsigned long long)fsbuf.f_bsize * (unsigned long long)fsbuf.f_bavail;
+			totalspace = (uint64_t)fsbuf.f_bsize * (uint64_t)fsbuf.f_blocks;
+			freespace = (uint64_t)fsbuf.f_bsize * (uint64_t)fsbuf.f_bavail;
+			PRINT_DEBUG("Total space %lld byte(s)", totalspace);
+			PRINT_DEBUG("Free space %lld byte(s)", freespace);
+		}
+		else
+		{
+			PRINT_WARN("Failed to get statvfs for %s\n", storage_path);
 		}
 
 		poke(buffer, &ofs, 4, totalspace&0x00000000FFFFFFFF);                       // Max Capacity
