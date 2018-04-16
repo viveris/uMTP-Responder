@@ -62,6 +62,22 @@ extern void* io_thread(void* arg);
 int read_usb(usb_gadget * ctx, unsigned char * buffer, int maxsize)
 {
 	int ret;
+	int max_read_fd;
+	fd_set read_set;
+
+	max_read_fd = 0;
+
+	if (ctx->ep_handles[EP_DESCRIPTOR_OUT] > max_read_fd)
+		max_read_fd = ctx->ep_handles[EP_DESCRIPTOR_OUT];
+
+	FD_ZERO(&read_set);
+	FD_SET(ctx->ep_handles[EP_DESCRIPTOR_OUT], &read_set);
+
+	ret = select(max_read_fd+1, &read_set, NULL, NULL, NULL);
+
+	// Error
+	if (ret < 0)
+		return ret;
 
 	ret = read (ctx->ep_handles[EP_DESCRIPTOR_OUT], buffer, maxsize);
 
@@ -185,7 +201,7 @@ void fill_ep_descriptor(mtp_ctx * ctx, usb_gadget * usbctx,struct usb_endpoint_d
 	if(bulk)
 	{
 		desc->bmAttributes = USB_ENDPOINT_XFER_BULK;
-	    desc->wMaxPacketSize = ctx->usb_cfg.usb_max_packet_size;
+		desc->wMaxPacketSize = ctx->usb_cfg.usb_max_packet_size;
 	}
 	else
 	{
