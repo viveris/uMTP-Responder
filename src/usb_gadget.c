@@ -135,7 +135,7 @@ void fill_config_descriptor(mtp_ctx * ctx , usb_gadget * usbctx,struct usb_confi
 	desc->bmAttributes = USB_CONFIG_ATT_ONE;
 	desc->bMaxPower = 1;
 
-	PRINT_DEBUG("fill_config_descriptor: (Total Len : %d + %d = %d)",sizeof(struct usb_config_descriptor) ,total_size,desc->wTotalLength);
+	PRINT_DEBUG("fill_config_descriptor: (Total Len : %lu + %d = %d)",sizeof(struct usb_config_descriptor) ,total_size,desc->wTotalLength);
 	PRINT_DEBUG_BUF(desc, sizeof(struct usb_config_descriptor));
 
 	return;

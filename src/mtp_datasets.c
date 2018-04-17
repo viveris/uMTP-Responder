@@ -26,6 +26,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include <inttypes.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -99,8 +100,8 @@ int build_storageinfo_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uint32_t 
 		{
 			totalspace = (uint64_t)fsbuf.f_bsize * (uint64_t)fsbuf.f_blocks;
 			freespace = (uint64_t)fsbuf.f_bsize * (uint64_t)fsbuf.f_bavail;
-			PRINT_DEBUG("Total space %llu byte(s)", totalspace);
-			PRINT_DEBUG("Free space %llu byte(s)", freespace);
+			PRINT_DEBUG("Total space %" PRIu64 " byte(s)", totalspace);
+			PRINT_DEBUG("Free space %" PRIu64 " byte(s)", freespace);
 		}
 		else
 		{

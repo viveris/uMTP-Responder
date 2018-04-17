@@ -25,6 +25,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 #include "logs_out.h"
 
 #ifdef DEBUG
