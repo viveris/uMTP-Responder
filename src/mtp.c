@@ -370,7 +370,7 @@ int check_and_send_USB_ZLP(mtp_ctx * ctx , int size)
 	// USB ZLP needed ?
 	if( (size >= ctx->max_packet_size) && !(size % ctx->max_packet_size) )
 	{
-		PRINT_DEBUG("%d bytes transfert ended - ZLP packet needed\n");
+		PRINT_DEBUG("%d bytes transfert ended - ZLP packet needed\n", size);
 
 		// Yes - Send zero lenght packet.
 		write_usb(ctx->usb_ctx,ctx->wrbuffer,0);

@@ -85,6 +85,12 @@
                                             ## args);               \
                                     fflush(stdout);                 \
                                   }
+#else
+
+#define PRINT_DEBUG(fmt, args...)
+
+#endif
+
 #endif
 
 #ifdef DEBUG
@@ -94,11 +100,9 @@ void printbuf(void * buf,int size);
 
 #else
 
-#define PRINT_DEBUG(x...)
 #define PRINT_DEBUG_BUF(x, y)
 
 #endif
 
 #endif
 
-#endif
