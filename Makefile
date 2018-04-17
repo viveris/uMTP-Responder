@@ -1,7 +1,7 @@
 
-CFLAGS= -I./inc -lpthread -Wall
+override CFLAGS += -I./inc -lpthread -Wall
 
-all: umtprd
+all: output_dir umtprd
 
 umtprd: obj/umtprd.o obj/mtp.o obj/mtp_datasets.o obj/mtp_helpers.o \
 		obj/mtp_support_def.o obj/mtp_constant_strings.o obj/fs_handles_db.o \
@@ -41,7 +41,9 @@ obj/logs_out.o: src/logs_out.c
 obj/usbstring.o: src/usbstring.c
 	${CC} -o $@ $^ -c $(CFLAGS)
 
+output_dir:
+	@mkdir -p obj
+
 clean:
 	rm -Rf  *.o  .*.o  .*.o.* *.ko  .*.ko  *.mod.* .*.mod.* .*.cmd umtprd obj
-	mkdir obj
 

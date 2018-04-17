@@ -99,8 +99,8 @@ int build_storageinfo_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uint32_t 
 		{
 			totalspace = (uint64_t)fsbuf.f_bsize * (uint64_t)fsbuf.f_blocks;
 			freespace = (uint64_t)fsbuf.f_bsize * (uint64_t)fsbuf.f_bavail;
-			PRINT_DEBUG("Total space %lld byte(s)", totalspace);
-			PRINT_DEBUG("Free space %lld byte(s)", freespace);
+			PRINT_DEBUG("Total space %llu byte(s)", totalspace);
+			PRINT_DEBUG("Free space %llu byte(s)", freespace);
 		}
 		else
 		{
