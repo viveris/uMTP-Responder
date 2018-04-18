@@ -4,7 +4,7 @@
 
 The uMTP-Responder allows files to be transferred to and from devices through device USB port.
 
-### Main characteristics and features and specifications are :
+### Main characteristics and features
 
 - Implemented in C.
 
@@ -20,9 +20,9 @@ The uMTP-Responder allows files to be transferred to and from devices through de
 
 - (Optional) Syslog support.
 
-## Current status :
+## Current status
 
-### What is working :
+### What is working
 
 - Folder listing.
 
@@ -36,7 +36,7 @@ The uMTP-Responder allows files to be transferred to and from devices through de
 
 - Up to 16 storage instances supported.
 
-### What is planned :
+### What is planned
 
 - libcomposite support.
 
@@ -44,13 +44,13 @@ The uMTP-Responder allows files to be transferred to and from devices through de
 
 Any boards with a USB device port should be compatible. The only requirement is to have the USB Gadget FS support enabled in your Linux kernel.
 
-### Board successfully tested :
+### Board successfully tested
 
 - Atmel Sama5D2 Xplained.
 
 - Raspberry PI Zero (W).
 
-### Client operating systems successfully tested :
+### Client operating systems successfully tested
 
 - Windows 7, Windows 10, Linux.
 
