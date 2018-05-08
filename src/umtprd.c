@@ -91,8 +91,13 @@ int main(int argc, char *argv[])
 	else
 	{
 		PRINT_ERROR("USB Init failed !");
+
+		mtp_deinit_responder(mtp_context);
+
 		exit(-2);
 	}
+
+	mtp_deinit_responder(mtp_context);
 
 	exit(0);
 }

@@ -64,19 +64,19 @@ mtp_ctx * mtp_init_responder()
 	{
 		memset(ctx,0,sizeof(mtp_ctx));
 
-		ctx->wrbuffer = malloc(MAX_RX_BUFFER_SIZE);
+		ctx->wrbuffer = malloc(MAX_TX_BUFFER_SIZE);
 		if(!ctx->wrbuffer)
 			goto init_error;
 
-		ctx->rdbuffer = malloc(128*1024);
+		ctx->rdbuffer = malloc( MAX_RX_BUFFER_SIZE );
 		if(!ctx->rdbuffer)
 			goto init_error;
 
-		ctx->rdbuffer2 = malloc(128*1024);
+		ctx->rdbuffer2 = malloc( MAX_RX_BUFFER_SIZE );
 		if(!ctx->rdbuffer2)
 			goto init_error;
 
-		ctx->temp_array = malloc(128*1024);
+		ctx->temp_array = malloc( MAX_STORAGE_NB * sizeof(uint32_t) );
 		if(!ctx->temp_array)
 			goto init_error;
 
@@ -106,6 +106,26 @@ init_error:
 	PRINT_ERROR("init_mtp_responder : Failed !\n");
 
 	return 0;
+}
+
+void mtp_deinit_responder(mtp_ctx * ctx)
+{
+	if( ctx )
+	{
+		if(ctx->wrbuffer)
+			free(ctx->wrbuffer);
+
+		if(ctx->rdbuffer)
+			free(ctx->rdbuffer);
+
+		if(ctx->rdbuffer2)
+			free(ctx->rdbuffer2);
+
+		if(ctx->temp_array)
+			free(ctx->temp_array);
+
+		free(ctx);
+	}
 }
 
 int delete_tree(mtp_ctx * ctx,uint32_t handle)
