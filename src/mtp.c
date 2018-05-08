@@ -452,7 +452,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 	int i,size,offset,maxsize,actualsize;
 	int handle_index;
 	int nb_of_handles;
-	int ofs;
+	int ofs, no_response;
 	unsigned char * tmp_ptr;
 	char * full_path;
 	FILE * f;
@@ -462,6 +462,8 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 	params[2] = 0x000000;
 	params[3] = 0x000000;
 	params[4] = 0x000000;
+
+	no_response = 0;
 
 	switch( mtp_packet_hdr->code )
 	{
@@ -753,37 +755,73 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 		case MTP_OPERATION_SEND_OBJECT:
 
-			if(ctx->SendObjInfoHandle != 0xFFFFFFFF && (mtp_packet_hdr->operation == MTP_CONTAINER_TYPE_DATA))
+			response_code = MTP_RESPONSE_GENERAL_ERROR;
+
+			if( ctx->SendObjInfoHandle != 0xFFFFFFFF )
 			{
-				entry = get_entry_by_handle(ctx->fs_db, ctx->SendObjInfoHandle);
-				if(entry)
+				switch(mtp_packet_hdr->operation)
 				{
-					full_path = build_full_path(ctx->fs_db, mtp_get_storage_root(ctx, entry->storage_id), entry);
-					if(full_path)
-					{
-						f = fopen(full_path,"wb");
-						if(f)
+					case MTP_CONTAINER_TYPE_DATA:
+						entry = get_entry_by_handle(ctx->fs_db, ctx->SendObjInfoHandle);
+						if(entry)
 						{
-							size = rawsize - sizeof(MTP_PACKET_HEADER);
-							tmp_ptr = ((unsigned char*)mtp_packet_hdr) ;
-							tmp_ptr += sizeof(MTP_PACKET_HEADER);
-							do
+							full_path = build_full_path(ctx->fs_db, mtp_get_storage_root(ctx, entry->storage_id), entry);
+							if(full_path)
 							{
-								fwrite(tmp_ptr,size, 1 ,f);
-								ctx->SendObjInfoSize -= size;
+								f = fopen(full_path,"wb");
+								if(f)
+								{
+									size = rawsize - sizeof(MTP_PACKET_HEADER);
+									tmp_ptr = ((unsigned char*)mtp_packet_hdr) ;
+									tmp_ptr += sizeof(MTP_PACKET_HEADER);
 
-								size = read_usb(ctx->usb_ctx, ctx->rdbuffer2, MAX_RX_BUFFER_SIZE);
-								tmp_ptr = ctx->rdbuffer2;
-							}while(ctx->SendObjInfoSize>0);
+									if(size)
+									{
+										fwrite(tmp_ptr,size, 1 ,f);
+										ctx->SendObjInfoSize -= size;
+									}
 
-							fclose(f);
+									tmp_ptr = ctx->rdbuffer2;
+									if( size == ( MAX_RX_BUFFER_SIZE - sizeof(MTP_PACKET_HEADER) ) )
+									{
+										size = MAX_RX_BUFFER_SIZE;
+									}
+
+									while( size == MAX_RX_BUFFER_SIZE )
+									{
+										size = read_usb(ctx->usb_ctx, ctx->rdbuffer2, MAX_RX_BUFFER_SIZE);
+
+										fwrite(tmp_ptr,size, 1 ,f);
+
+										ctx->SendObjInfoSize -= size;
+									};
+
+									fclose(f);
+
+									response_code = MTP_RESPONSE_OK;
+								}
+							}
 						}
-					}
+						else
+						{
+							response_code = MTP_RESPONSE_INVALID_OBJECT_HANDLE;
+						}
+					break;
+					case MTP_CONTAINER_TYPE_COMMAND:
+						// no response to send, wait for the data...
+						response_code = MTP_RESPONSE_OK;
+						no_response = 1;
+					break;
+					default:
+					break;
 				}
 			}
+			else
+			{
+				PRINT_WARN("MTP_OPERATION_SEND_OBJECT ! : Invalid Handle (0x%.8X)\n", ctx->SendObjInfoHandle);
 
-			response_code = MTP_RESPONSE_OK;
-
+				response_code = MTP_RESPONSE_INVALID_OBJECT_HANDLE;
+			}
 		break;
 
 		case MTP_OPERATION_DELETE_OBJECT:
@@ -811,9 +849,11 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 	}
 
 	// Send the status response
-	size = build_response(ctx, mtp_packet_hdr->tx_id,MTP_CONTAINER_TYPE_RESPONSE, response_code, ctx->wrbuffer,&params,sizeof(params));
-	write_usb(ctx->usb_ctx,ctx->wrbuffer,size);
-
+	if(!no_response)
+	{
+		size = build_response(ctx, mtp_packet_hdr->tx_id,MTP_CONTAINER_TYPE_RESPONSE, response_code, ctx->wrbuffer,&params,sizeof(params));
+		write_usb(ctx->usb_ctx,ctx->wrbuffer,size);
+	}
 	return 0; // TODO Return usb error code.
 }
 
