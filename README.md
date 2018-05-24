@@ -1,3 +1,6 @@
+![uMTP-responder logo](https://raw.githubusercontent.com/viveris/uMTP-Responder/master/img/umtp-128h.png
+)
+
 # uMTP-Responder
 
 ## Ligthweight Media Transfer Protocol (MTP) responder daemon for GNU/Linux
