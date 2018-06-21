@@ -98,4 +98,6 @@ typedef struct _usb_gadget
 
 	struct usb_string stringtab[MAX_USB_STRING];
 
+	int wait_connection;
+
 }usb_gadget;

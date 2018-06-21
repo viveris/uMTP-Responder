@@ -392,6 +392,9 @@ int handle_ep0(usb_gadget * ctx)
 			ret = select(ctx->usb_device+1, &read_set, NULL, NULL, NULL);
 		}
 
+		if(ctx->wait_connection && ret == 0 )
+			continue;
+
 		if( ret <= 0 )
 			return ret;
 
@@ -495,6 +498,8 @@ usb_gadget * init_usb_mtp_gadget(mtp_ctx * ctx)
 		add_usb_string(usbctx, STRINGID_MAX,          NULL);
 
 		strings.strings = usbctx->stringtab;
+
+		usbctx->wait_connection = ctx->usb_cfg.wait_connection;
 
 		usbctx->usb_config = malloc(sizeof(usb_cfg));
 		if(!usbctx->usb_config)

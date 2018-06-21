@@ -65,6 +65,8 @@ typedef struct mtp_usb_cfg_
 
 	char usb_string_interface[MAX_CFG_STRING_SIZE];
 
+	int wait_connection;
+
 }mtp_usb_cfg;
 
 typedef struct mtp_storage_
