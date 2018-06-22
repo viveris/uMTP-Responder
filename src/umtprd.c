@@ -27,12 +27,13 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <pthread.h>
 
 #include <errno.h>
 
 #include "mtp.h"
 
+
+#include "usb_gadget.h"
 #include "usb_gadget_fct.h"
 
 #include "logs_out.h"
@@ -48,14 +49,10 @@ void* io_thread(void* arg)
 
 	while (is_usb_up(ctx))
 	{
-		ret = 1;
-		if( ret > 0 )
+		ret = mtp_incoming_packet(mtp_context);
+		if(ret == -1)
 		{
-			mtp_incoming_packet(mtp_context);
-		}
-		else
-		{
-			PRINT_ERROR("Read error %d(%m)\n", ret);
+			ctx->stop = 1;
 		}
 	}
 
@@ -65,6 +62,8 @@ void* io_thread(void* arg)
 int main(int argc, char *argv[])
 {
 	usb_gadget * usb_contex;
+	int retcode = 0;
+	int loop_continue = 0;
 
 	mtp_context = 0;
 
@@ -82,22 +81,29 @@ int main(int argc, char *argv[])
 
 	mtp_load_config_file(mtp_context);
 
-	usb_contex = init_usb_mtp_gadget(mtp_context);
-	if(usb_contex)
-	{
-		mtp_set_usb_handle(mtp_context, usb_contex, mtp_context->usb_cfg.usb_max_packet_size);
-		handle_ep0(usb_contex);
-	}
-	else
-	{
-		PRINT_ERROR("USB Init failed !");
+	loop_continue = mtp_context->usb_cfg.loop_on_disconnect;
 
-		mtp_deinit_responder(mtp_context);
 
-		exit(-2);
+	while(loop_continue)
+	{
+		usb_contex = init_usb_mtp_gadget(mtp_context);
+		if(usb_contex)
+		{
+			mtp_set_usb_handle(mtp_context, usb_contex, mtp_context->usb_cfg.usb_max_packet_size);
+			handle_ep0(usb_contex);
+			deinit_usb_mtp_gadget(usb_contex);
+		}
+		else
+		{
+			PRINT_ERROR("USB Init failed !");
+			retcode = -2;
+			loop_continue = 0;
+		}
+
+		PRINT_MSG("Disconnected");
 	}
 
 	mtp_deinit_responder(mtp_context);
 
-	exit(0);
+	exit(retcode);
 }
