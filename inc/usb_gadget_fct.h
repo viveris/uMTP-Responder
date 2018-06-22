@@ -36,5 +36,5 @@ int write_usb(usb_gadget * ctx, unsigned char * buffer, int size);
 int handle_ep0(usb_gadget * ctx);
 int is_usb_up(usb_gadget * ctx);
 
-void deinit(usb_gadget * ctx);
+void deinit_usb_mtp_gadget(usb_gadget * usbctx);
 #endif

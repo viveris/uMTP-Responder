@@ -576,3 +576,12 @@ init_error:
 
 	return 0;
 }
+
+void deinit_usb_mtp_gadget(usb_gadget * usbctx)
+{
+	if(usbctx->usb_config)
+		free(usbctx->usb_config);
+
+	if (usbctx->usb_device >= 0)
+		close(usbctx->usb_device);
+}
