@@ -70,7 +70,8 @@ enum
 	SERIAL_STRING_CMD,
 	INTERFACE_STRING_CMD,
 
-	WAIT_CONNECTION
+	WAIT_CONNECTION,
+	LOOP_ON_DISCONNECT
 };
 
 typedef struct kw_list_
@@ -273,6 +274,10 @@ int get_hex_param(mtp_ctx * context, char * line,int cmd)
 			case WAIT_CONNECTION:
 				context->usb_cfg.wait_connection = param_value;
 			break;
+
+			case LOOP_ON_DISCONNECT:
+				context->usb_cfg.loop_on_disconnect = param_value;
+			break;
 		}
 	}
 
@@ -348,6 +353,7 @@ kw_list kwlist[] =
 	{"interface",           get_str_param,      INTERFACE_STRING_CMD},
 
 	{"wait",                get_hex_param,      WAIT_CONNECTION},
+	{"loop_on_disconnect",  get_hex_param,      LOOP_ON_DISCONNECT},
 	{ 0, 0, 0 }
 };
 
@@ -420,6 +426,7 @@ int mtp_load_config_file(mtp_ctx * context)
 	context->usb_cfg.usb_max_packet_size = MAX_PACKET_SIZE;
 
 	context->usb_cfg.wait_connection = 0;
+	context->usb_cfg.loop_on_disconnect = 0;
 
 	f = fopen(UMTPR_CONF_FILE,"r");
 	if(f)
@@ -458,6 +465,7 @@ int mtp_load_config_file(mtp_ctx * context)
 	PRINT_MSG("USB Device version : 0x%.4X",context->usb_cfg.usb_dev_version);
 
 	PRINT_MSG("Wait for connection : %i",context->usb_cfg.wait_connection);
+	PRINT_MSG("Loop on disconnect : %i",context->usb_cfg.loop_on_disconnect);
 
 	return err;
 }
