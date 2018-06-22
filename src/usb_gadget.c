@@ -273,7 +273,6 @@ static void handle_setup_request(usb_gadget * ctx, struct usb_ctrlrequest* setup
 {
 	int status;
 	uint8_t buffer[512];
-	pthread_t thread;
 
 	PRINT_DEBUG("Setup request %d", setup->bRequest);
 
@@ -328,7 +327,8 @@ static void handle_setup_request(usb_gadget * ctx, struct usb_ctrlrequest* setup
 			if (!status)
 			{
 				ctx->stop = 0;
-				pthread_create(&thread, NULL, io_thread, ctx);
+				pthread_create(&ctx->thread, NULL, io_thread, ctx);
+				ctx->thread_started = 1;
 			}
 			break;
 		case 0:
@@ -434,6 +434,10 @@ int handle_ep0(usb_gadget * ctx)
 				break;
 			}
 		}
+	}
+	if(ctx->thread_started)
+	{
+		pthread_join(ctx->thread, NULL);
 	}
 
 end:

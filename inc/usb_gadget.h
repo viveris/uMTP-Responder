@@ -28,6 +28,7 @@
 
 #include <linux/usb/ch9.h>
 #include <linux/usb/gadgetfs.h>
+#include <pthread.h>
 #include "usbstring.h"
 
 enum
@@ -106,6 +107,8 @@ typedef struct _usb_gadget
 	struct usb_string stringtab[MAX_USB_STRING];
 
 	int wait_connection;
+	pthread_t thread;
+	int thread_started;
 
 }usb_gadget;
 
