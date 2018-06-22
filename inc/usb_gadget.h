@@ -26,6 +26,10 @@
 #ifndef _INC_USB_GADGET_H_
 #define _INC_USB_GADGET_H_
 
+#include <linux/usb/ch9.h>
+#include <linux/usb/gadgetfs.h>
+#include "usbstring.h"
+
 enum
 {
 	EP_DESCRIPTOR_IN = 0,

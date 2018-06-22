@@ -25,9 +25,8 @@
 
 #ifndef _INC_USB_GADGET_FCT_H_
 #define _INC_USB_GADGET_FCT_H_
-#ifndef usb_gadget
-typedef void usb_gadget;
-#endif
+
+#include "usb_gadget.h"
 
 usb_gadget * init_usb_mtp_gadget(mtp_ctx * ctx);
 

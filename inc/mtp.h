@@ -41,10 +41,7 @@ typedef struct _MTP_PACKET_HEADER
 
 #pragma pack()
 
-#ifndef _DEF_FS_HANDLES_
-typedef void fs_handles_db;
-#define _DEF_FS_HANDLES_
-#endif
+#include "fs_handles_db.h"
 
 typedef struct mtp_usb_cfg_
 {
