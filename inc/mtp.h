@@ -23,6 +23,9 @@
  * @author Jean-François DEL NERO <Jean-Francois.DELNERO@viveris.fr>
  */
 
+#ifndef _INC_MTP_H_
+#define _INC_MTP_H_
+
 #define MAX_STORAGE_NB 16
 #define MAX_CFG_STRING_SIZE 512
 
@@ -116,3 +119,5 @@ char * mtp_get_storage_root(mtp_ctx * ctx, uint32_t storage_id);
 void mtp_deinit_responder(mtp_ctx * ctx);
 
 #define APP_VERSION "v0.8.1"
+
+#endif

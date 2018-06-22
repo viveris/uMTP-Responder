@@ -23,7 +23,9 @@
  * @author Jean-François DEL NERO <Jean-Francois.DELNERO@viveris.fr>
  */
 
+#ifndef _INC_MTP_CONSTANT_STRINGS_H_
 extern const char DevInfos_MTP_Extensions[];
 
 const char * mtp_get_operation_string(uint16_t operation);
 const char * mtp_get_type_string(uint16_t type);
+#endif

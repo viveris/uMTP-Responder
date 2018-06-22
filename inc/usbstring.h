@@ -23,6 +23,9 @@
  * @author Jean-François DEL NERO <Jean-Francois.DELNERO@viveris.fr>
  */
 
+#ifndef _INC_USBSTRING_H_
+#define _INC_USBSTRING_H_
+
 struct usb_string {
 	uint8_t id;
 	char *str;
@@ -34,3 +37,5 @@ struct usb_gadget_strings {
 };
 
 int usb_gadget_get_string (struct usb_gadget_strings *table, int id, uint8_t *buf);
+
+#endif

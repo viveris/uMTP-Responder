@@ -23,6 +23,9 @@
  * @author Jean-François DEL NERO <Jean-Francois.DELNERO@viveris.fr>
  */
 
+#ifndef _INC_USB_GADGET_H_
+#define _INC_USB_GADGET_H_
+
 enum
 {
 	EP_DESCRIPTOR_IN = 0,
@@ -101,3 +104,5 @@ typedef struct _usb_gadget
 	int wait_connection;
 
 }usb_gadget;
+
+#endif
