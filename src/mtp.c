@@ -142,9 +142,12 @@ int delete_tree(mtp_ctx * ctx,uint32_t handle)
 
 		if(entry->flags & ENTRY_IS_DIR)
 		{
-			ret = remove(path);
+			ret = fs_remove_tree( path );
+
 			if(!ret)
 				entry->flags |= ENTRY_IS_DELETED;
+			else
+				scan_and_add_folder(ctx->fs_db, path, handle, entry->storage_id); // partially deleted ? update/sync the db.
 		}
 		else
 		{

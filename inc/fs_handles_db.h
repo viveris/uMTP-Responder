@@ -82,4 +82,7 @@ int entry_read(fs_handles_db * db, FILE * f, unsigned char * buffer_out, int off
 void entry_close(FILE * f);
 
 char * build_full_path(fs_handles_db * db,char * root_path,fs_entry * entry);
+
+int fs_remove_tree( char *folder );
+
 #endif

@@ -36,6 +36,71 @@
 #include "fs_handles_db.h"
 #include "mtp.h"
 
+int fs_remove_tree( char *folder )
+{
+	struct dirent *d;
+	DIR * dir;
+	struct stat fileStat;
+	char * tmpstr;
+	int del_fail;
+
+	del_fail = 0;
+
+	dir = opendir (folder);
+	if( dir )
+	{
+		do
+		{
+			d = readdir (dir);
+			if( d )
+			{
+				tmpstr = malloc (strlen(folder) + strlen(d->d_name) + 4 );
+				if( tmpstr )
+				{
+					strcpy(tmpstr,folder);
+					strcat(tmpstr,"/");
+					strcat(tmpstr,d->d_name);
+
+					memset(&fileStat,0,sizeof(struct stat));
+					if( !lstat (tmpstr, &fileStat) )
+					{
+						if ( S_ISDIR ( fileStat.st_mode ) )
+						{
+							if( strcmp(d->d_name,"..") && strcmp(d->d_name,".") )
+							{
+								if( fs_remove_tree(tmpstr) )
+									del_fail = 1;
+							}
+						}
+						else
+						{
+							if( remove(tmpstr) )
+								del_fail = 1;
+						}
+					}
+
+					free(tmpstr);
+				}
+				else
+				{
+					del_fail = 1;
+				}
+			}
+		}while(d);
+
+		closedir(dir);
+
+		if( remove(folder) )
+			del_fail = 1;
+	}
+	else
+	{
+		del_fail = 1;
+	}
+
+	return del_fail;
+}
+
 DIR * fs_find_first_file(char *folder, filefoundinfo* fileinfo)
 {
 	struct dirent *d;
