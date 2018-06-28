@@ -53,6 +53,10 @@ Any board with a USB device port should be compatible. The only requirement is t
 
 - Raspberry PI Zero (W).
 
+- BeagleBone Black.
+
+- Allwinner SoC based board.
+
 ### Client operating systems successfully tested
 
 - Windows 7, Windows 10, Linux.
