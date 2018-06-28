@@ -8,7 +8,7 @@ UMTPRD_DAEMON_USER=root
 
 case "$1" in
   start)
-    echo -n "Start uMTPrd deamon :"
+    echo -n "Start uMTPrd daemon :"
     if [ ! -d "$GADGETFS_PATH" ]; then
       mkdir $GADGETFS_PATH
     fi
@@ -26,7 +26,7 @@ case "$1" in
     echo "DONE"
   ;;
   stop)
-    echo -n "Stop uMTPrd deamon :"
+    echo -n "Stop uMTPrd daemon :"
     start-stop-daemon --stop --signal 3 --quiet --exec $UMTPRD_DAEMON_PATH
     echo " DONE"
     ;;
