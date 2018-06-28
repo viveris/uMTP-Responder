@@ -23,4 +23,8 @@
  * @author Jean-François DEL NERO <Jean-Francois.DELNERO@viveris.fr>
  */
 
+#ifndef _INC_MTP_CFG_H_
+#include "mtp.h"
+
 int mtp_create_storage(mtp_ctx * context);
+#endif

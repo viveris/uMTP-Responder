@@ -23,6 +23,9 @@
  * @author Jean-François DEL NERO <Jean-Francois.DELNERO@viveris.fr>
  */
 
+#ifndef _INC_MTS_SUPPORT_DEF_H_
+#define _INC_MTS_SUPPORT_DEF_H_
+
 #define MTP_VERSION 100
 
 extern const unsigned short supported_op[];
@@ -34,3 +37,4 @@ extern const int supported_formats_size;
 extern const int supported_property_size;
 extern const int supported_event_size;
 extern const int supported_op_size;
+#endif

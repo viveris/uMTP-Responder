@@ -23,6 +23,9 @@
  * @author Jean-François DEL NERO <Jean-Francois.DELNERO@viveris.fr>
  */
 
+#ifndef _INC_MTP_H_
+#define _INC_MTP_H_
+
 #define MAX_STORAGE_NB 16
 #define MAX_CFG_STRING_SIZE 512
 
@@ -38,10 +41,7 @@ typedef struct _MTP_PACKET_HEADER
 
 #pragma pack()
 
-#ifndef _DEF_FS_HANDLES_
-typedef void fs_handles_db;
-#define _DEF_FS_HANDLES_
-#endif
+#include "fs_handles_db.h"
 
 typedef struct mtp_usb_cfg_
 {
@@ -64,6 +64,9 @@ typedef struct mtp_usb_cfg_
 	char usb_string_serial[MAX_CFG_STRING_SIZE];
 
 	char usb_string_interface[MAX_CFG_STRING_SIZE];
+
+	int wait_connection;
+	int loop_on_disconnect;
 
 }mtp_usb_cfg;
 
@@ -114,3 +117,5 @@ char * mtp_get_storage_root(mtp_ctx * ctx, uint32_t storage_id);
 void mtp_deinit_responder(mtp_ctx * ctx);
 
 #define APP_VERSION "v0.8.1"
+
+#endif

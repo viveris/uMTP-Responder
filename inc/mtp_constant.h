@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef _MTP_H
-#define _MTP_H
+#ifndef _INC_MTP_CONSTANT_H_
+#define _INC_MTP_CONSTANT_H_
 
 #include <stdint.h>
 #include <stdlib.h>

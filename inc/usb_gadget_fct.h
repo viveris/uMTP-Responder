@@ -23,9 +23,10 @@
  * @author Jean-François DEL NERO <Jean-Francois.DELNERO@viveris.fr>
  */
 
-#ifndef usb_gadget
-typedef void usb_gadget;
-#endif
+#ifndef _INC_USB_GADGET_FCT_H_
+#define _INC_USB_GADGET_FCT_H_
+
+#include "usb_gadget.h"
 
 usb_gadget * init_usb_mtp_gadget(mtp_ctx * ctx);
 
@@ -35,4 +36,5 @@ int write_usb(usb_gadget * ctx, unsigned char * buffer, int size);
 int handle_ep0(usb_gadget * ctx);
 int is_usb_up(usb_gadget * ctx);
 
-void deinit(usb_gadget * ctx);
+void deinit_usb_mtp_gadget(usb_gadget * usbctx);
+#endif

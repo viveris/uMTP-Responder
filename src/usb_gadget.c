@@ -273,7 +273,6 @@ static void handle_setup_request(usb_gadget * ctx, struct usb_ctrlrequest* setup
 {
 	int status;
 	uint8_t buffer[512];
-	pthread_t thread;
 
 	PRINT_DEBUG("Setup request %d", setup->bRequest);
 
@@ -328,7 +327,8 @@ static void handle_setup_request(usb_gadget * ctx, struct usb_ctrlrequest* setup
 			if (!status)
 			{
 				ctx->stop = 0;
-				pthread_create(&thread, NULL, io_thread, ctx);
+				pthread_create(&ctx->thread, NULL, io_thread, ctx);
+				ctx->thread_started = 1;
 			}
 			break;
 		case 0:
@@ -392,6 +392,9 @@ int handle_ep0(usb_gadget * ctx)
 			ret = select(ctx->usb_device+1, &read_set, NULL, NULL, NULL);
 		}
 
+		if(ctx->wait_connection && ret == 0 )
+			continue;
+
 		if( ret <= 0 )
 			return ret;
 
@@ -431,6 +434,10 @@ int handle_ep0(usb_gadget * ctx)
 				break;
 			}
 		}
+	}
+	if(ctx->thread_started)
+	{
+		pthread_join(ctx->thread, NULL);
 	}
 
 end:
@@ -495,6 +502,8 @@ usb_gadget * init_usb_mtp_gadget(mtp_ctx * ctx)
 		add_usb_string(usbctx, STRINGID_MAX,          NULL);
 
 		strings.strings = usbctx->stringtab;
+
+		usbctx->wait_connection = ctx->usb_cfg.wait_connection;
 
 		usbctx->usb_config = malloc(sizeof(usb_cfg));
 		if(!usbctx->usb_config)
@@ -566,4 +575,13 @@ init_error:
 		close(usbctx->usb_device);
 
 	return 0;
+}
+
+void deinit_usb_mtp_gadget(usb_gadget * usbctx)
+{
+	if(usbctx->usb_config)
+		free(usbctx->usb_config);
+
+	if (usbctx->usb_device >= 0)
+		close(usbctx->usb_device);
 }

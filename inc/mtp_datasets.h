@@ -23,6 +23,13 @@
  * @author Jean-François DEL NERO <Jean-Francois.DELNERO@viveris.fr>
  */
 
+#ifndef _INC_MTP_DATASETS_H_
+#define _INC_MTP_DATASETS_H_
+
+#include "mtp.h"
+
 int build_deviceinfo_dataset(mtp_ctx * ctx,void * buffer, int maxsize);
 int build_storageinfo_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uint32_t storageid);
 int build_objectinfo_dataset(mtp_ctx * ctx, void * buffer, int maxsize,fs_entry * entry);
+
+#endif

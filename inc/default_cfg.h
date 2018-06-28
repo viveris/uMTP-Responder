@@ -23,6 +23,9 @@
  * @author Jean-François DEL NERO <Jean-Francois.DELNERO@viveris.fr>
  */
 
+#ifndef _INC_DEFAULT_CFG_H_
+#define _INC_DEFAULT_CFG_H_
+
 #ifndef UMTPR_CONF_FILE
 #define UMTPR_CONF_FILE   "/etc/umtprd/umtprd.conf"
 #endif
@@ -48,3 +51,4 @@
 #define PRODUCT "The Viveris Product !"
 #define SERIALNUMBER "01234567"
 
+#endif

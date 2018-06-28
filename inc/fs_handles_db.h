@@ -23,6 +23,9 @@
  * @author Jean-François DEL NERO <Jean-Francois.DELNERO@viveris.fr>
  */
 
+#ifndef _INC_FS_HANDLES_DB_H_
+#define _INC_FS_HANDLES_DB_H_
+
 typedef struct fs_entry fs_entry;
 
 struct fs_entry
@@ -79,3 +82,4 @@ int entry_read(fs_handles_db * db, FILE * f, unsigned char * buffer_out, int off
 void entry_close(FILE * f);
 
 char * build_full_path(fs_handles_db * db,char * root_path,fs_entry * entry);
+#endif
