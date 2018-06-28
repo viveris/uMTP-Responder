@@ -3,7 +3,7 @@
  * Copyright (c) 2018 Viveris Technologies
  *
  * uMTP Responder is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
+ * modify it under the terms of the GNU General Public
  * License as published by the Free Software Foundation; either
  * version 3.0 of the License, or (at your option) any later version.
  *
@@ -91,8 +91,13 @@ int main(int argc, char *argv[])
 	else
 	{
 		PRINT_ERROR("USB Init failed !");
+
+		mtp_deinit_responder(mtp_context);
+
 		exit(-2);
 	}
+
+	mtp_deinit_responder(mtp_context);
 
 	exit(0);
 }

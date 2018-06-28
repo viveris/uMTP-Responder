@@ -3,7 +3,7 @@
  * Copyright (c) 2018 Viveris Technologies
  *
  * uMTP Responder is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
+ * modify it under the terms of the GNU General Public
  * License as published by the Free Software Foundation; either
  * version 3.0 of the License, or (at your option) any later version.
  *
@@ -26,9 +26,11 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include <inttypes.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <sys/statvfs.h>
 
 #include <time.h>
 
@@ -78,22 +80,39 @@ int build_storageinfo_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uint32_t 
 	int ofs;
 	char * storage_description;
 	char volumeident[16];
+	char * storage_path = NULL;
+	struct statvfs fsbuf;
+	uint64_t freespace = 0x4000000000000000U;
+	uint64_t totalspace = 0x8000000000000000U;
 
 	ofs = 0;
 
 	storage_description = mtp_get_storage_description(ctx,storageid);
-	if(storage_description)
+	storage_path = mtp_get_storage_root(ctx, storageid);
+	if(storage_description && storage_path)
 	{
+		PRINT_DEBUG("Add storageinfo for %s", storage_path);
 		poke(buffer, &ofs, 2, MTP_STORAGE_FIXED_RAM);                               // Storage Type
 		poke(buffer, &ofs, 2, MTP_STORAGE_FILESYSTEM_HIERARCHICAL);                 // Filesystem Type
 		poke(buffer, &ofs, 2, MTP_STORAGE_READ_WRITE);                              // Access Capability
 
-		// TODO : return total and free space
-		poke(buffer, &ofs, 4, 0x80000000);                                          // Max Capacity
-		poke(buffer, &ofs, 4, 0x00000000);                                          //
+		if(statvfs(storage_path, &fsbuf) == 0)
+		{
+			totalspace = (uint64_t)fsbuf.f_bsize * (uint64_t)fsbuf.f_blocks;
+			freespace = (uint64_t)fsbuf.f_bsize * (uint64_t)fsbuf.f_bavail;
+			PRINT_DEBUG("Total space %" PRIu64 " byte(s)", totalspace);
+			PRINT_DEBUG("Free space %" PRIu64 " byte(s)", freespace);
+		}
+		else
+		{
+			PRINT_WARN("Failed to get statvfs for %s\n", storage_path);
+		}
 
-		poke(buffer, &ofs, 4, 0x40000000);                                          // Free space
-		poke(buffer, &ofs, 4, 0x00000000);                                          //
+		poke(buffer, &ofs, 4, totalspace&0x00000000FFFFFFFF);                       // Max Capacity
+		poke(buffer, &ofs, 4, (totalspace>>32));                                    //
+
+		poke(buffer, &ofs, 4, freespace&0x00000000FFFFFFFF);                        // Free space in Bytes
+		poke(buffer, &ofs, 4, (freespace>>32));                                     //
 
 		poke(buffer, &ofs, 4, 0xFFFFFFFF);                                          // Free Space In Objects
 

@@ -3,7 +3,7 @@
  * Copyright (c) 2018 Viveris Technologies
  *
  * uMTP Responder is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
+ * modify it under the terms of the GNU General Public
  * License as published by the Free Software Foundation; either
  * version 3.0 of the License, or (at your option) any later version.
  *
@@ -85,6 +85,12 @@
                                             ## args);               \
                                     fflush(stdout);                 \
                                   }
+#else
+
+#define PRINT_DEBUG(fmt, args...)
+
+#endif
+
 #endif
 
 #ifdef DEBUG
@@ -94,11 +100,9 @@ void printbuf(void * buf,int size);
 
 #else
 
-#define PRINT_DEBUG(x...)
 #define PRINT_DEBUG_BUF(x, y)
 
 #endif
 
 #endif
 
-#endif

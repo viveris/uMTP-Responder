@@ -3,7 +3,7 @@
  * Copyright (c) 2018 Viveris Technologies
  *
  * uMTP Responder is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
+ * modify it under the terms of the GNU General Public
  * License as published by the Free Software Foundation; either
  * version 3.0 of the License, or (at your option) any later version.
  *
@@ -62,6 +62,22 @@ extern void* io_thread(void* arg);
 int read_usb(usb_gadget * ctx, unsigned char * buffer, int maxsize)
 {
 	int ret;
+	int max_read_fd;
+	fd_set read_set;
+
+	max_read_fd = 0;
+
+	if (ctx->ep_handles[EP_DESCRIPTOR_OUT] > max_read_fd)
+		max_read_fd = ctx->ep_handles[EP_DESCRIPTOR_OUT];
+
+	FD_ZERO(&read_set);
+	FD_SET(ctx->ep_handles[EP_DESCRIPTOR_OUT], &read_set);
+
+	ret = select(max_read_fd+1, &read_set, NULL, NULL, NULL);
+
+	// Error
+	if (ret < 0)
+		return ret;
 
 	ret = read (ctx->ep_handles[EP_DESCRIPTOR_OUT], buffer, maxsize);
 
@@ -119,7 +135,7 @@ void fill_config_descriptor(mtp_ctx * ctx , usb_gadget * usbctx,struct usb_confi
 	desc->bmAttributes = USB_CONFIG_ATT_ONE;
 	desc->bMaxPower = 1;
 
-	PRINT_DEBUG("fill_config_descriptor: (Total Len : %d + %d = %d)",sizeof(struct usb_config_descriptor) ,total_size,desc->wTotalLength);
+	PRINT_DEBUG("fill_config_descriptor: (Total Len : %lu + %d = %d)",sizeof(struct usb_config_descriptor) ,total_size,desc->wTotalLength);
 	PRINT_DEBUG_BUF(desc, sizeof(struct usb_config_descriptor));
 
 	return;
@@ -185,7 +201,7 @@ void fill_ep_descriptor(mtp_ctx * ctx, usb_gadget * usbctx,struct usb_endpoint_d
 	if(bulk)
 	{
 		desc->bmAttributes = USB_ENDPOINT_XFER_BULK;
-	    desc->wMaxPacketSize = ctx->usb_cfg.usb_max_packet_size;
+		desc->wMaxPacketSize = ctx->usb_cfg.usb_max_packet_size;
 	}
 	else
 	{
@@ -281,7 +297,7 @@ static void handle_setup_request(usb_gadget * ctx, struct usb_ctrlrequest* setup
 				else
 				{
 					PRINT_DEBUG("Found %d bytes", status);
-                    PRINT_DEBUG_BUF(buffer, status);
+					PRINT_DEBUG_BUF(buffer, status);
 				}
 				write (ctx->usb_device, buffer, status);
 				return;
@@ -402,7 +418,9 @@ int handle_ep0(usb_gadget * ctx)
 				break;
 			case GADGETFS_DISCONNECT:
 				PRINT_DEBUG("EP0 DISCONNECT");
-				ctx->stop = 1;
+				// Set timeout for a reconnection during the enumeration...
+				timeout.tv_sec = 1;
+				timeout.tv_usec = 0;
 				break;
 			case GADGETFS_SETUP:
 				PRINT_DEBUG("EP0 SETUP");

@@ -3,7 +3,7 @@
  * Copyright (c) 2018 Viveris Technologies
  *
  * uMTP Responder is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
+ * modify it under the terms of the GNU General Public
  * License as published by the Free Software Foundation; either
  * version 3.0 of the License, or (at your option) any later version.
  *
@@ -25,6 +25,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 #include "logs_out.h"
 
 #ifdef DEBUG
