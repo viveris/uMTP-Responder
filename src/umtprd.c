@@ -61,7 +61,7 @@ void* io_thread(void* arg)
 
 int main(int argc, char *argv[])
 {
-	usb_gadget * usb_contex;
+	usb_gadget * usb_ctx;
 	int retcode = 0;
 	int loop_continue = 0;
 
@@ -83,15 +83,14 @@ int main(int argc, char *argv[])
 
 	loop_continue = mtp_context->usb_cfg.loop_on_disconnect;
 
-
 	while(loop_continue)
 	{
-		usb_contex = init_usb_mtp_gadget(mtp_context);
-		if(usb_contex)
+		usb_ctx = init_usb_mtp_gadget(mtp_context);
+		if(usb_ctx)
 		{
-			mtp_set_usb_handle(mtp_context, usb_contex, mtp_context->usb_cfg.usb_max_packet_size);
-			handle_ep0(usb_contex);
-			deinit_usb_mtp_gadget(usb_contex);
+			mtp_set_usb_handle(mtp_context, usb_ctx, mtp_context->usb_cfg.usb_max_packet_size);
+			handle_ep0(usb_ctx);
+			deinit_usb_mtp_gadget(usb_ctx);
 		}
 		else
 		{
@@ -101,6 +100,12 @@ int main(int argc, char *argv[])
 		}
 
 		PRINT_MSG("Disconnected");
+
+		if(mtp_context->fs_db)
+		{
+			deinit_fs_db(mtp_context->fs_db);
+			mtp_context->fs_db = 0;
+		}
 	}
 
 	mtp_deinit_responder(mtp_context);

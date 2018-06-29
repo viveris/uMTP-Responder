@@ -140,20 +140,25 @@ int delete_tree(mtp_ctx * ctx,uint32_t handle)
 	{
 		path = build_full_path(ctx->fs_db, mtp_get_storage_root(ctx, entry->storage_id), entry);
 
-		if(entry->flags & ENTRY_IS_DIR)
+		if (path)
 		{
-			ret = fs_remove_tree( path );
+			if(entry->flags & ENTRY_IS_DIR)
+			{
+				ret = fs_remove_tree( path );
 
-			if(!ret)
-				entry->flags |= ENTRY_IS_DELETED;
+				if(!ret)
+					entry->flags |= ENTRY_IS_DELETED;
+				else
+					scan_and_add_folder(ctx->fs_db, path, handle, entry->storage_id); // partially deleted ? update/sync the db.
+			}
 			else
-				scan_and_add_folder(ctx->fs_db, path, handle, entry->storage_id); // partially deleted ? update/sync the db.
-		}
-		else
-		{
-			ret = remove(path);
-			if(!ret)
-				entry->flags |= ENTRY_IS_DELETED;
+			{
+				ret = remove(path);
+				if(!ret)
+					entry->flags |= ENTRY_IS_DELETED;
+			}
+
+			free(path);
 		}
 	}
 
@@ -465,7 +470,6 @@ int send_file_data( mtp_ctx * ctx, fs_entry * entry,uint32_t offset, uint32_t ma
 	return actualsize;
 }
 
-
 int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int rawsize)
 {
 	fs_entry * entry;
@@ -478,6 +482,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 	int ofs, no_response;
 	unsigned char * tmp_ptr;
 	char * full_path;
+	char * tmp_str;
 	FILE * f;
 
 	params[0] = 0x000000;
@@ -607,13 +612,15 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 				break;
 			}
 
+			tmp_str = 0;
 			full_path = 0;
 			if(parent_handle && parent_handle!=0xFFFFFFFF)
 			{
 				entry = get_entry_by_handle(ctx->fs_db, parent_handle);
 				if(entry)
 				{
-					full_path = build_full_path(ctx->fs_db, mtp_get_storage_root(ctx, entry->storage_id), entry);
+					tmp_str = build_full_path(ctx->fs_db, mtp_get_storage_root(ctx, entry->storage_id), entry);
+					full_path = tmp_str;
 				}
 			}
 			else
@@ -638,6 +645,9 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 				// Restart
 				init_search_handle(ctx->fs_db, parent_handle, storageid);
+
+				if (tmp_str)
+					free(tmp_str);
 			}
 
 			// Update packet size
@@ -823,6 +833,8 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 									response_code = MTP_RESPONSE_OK;
 								}
+
+								free( full_path );
 							}
 						}
 						else
@@ -931,7 +943,6 @@ void mtp_set_usb_handle(mtp_ctx * ctx, void * handle, uint32_t max_packet_size)
 	ctx->usb_ctx = handle;
 	ctx->max_packet_size = max_packet_size;
 }
-
 
 uint32_t mtp_add_storage(mtp_ctx * ctx, char * path, char * description)
 {

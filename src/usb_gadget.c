@@ -48,6 +48,8 @@
 #include "usbstring.h"
 #include "usb_gadget.h"
 
+#include "usb_gadget_fct.h"
+
 #include "logs_out.h"
 
 #define CONFIG_VALUE 1
@@ -568,20 +570,45 @@ usb_gadget * init_usb_mtp_gadget(mtp_ctx * ctx)
 init_error:
 	PRINT_ERROR("init_usb_mtp_gadget init error !");
 
-	if(usbctx->usb_config)
-		free(usbctx->usb_config);
-
-	if (usbctx->usb_device >= 0)
-		close(usbctx->usb_device);
+	deinit_usb_mtp_gadget(usbctx);
 
 	return 0;
 }
 
 void deinit_usb_mtp_gadget(usb_gadget * usbctx)
 {
-	if(usbctx->usb_config)
-		free(usbctx->usb_config);
+	int i;
 
-	if (usbctx->usb_device >= 0)
-		close(usbctx->usb_device);
+	if( usbctx )
+	{
+		if(usbctx->usb_config)
+		{
+			free(usbctx->usb_config);
+			usbctx->usb_config = 0;
+		}
+
+		if (usbctx->usb_device >= 0)
+		{
+			close(usbctx->usb_device);
+			usbctx->usb_device = - 1;
+		}
+
+		for(i=0;i<3;i++)
+		{
+			if( usbctx->ep_config[i] )
+				free( usbctx->ep_config[i] );
+		}
+
+		i = 0;
+		while( i < MAX_USB_STRING )
+		{
+			if( usbctx->stringtab[i].str )
+			{
+				free ( usbctx->stringtab[i].str );
+			}
+			i++;
+		}
+
+		free( usbctx );
+	}
 }
