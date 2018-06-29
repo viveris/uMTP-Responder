@@ -493,7 +493,15 @@ usb_gadget * init_usb_mtp_gadget(mtp_ctx * ctx)
 	if(usbctx)
 	{
 		memset(usbctx,0,sizeof(usb_gadget));
+
 		usbctx->usb_device = -1;
+
+		i = 0;
+		while( i < EP_NB_OF_DESCRIPTORS )
+		{
+			usbctx->ep_handles[i] = -1;
+			i++;
+		}
 
 		add_usb_string(usbctx, STRINGID_MANUFACTURER, ctx->usb_cfg.usb_string_manufacturer);
 		add_usb_string(usbctx, STRINGID_PRODUCT,      ctx->usb_cfg.usb_string_product);
@@ -581,6 +589,14 @@ void deinit_usb_mtp_gadget(usb_gadget * usbctx)
 
 	if( usbctx )
 	{
+		i = 0;
+		while( i < EP_NB_OF_DESCRIPTORS )
+		{
+			if( usbctx->ep_handles[i] >= 0 )
+				close(usbctx->ep_handles[i] );
+			i++;
+		}
+
 		if(usbctx->usb_config)
 		{
 			free(usbctx->usb_config);
