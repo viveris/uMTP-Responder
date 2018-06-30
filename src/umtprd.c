@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
 
 	loop_continue = mtp_context->usb_cfg.loop_on_disconnect;
 
-	while(loop_continue)
+	do
 	{
 		usb_ctx = init_usb_mtp_gadget(mtp_context);
 		if(usb_ctx)
@@ -106,7 +106,7 @@ int main(int argc, char *argv[])
 			deinit_fs_db(mtp_context->fs_db);
 			mtp_context->fs_db = 0;
 		}
-	}
+	}while(loop_continue);
 
 	mtp_deinit_responder(mtp_context);
 
