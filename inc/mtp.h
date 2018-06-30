@@ -116,6 +116,6 @@ char * mtp_get_storage_root(mtp_ctx * ctx, uint32_t storage_id);
 
 void mtp_deinit_responder(mtp_ctx * ctx);
 
-#define APP_VERSION "v0.8.5"
+#define APP_VERSION "v0.8.6"
 
 #endif
