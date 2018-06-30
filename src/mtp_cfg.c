@@ -426,7 +426,7 @@ int mtp_load_config_file(mtp_ctx * context)
 	context->usb_cfg.usb_max_packet_size = MAX_PACKET_SIZE;
 
 	context->usb_cfg.wait_connection = 0;
-	context->usb_cfg.loop_on_disconnect = 1;
+	context->usb_cfg.loop_on_disconnect = 0;
 
 	f = fopen(UMTPR_CONF_FILE,"r");
 	if(f)
