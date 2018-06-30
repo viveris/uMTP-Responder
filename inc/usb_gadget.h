@@ -108,7 +108,7 @@ typedef struct _usb_gadget
 
 	int wait_connection;
 	pthread_t thread;
-	int thread_started;
+	int thread_not_started;
 
 }usb_gadget;
 

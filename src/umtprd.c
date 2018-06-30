@@ -50,7 +50,7 @@ void* io_thread(void* arg)
 	while (is_usb_up(ctx))
 	{
 		ret = mtp_incoming_packet(mtp_context);
-		if(ret == -1)
+		if(ret < 0)
 		{
 			ctx->stop = 1;
 		}
@@ -99,7 +99,7 @@ int main(int argc, char *argv[])
 			loop_continue = 0;
 		}
 
-		PRINT_MSG("Disconnected");
+		PRINT_MSG("uMTP Responder : Disconnected");
 
 		if(mtp_context->fs_db)
 		{

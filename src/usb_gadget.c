@@ -64,51 +64,25 @@ extern void* io_thread(void* arg);
 int read_usb(usb_gadget * ctx, unsigned char * buffer, int maxsize)
 {
 	int ret;
-	int max_read_fd;
-	fd_set read_set;
 
-	max_read_fd = 0;
-
-	if (ctx->ep_handles[EP_DESCRIPTOR_OUT] > max_read_fd)
-		max_read_fd = ctx->ep_handles[EP_DESCRIPTOR_OUT];
-
-	FD_ZERO(&read_set);
-	FD_SET(ctx->ep_handles[EP_DESCRIPTOR_OUT], &read_set);
-
-	ret = select(max_read_fd+1, &read_set, NULL, NULL, NULL);
-
-	// Error
-	if (ret < 0)
-		return ret;
-
-	ret = read (ctx->ep_handles[EP_DESCRIPTOR_OUT], buffer, maxsize);
+	ret = -1;
+	if(ctx->ep_handles[EP_DESCRIPTOR_OUT] >= 0 && maxsize && buffer)
+	{
+		ret = read (ctx->ep_handles[EP_DESCRIPTOR_OUT], buffer, maxsize);
+	}
 
 	return ret;
 }
 
 int write_usb(usb_gadget * ctx, unsigned char * buffer, int size)
 {
-	fd_set write_set;
-	int ret, max_write_fd;
+	int ret;
 
-	max_write_fd = 0;
-
-	if (ctx->ep_handles[EP_DESCRIPTOR_IN] > max_write_fd)
-		max_write_fd = ctx->ep_handles[EP_DESCRIPTOR_IN];
-
-	FD_ZERO(&write_set);
-	FD_SET(ctx->ep_handles[EP_DESCRIPTOR_IN], &write_set);
-
-	ret = select(max_write_fd+1, NULL, &write_set, NULL, NULL);
-
-	// Error
-	if (ret < 0)
-		return ret;
-
-	PRINT_DEBUG("Send %d bytes :\n", size);
-	PRINT_DEBUG_BUF(buffer,size);
-	ret = write (ctx->ep_handles[EP_DESCRIPTOR_IN], buffer, size);
-	PRINT_DEBUG("Write status %d (%m)", ret);
+	ret = -1;
+	if(ctx->ep_handles[EP_DESCRIPTOR_IN] >= 0 && buffer)
+	{
+		ret = write (ctx->ep_handles[EP_DESCRIPTOR_IN], buffer, size);
+	}
 
 	return ret;
 }
@@ -315,28 +289,26 @@ static void handle_setup_request(usb_gadget * ctx, struct usb_ctrlrequest* setup
 		switch (setup->wValue) {
 		case CONFIG_VALUE:
 			PRINT_DEBUG("Set config value");
-			if (!ctx->stop)
-			{
-				ctx->stop = 1;
-				usleep(200000); // Wait for termination
-			}
+
 			if (ctx->ep_handles[EP_DESCRIPTOR_IN] <= 0)
 			{
 				status = init_eps(ctx);
 			}
 			else
 				status = 0;
+
 			if (!status)
 			{
 				ctx->stop = 0;
-				pthread_create(&ctx->thread, NULL, io_thread, ctx);
-				ctx->thread_started = 1;
+				if( ctx->thread_not_started )
+					ctx->thread_not_started = pthread_create(&ctx->thread, NULL, io_thread, ctx);
 			}
 			break;
 		case 0:
 			PRINT_DEBUG("Disable threads");
 			ctx->stop = 1;
 			break;
+
 		default:
 			PRINT_DEBUG("Unhandled configuration value %d", setup->wValue);
 			break;
@@ -437,10 +409,8 @@ int handle_ep0(usb_gadget * ctx)
 			}
 		}
 	}
-	if(ctx->thread_started)
-	{
-		pthread_join(ctx->thread, NULL);
-	}
+
+	ctx->stop = 1;
 
 end:
 	return 1;
@@ -495,6 +465,7 @@ usb_gadget * init_usb_mtp_gadget(mtp_ctx * ctx)
 		memset(usbctx,0,sizeof(usb_gadget));
 
 		usbctx->usb_device = -1;
+		usbctx->thread_not_started = 1;
 
 		i = 0;
 		while( i < EP_NB_OF_DESCRIPTORS )
@@ -570,7 +541,7 @@ usb_gadget * init_usb_mtp_gadget(mtp_ctx * ctx)
 			goto init_error;
 		}
 
-		PRINT_MSG("init_usb_mtp_gadget : USB config done");
+		PRINT_DEBUG("init_usb_mtp_gadget : USB config done");
 
 		return usbctx;
 	}
@@ -589,6 +560,8 @@ void deinit_usb_mtp_gadget(usb_gadget * usbctx)
 
 	if( usbctx )
 	{
+		usbctx->stop = 1;
+
 		i = 0;
 		while( i < EP_NB_OF_DESCRIPTORS )
 		{
@@ -597,16 +570,22 @@ void deinit_usb_mtp_gadget(usb_gadget * usbctx)
 			i++;
 		}
 
-		if(usbctx->usb_config)
-		{
-			free(usbctx->usb_config);
-			usbctx->usb_config = 0;
-		}
-
 		if (usbctx->usb_device >= 0)
 		{
 			close(usbctx->usb_device);
 			usbctx->usb_device = - 1;
+		}
+
+		if( !usbctx->thread_not_started )
+		{
+			pthread_join(usbctx->thread, NULL);
+			usbctx->thread_not_started = 1;
+		}
+
+		if(usbctx->usb_config)
+		{
+			free(usbctx->usb_config);
+			usbctx->usb_config = 0;
 		}
 
 		for(i=0;i<3;i++)

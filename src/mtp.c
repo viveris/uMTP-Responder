@@ -902,9 +902,12 @@ int mtp_incoming_packet(mtp_ctx * ctx)
 
 	size = read_usb(ctx->usb_ctx, ctx->rdbuffer, MAX_RX_BUFFER_SIZE);
 
-	if(size>0)
+	if(size>=0)
 	{
 		PRINT_DEBUG("incoming_packet : %p - rawsize : %d\n",ctx->rdbuffer,size);
+
+		if(!size)
+			return 0; // ZLP
 
 		mtp_packet_hdr = (MTP_PACKET_HEADER *)ctx->rdbuffer;
 
