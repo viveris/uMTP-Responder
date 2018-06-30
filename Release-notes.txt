@@ -1,0 +1,27 @@
+=================================================
+* uMTP Responder
+* Copyright (c) 2018 Viveris Technologies
+* Release notes
+=================================================
+
+Noteworthy changes in release v0.8.6 (2018-6-30)
+=================================================
+
+* Daemon mode :
+
+    * New "loop_on_disconnect" config file option.
+
+* Bug fixes / Improvements :
+
+    * Windows host : Non-empty folder deletion issue fixed.
+
+    * Severals memory leaks in daemon mode fixed.
+
+    * GadgetFs init/deinit reworked.
+
+Noteworthy changes in release v0.8.1 (2018-5-9)
+=================================================
+
+* Initial release.
+
+    Tested on Raspberry Pi Zero and Atmel Sama5D2 Xplained boards.
