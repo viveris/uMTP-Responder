@@ -28,6 +28,8 @@
 
 #include <linux/usb/ch9.h>
 #include <linux/usb/gadgetfs.h>
+#include <linux/usb/functionfs.h>
+
 #include <pthread.h>
 #include "usbstring.h"
 
@@ -54,6 +56,7 @@ struct usb_endpoint_descriptor_noaudio {
 } __attribute__ ((packed));
 
 
+// Direct GadgetFS mode
 typedef struct _usb_cfg
 {
 	uint32_t head;
@@ -70,6 +73,22 @@ typedef struct _usb_cfg
 
 } __attribute__ ((packed)) usb_cfg;
 
+// FunctionFS mode
+typedef struct _usb_ffs_cfg
+{
+	uint32_t magic;
+	uint32_t length;
+	uint32_t flags;
+	uint32_t fs_count;
+	uint32_t hs_count;
+
+	struct usb_interface_descriptor if_desc;
+	struct usb_endpoint_descriptor_noaudio ep_desc[3];
+
+	struct usb_interface_descriptor if_desc_hs;
+	struct usb_endpoint_descriptor_noaudio ep_desc_hs[3];
+
+} __attribute__ ((packed)) usb_ffs_cfg;
 
 typedef struct _ep_cfg
 {
@@ -96,6 +115,8 @@ typedef struct _usb_gadget
 	int usb_device;
 
 	usb_cfg * usb_config;
+	usb_ffs_cfg * usb_ffs_config;
+
 	ep_cfg *  ep_config[3];
 
 	int ep_handles[EP_NB_OF_DESCRIPTORS];

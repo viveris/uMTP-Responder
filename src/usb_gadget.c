@@ -123,7 +123,7 @@ void fill_dev_descriptor(mtp_ctx * ctx, usb_gadget * usbctx,struct usb_device_de
 
 	desc->bLength = USB_DT_DEVICE_SIZE;
 	desc->bDescriptorType = USB_DT_DEVICE;
-	desc->bDeviceClass =	ctx->usb_cfg.usb_class;
+	desc->bDeviceClass =    ctx->usb_cfg.usb_class;
 	desc->bDeviceSubClass = ctx->usb_cfg.usb_subclass;
 	desc->bDeviceProtocol = ctx->usb_cfg.usb_protocol;
 	desc->idVendor =        ctx->usb_cfg.usb_vendor_id;
@@ -131,7 +131,7 @@ void fill_dev_descriptor(mtp_ctx * ctx, usb_gadget * usbctx,struct usb_device_de
 	desc->bcdDevice =       ctx->usb_cfg.usb_dev_version; // Version
 	// Strings
 	desc->iManufacturer =   STRINGID_MANUFACTURER;
-	desc->iProduct =	    STRINGID_PRODUCT;
+	desc->iProduct =        STRINGID_PRODUCT;
 	desc->iSerialNumber =   STRINGID_SERIAL;
 	desc->bNumConfigurations = 1; // Only one configuration
 
@@ -486,12 +486,6 @@ usb_gadget * init_usb_mtp_gadget(mtp_ctx * ctx)
 
 		usbctx->wait_connection = ctx->usb_cfg.wait_connection;
 
-		usbctx->usb_config = malloc(sizeof(usb_cfg));
-		if(!usbctx->usb_config)
-			goto init_error;
-
-		memset(usbctx->usb_config,0,sizeof(usb_cfg));
-
 		for(i=0;i<3;i++)
 		{
 			usbctx->ep_config[i] = malloc(sizeof(ep_cfg));
@@ -515,30 +509,73 @@ usb_gadget * init_usb_mtp_gadget(mtp_ctx * ctx)
 
 		cfg_size = sizeof(struct usb_interface_descriptor) + (sizeof(struct usb_endpoint_descriptor_noaudio) * 3);
 
-		usbctx->usb_config->head = 0x00000000;
-		fill_config_descriptor(ctx, usbctx, &usbctx->usb_config->cfg, cfg_size, 0);
-		fill_if_descriptor(ctx, usbctx, &usbctx->usb_config->if_desc);
-		fill_ep_descriptor(ctx, usbctx, &usbctx->usb_config->ep_desc[EP_DESCRIPTOR_IN],EP_DESCRIPTOR_IN+1,1,0,0);
-		fill_ep_descriptor(ctx, usbctx, &usbctx->usb_config->ep_desc[EP_DESCRIPTOR_OUT],EP_DESCRIPTOR_OUT+1,1,1,0);
-		fill_ep_descriptor(ctx, usbctx, &usbctx->usb_config->ep_desc[EP_DESCRIPTOR_INT_IN],EP_DESCRIPTOR_INT_IN+1,0,0,0);
-
-		fill_config_descriptor(ctx, usbctx, &usbctx->usb_config->cfg_hs, cfg_size, 1);
-		fill_if_descriptor(ctx, usbctx, &usbctx->usb_config->if_desc_hs);
-		fill_ep_descriptor(ctx, usbctx, &usbctx->usb_config->ep_desc_hs[EP_DESCRIPTOR_IN],EP_DESCRIPTOR_IN+1,1,0,1);
-		fill_ep_descriptor(ctx, usbctx, &usbctx->usb_config->ep_desc_hs[EP_DESCRIPTOR_OUT],EP_DESCRIPTOR_OUT+1,1,1,1);
-		fill_ep_descriptor(ctx, usbctx, &usbctx->usb_config->ep_desc_hs[EP_DESCRIPTOR_INT_IN],EP_DESCRIPTOR_INT_IN+1,0,0,1);
-
-		fill_dev_descriptor(ctx, usbctx,&usbctx->usb_config->dev_desc);
-
-		PRINT_DEBUG("init_usb_mtp_gadget :\n");
-		PRINT_DEBUG_BUF(usbctx->usb_config, sizeof(usb_cfg));
-
-		ret = write(usbctx->usb_device, usbctx->usb_config, sizeof(usb_cfg));
-
-		if(ret != sizeof(usb_cfg))
+		if( ctx->usb_cfg.usb_functionfs_mode )
 		{
-			PRINT_ERROR("USB Config write error (%d != %zu)",ret,sizeof(usb_cfg));
-			goto init_error;
+			// FunctionFS mode
+
+			usbctx->usb_ffs_config = malloc(sizeof(usb_ffs_cfg));
+			if(!usbctx->usb_ffs_config)
+				goto init_error;
+
+			memset(usbctx->usb_ffs_config,0,sizeof(usb_ffs_cfg));
+
+			usbctx->usb_ffs_config->magic = htole32(FUNCTIONFS_DESCRIPTORS_MAGIC_V2);
+			usbctx->usb_ffs_config->flags = htole32(FUNCTIONFS_HAS_FS_DESC | FUNCTIONFS_HAS_HS_DESC);
+			usbctx->usb_ffs_config->fs_count = htole32(3),
+			usbctx->usb_ffs_config->hs_count = htole32(3),
+			usbctx->usb_ffs_config->length = htole32(sizeof(usb_ffs_cfg));
+
+			fill_if_descriptor(ctx, usbctx, &usbctx->usb_ffs_config->if_desc);
+			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_ffs_config->ep_desc[EP_DESCRIPTOR_IN],EP_DESCRIPTOR_IN+1,1,0,0);
+			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_ffs_config->ep_desc[EP_DESCRIPTOR_OUT],EP_DESCRIPTOR_OUT+1,1,1,0);
+			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_ffs_config->ep_desc[EP_DESCRIPTOR_INT_IN],EP_DESCRIPTOR_INT_IN+1,0,0,0);
+
+			fill_if_descriptor(ctx, usbctx, &usbctx->usb_ffs_config->if_desc_hs);
+			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_ffs_config->ep_desc_hs[EP_DESCRIPTOR_IN],EP_DESCRIPTOR_IN+1,1,0,1);
+			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_ffs_config->ep_desc_hs[EP_DESCRIPTOR_OUT],EP_DESCRIPTOR_OUT+1,1,1,1);
+			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_ffs_config->ep_desc_hs[EP_DESCRIPTOR_INT_IN],EP_DESCRIPTOR_INT_IN+1,0,0,1);
+
+			ret = write(usbctx->usb_device, usbctx->usb_ffs_config, sizeof(usb_ffs_cfg));
+
+			if(ret != sizeof(usb_ffs_cfg))
+			{
+				PRINT_ERROR("FunctionFS USB Config write error (%d != %zu)",ret,sizeof(usb_ffs_cfg));
+				goto init_error;
+			}
+		}
+		else
+		{
+			usbctx->usb_config = malloc(sizeof(usb_cfg));
+			if(!usbctx->usb_config)
+				goto init_error;
+
+			memset(usbctx->usb_config,0,sizeof(usb_cfg));
+
+			usbctx->usb_config->head = 0x00000000;
+			fill_config_descriptor(ctx, usbctx, &usbctx->usb_config->cfg, cfg_size, 0);
+			fill_if_descriptor(ctx, usbctx, &usbctx->usb_config->if_desc);
+			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_config->ep_desc[EP_DESCRIPTOR_IN],EP_DESCRIPTOR_IN+1,1,0,0);
+			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_config->ep_desc[EP_DESCRIPTOR_OUT],EP_DESCRIPTOR_OUT+1,1,1,0);
+			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_config->ep_desc[EP_DESCRIPTOR_INT_IN],EP_DESCRIPTOR_INT_IN+1,0,0,0);
+
+			fill_config_descriptor(ctx, usbctx, &usbctx->usb_config->cfg_hs, cfg_size, 1);
+			fill_if_descriptor(ctx, usbctx, &usbctx->usb_config->if_desc_hs);
+			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_config->ep_desc_hs[EP_DESCRIPTOR_IN],EP_DESCRIPTOR_IN+1,1,0,1);
+			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_config->ep_desc_hs[EP_DESCRIPTOR_OUT],EP_DESCRIPTOR_OUT+1,1,1,1);
+			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_config->ep_desc_hs[EP_DESCRIPTOR_INT_IN],EP_DESCRIPTOR_INT_IN+1,0,0,1);
+
+			fill_dev_descriptor(ctx, usbctx,&usbctx->usb_config->dev_desc);
+
+			PRINT_DEBUG("init_usb_mtp_gadget :\n");
+			PRINT_DEBUG_BUF(usbctx->usb_config, sizeof(usb_cfg));
+
+			ret = write(usbctx->usb_device, usbctx->usb_config, sizeof(usb_cfg));
+
+			if(ret != sizeof(usb_cfg))
+			{
+				PRINT_ERROR("GadgetFS USB Config write error (%d != %zu)",ret,sizeof(usb_cfg));
+				goto init_error;
+			}
 		}
 
 		PRINT_DEBUG("init_usb_mtp_gadget : USB config done");

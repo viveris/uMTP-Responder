@@ -51,8 +51,8 @@ typedef struct mtp_usb_cfg_
 	uint8_t  usb_subclass;
 	uint8_t  usb_protocol;
 	uint16_t usb_dev_version;
-
 	uint16_t usb_max_packet_size;
+	uint8_t  usb_functionfs_mode;
 
 	char usb_device_path[MAX_CFG_STRING_SIZE];
 	char usb_endpoint_in[MAX_CFG_STRING_SIZE];

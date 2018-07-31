@@ -59,6 +59,7 @@ enum
 	USBPROTOCOL_CMD,
 	USBDEVVERSION_CMD,
 	USBMAXPACKETSIZE_CMD,
+	USBFUNCTIONFSMODE_CMD,
 
 	USB_DEV_PATH_CMD,
 	USB_EPIN_PATH_CMD,
@@ -271,6 +272,10 @@ int get_hex_param(mtp_ctx * context, char * line,int cmd)
 				context->usb_cfg.usb_max_packet_size = param_value;
 			break;
 
+			case USBFUNCTIONFSMODE_CMD:
+				context->usb_cfg.usb_functionfs_mode = param_value;
+			break;
+
 			case WAIT_CONNECTION:
 				context->usb_cfg.wait_connection = param_value;
 			break;
@@ -342,6 +347,7 @@ kw_list kwlist[] =
 	{"usb_protocol",        get_hex_param,      USBPROTOCOL_CMD},
 	{"usb_dev_version",     get_hex_param,      USBDEVVERSION_CMD},
 	{"usb_max_packet_size", get_hex_param,      USBMAXPACKETSIZE_CMD},
+	{"usb_functionfs_mode", get_hex_param,      USBFUNCTIONFSMODE_CMD},
 
 	{"usb_dev_path",        get_str_param,      USB_DEV_PATH_CMD},
 	{"usb_epin_path",       get_str_param,      USB_EPIN_PATH_CMD},
@@ -424,6 +430,7 @@ int mtp_load_config_file(mtp_ctx * context)
 	context->usb_cfg.usb_protocol        = USB_DEV_PROTOCOL;
 	context->usb_cfg.usb_dev_version     = USB_DEV_VERSION;
 	context->usb_cfg.usb_max_packet_size = MAX_PACKET_SIZE;
+	context->usb_cfg.usb_functionfs_mode = 0;
 
 	context->usb_cfg.wait_connection = 0;
 	context->usb_cfg.loop_on_disconnect = 0;
