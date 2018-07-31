@@ -471,6 +471,15 @@ int mtp_load_config_file(mtp_ctx * context)
 	PRINT_MSG("USB Protocol ID : 0x%.2X",context->usb_cfg.usb_protocol);
 	PRINT_MSG("USB Device version : 0x%.4X",context->usb_cfg.usb_dev_version);
 
+	if(context->usb_cfg.usb_functionfs_mode)
+	{
+		PRINT_MSG("USB FunctionFS Mode");
+	}
+	else
+	{
+		PRINT_MSG("USB GadgetFS Mode");
+	}
+
 	PRINT_MSG("Wait for connection : %i",context->usb_cfg.wait_connection);
 	PRINT_MSG("Loop on disconnect : %i",context->usb_cfg.loop_on_disconnect);
 

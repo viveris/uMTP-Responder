@@ -535,6 +535,9 @@ usb_gadget * init_usb_mtp_gadget(mtp_ctx * ctx)
 			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_ffs_config->ep_desc_hs[EP_DESCRIPTOR_OUT],EP_DESCRIPTOR_OUT+1,1,1,1);
 			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_ffs_config->ep_desc_hs[EP_DESCRIPTOR_INT_IN],EP_DESCRIPTOR_INT_IN+1,0,0,1);
 
+			PRINT_DEBUG("init_usb_mtp_gadget :\n");
+			PRINT_DEBUG_BUF(usbctx->usb_ffs_config, sizeof(usb_ffs_cfg));
+
 			ret = write(usbctx->usb_device, usbctx->usb_ffs_config, sizeof(usb_ffs_cfg));
 
 			if(ret != sizeof(usb_ffs_cfg))
