@@ -90,6 +90,13 @@ typedef struct _usb_ffs_cfg
 
 } __attribute__ ((packed)) usb_ffs_cfg;
 
+typedef struct _ffs_strings
+{
+	struct usb_functionfs_strings_head header;
+	uint16_t code;
+	char string_data[128]; // string data.
+} __attribute__((packed)) ffs_strings;
+
 typedef struct _ep_cfg
 {
 	uint32_t head;

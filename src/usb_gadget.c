@@ -54,6 +54,8 @@
 
 #define CONFIG_VALUE 1
 
+#define STR_INTERFACE "umtp"
+
 static struct usb_gadget_strings strings = {
 	.language = 0x0409, /* en-us */
 	.strings = 0,
@@ -458,6 +460,7 @@ usb_gadget * init_usb_mtp_gadget(mtp_ctx * ctx)
 	usb_gadget * usbctx;
 	int cfg_size;
 	int ret,i;
+	ffs_strings ffs_str;
 
 	usbctx = malloc(sizeof(usb_gadget));
 	if(usbctx)
@@ -543,6 +546,25 @@ usb_gadget * init_usb_mtp_gadget(mtp_ctx * ctx)
 			if(ret != sizeof(usb_ffs_cfg))
 			{
 				PRINT_ERROR("FunctionFS USB Config write error (%d != %zu)",ret,sizeof(usb_ffs_cfg));
+				goto init_error;
+			}
+
+			memset( &ffs_str, 0, sizeof(ffs_strings));
+			ffs_str.header.magic = htole32(FUNCTIONFS_STRINGS_MAGIC);
+			ffs_str.header.length = htole32(sizeof(struct usb_functionfs_strings_head) + sizeof(uint16_t) + strlen(STR_INTERFACE) + 1);
+			ffs_str.header.str_count = htole32(1);
+			ffs_str.header.lang_count = htole32(1);
+			ffs_str.code = htole16(0x0409); // en-us
+			strcpy(ffs_str.string_data,STR_INTERFACE);
+
+			PRINT_DEBUG("write string :\n");
+			PRINT_DEBUG_BUF(&ffs_str, sizeof(ffs_strings));
+
+			ret = write(usbctx->usb_device, &ffs_str, ffs_str.header.length);
+
+			if( ret != ffs_str.header.length )
+			{
+				PRINT_ERROR("FunctionFS String Config write error (%d != %zu)",ret,ffs_str.header.length);
 				goto init_error;
 			}
 		}
