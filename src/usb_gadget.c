@@ -54,8 +54,6 @@
 
 #define CONFIG_VALUE 1
 
-#define STR_INTERFACE "umtp"
-
 static struct usb_gadget_strings strings = {
 	.language = 0x0409, /* en-us */
 	.strings = 0,
@@ -156,7 +154,14 @@ void fill_if_descriptor(mtp_ctx * ctx, usb_gadget * usbctx, struct usb_interface
 	desc->bInterfaceClass =    ctx->usb_cfg.usb_class;
 	desc->bInterfaceSubClass = ctx->usb_cfg.usb_subclass;
 	desc->bInterfaceProtocol = ctx->usb_cfg.usb_protocol;
-	desc->iInterface =         STRINGID_INTERFACE;
+	if( ctx->usb_cfg.usb_functionfs_mode )
+	{
+		desc->iInterface = 1;
+	}
+	else
+	{
+		desc->iInterface = STRINGID_INTERFACE;
+	}
 
 	PRINT_DEBUG("fill_if_descriptor:\n");
 	PRINT_DEBUG_BUF(desc, sizeof(struct usb_interface_descriptor));
@@ -165,9 +170,9 @@ void fill_if_descriptor(mtp_ctx * ctx, usb_gadget * usbctx, struct usb_interface
 }
 
 
-void fill_ep_descriptor(mtp_ctx * ctx, usb_gadget * usbctx,struct usb_endpoint_descriptor_noaudio * desc,int index,int bulk,int dir, int hs)
+void fill_ep_descriptor(mtp_ctx * ctx, usb_gadget * usbctx,struct usb_endpoint_descriptor_no_audio * desc,int index,int bulk,int dir, int hs)
 {
-	memset(desc,0,sizeof(struct usb_endpoint_descriptor_noaudio));
+	memset(desc,0,sizeof(struct usb_endpoint_descriptor_no_audio));
 
 	desc->bLength = USB_DT_ENDPOINT_SIZE;
 	desc->bDescriptorType = USB_DT_ENDPOINT;
@@ -189,7 +194,7 @@ void fill_ep_descriptor(mtp_ctx * ctx, usb_gadget * usbctx,struct usb_endpoint_d
 	}
 
 	PRINT_DEBUG("fill_ep_descriptor:\n");
-	PRINT_DEBUG_BUF(desc, sizeof(struct usb_endpoint_descriptor_noaudio));
+	PRINT_DEBUG_BUF(desc, sizeof(struct usb_endpoint_descriptor_no_audio));
 
 	return;
 }
@@ -210,8 +215,8 @@ int init_ep(usb_gadget * ctx,int index)
 
 	ctx->ep_config[index]->head = 1;
 
-	memcpy(&ctx->ep_config[index]->ep_desc[0], &ctx->usb_config->ep_desc[index],sizeof(struct usb_endpoint_descriptor_noaudio));
-	memcpy(&ctx->ep_config[index]->ep_desc[1], &ctx->usb_config->ep_desc[index],sizeof(struct usb_endpoint_descriptor_noaudio));
+	memcpy(&ctx->ep_config[index]->ep_desc[0], &ctx->usb_config->ep_desc[index],sizeof(struct usb_endpoint_descriptor_no_audio));
+	memcpy(&ctx->ep_config[index]->ep_desc[1], &ctx->usb_config->ep_desc[index],sizeof(struct usb_endpoint_descriptor_no_audio));
 
 	PRINT_DEBUG("init_ep (%d):\n",index);
 	PRINT_DEBUG_BUF(ctx->ep_config[index], sizeof(ep_cfg));
@@ -510,7 +515,7 @@ usb_gadget * init_usb_mtp_gadget(mtp_ctx * ctx)
 			goto init_error;
 		}
 
-		cfg_size = sizeof(struct usb_interface_descriptor) + (sizeof(struct usb_endpoint_descriptor_noaudio) * 3);
+		cfg_size = sizeof(struct usb_interface_descriptor) + (sizeof(struct usb_endpoint_descriptor_no_audio) * 3);
 
 		if( ctx->usb_cfg.usb_functionfs_mode )
 		{
@@ -551,11 +556,11 @@ usb_gadget * init_usb_mtp_gadget(mtp_ctx * ctx)
 
 			memset( &ffs_str, 0, sizeof(ffs_strings));
 			ffs_str.header.magic = htole32(FUNCTIONFS_STRINGS_MAGIC);
-			ffs_str.header.length = htole32(sizeof(struct usb_functionfs_strings_head) + sizeof(uint16_t) + strlen(STR_INTERFACE) + 1);
+			ffs_str.header.length = htole32(sizeof(struct usb_functionfs_strings_head) + sizeof(uint16_t) + strlen(ctx->usb_cfg.usb_string_interface) + 1);
 			ffs_str.header.str_count = htole32(1);
 			ffs_str.header.lang_count = htole32(1);
 			ffs_str.code = htole16(0x0409); // en-us
-			strcpy(ffs_str.string_data,STR_INTERFACE);
+			strcpy(ffs_str.string_data,ctx->usb_cfg.usb_string_interface);
 
 			PRINT_DEBUG("write string :\n");
 			PRINT_DEBUG_BUF(&ffs_str, sizeof(ffs_strings));

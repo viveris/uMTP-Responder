@@ -42,20 +42,6 @@ enum
 	EP_NB_OF_DESCRIPTORS
 };
 
-/* USB_DT_ENDPOINT: Endpoint descriptor */
-// TODO : Find a better solution than redefine this structure to remove the audio related members ...
-struct usb_endpoint_descriptor_noaudio {
-	uint8_t  bLength;
-	uint8_t  bDescriptorType;
-
-	uint8_t  bEndpointAddress;
-	uint8_t  bmAttributes;
-	uint16_t wMaxPacketSize;
-	uint8_t  bInterval;
-
-} __attribute__ ((packed));
-
-
 // Direct GadgetFS mode
 typedef struct _usb_cfg
 {
@@ -63,11 +49,11 @@ typedef struct _usb_cfg
 
 	struct usb_config_descriptor cfg;
 	struct usb_interface_descriptor if_desc;
-	struct usb_endpoint_descriptor_noaudio ep_desc[3];
+	struct usb_endpoint_descriptor_no_audio ep_desc[3];
 
 	struct usb_config_descriptor cfg_hs;
 	struct usb_interface_descriptor if_desc_hs;
-	struct usb_endpoint_descriptor_noaudio ep_desc_hs[3];
+	struct usb_endpoint_descriptor_no_audio ep_desc_hs[3];
 
 	struct usb_device_descriptor dev_desc;
 
@@ -83,10 +69,10 @@ typedef struct _usb_ffs_cfg
 	uint32_t hs_count;
 
 	struct usb_interface_descriptor if_desc;
-	struct usb_endpoint_descriptor_noaudio ep_desc[3];
+	struct usb_endpoint_descriptor_no_audio ep_desc[3];
 
 	struct usb_interface_descriptor if_desc_hs;
-	struct usb_endpoint_descriptor_noaudio ep_desc_hs[3];
+	struct usb_endpoint_descriptor_no_audio ep_desc_hs[3];
 
 } __attribute__ ((packed)) usb_ffs_cfg;
 
@@ -101,7 +87,7 @@ typedef struct _ep_cfg
 {
 	uint32_t head;
 
-	struct usb_endpoint_descriptor_noaudio ep_desc[2];
+	struct usb_endpoint_descriptor_no_audio ep_desc[2];
 
 } __attribute__ ((packed)) ep_cfg;
 
