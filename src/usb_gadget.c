@@ -19,9 +19,11 @@
 
 /**
  * @file   usb_gadget.c
- * @brief  USB gadget layer - Main inspiration from Grégory Soutadé (http://blog.soutade.fr/post/2016/07/create-your-own-usb-gadget-with-gadgetfs.html)
+ * @brief  USB GadgetFS & FunctionFS layer.
  * @author Jean-François DEL NERO <Jean-Francois.DELNERO@viveris.fr>
  */
+
+// GadgetFS support : Main inspiration from Grégory Soutadé (http://blog.soutade.fr/post/2016/07/create-your-own-usb-gadget-with-gadgetfs.html)
 
 #include <sys/ioctl.h>
 #include <sys/types.h>
@@ -111,7 +113,7 @@ void fill_config_descriptor(mtp_ctx * ctx , usb_gadget * usbctx,struct usb_confi
 	desc->bmAttributes = USB_CONFIG_ATT_ONE;
 	desc->bMaxPower = 1;
 
-	PRINT_DEBUG("fill_config_descriptor: (Total Len : %lu + %d = %d)",sizeof(struct usb_config_descriptor) ,total_size,desc->wTotalLength);
+	PRINT_DEBUG("fill_config_descriptor: (Total Len : %u + %d = %d)", (unsigned int) sizeof(struct usb_config_descriptor), total_size, desc->wTotalLength);
 	PRINT_DEBUG_BUF(desc, sizeof(struct usb_config_descriptor));
 
 	return;
@@ -215,8 +217,16 @@ int init_ep(usb_gadget * ctx,int index)
 
 	ctx->ep_config[index]->head = 1;
 
-	memcpy(&ctx->ep_config[index]->ep_desc[0], &ctx->usb_config->ep_desc[index],sizeof(struct usb_endpoint_descriptor_no_audio));
-	memcpy(&ctx->ep_config[index]->ep_desc[1], &ctx->usb_config->ep_desc[index],sizeof(struct usb_endpoint_descriptor_no_audio));
+	if( ctx->usb_ffs_config )
+	{
+		memcpy(&ctx->ep_config[index]->ep_desc[0], &ctx->usb_ffs_config->ep_desc[index],sizeof(struct usb_endpoint_descriptor_no_audio));
+		memcpy(&ctx->ep_config[index]->ep_desc[1], &ctx->usb_ffs_config->ep_desc[index],sizeof(struct usb_endpoint_descriptor_no_audio));
+	}
+	else
+	{
+		memcpy(&ctx->ep_config[index]->ep_desc[0], &ctx->usb_config->ep_desc[index],sizeof(struct usb_endpoint_descriptor_no_audio));
+		memcpy(&ctx->ep_config[index]->ep_desc[1], &ctx->usb_config->ep_desc[index],sizeof(struct usb_endpoint_descriptor_no_audio));
+	}
 
 	PRINT_DEBUG("init_ep (%d):\n",index);
 	PRINT_DEBUG_BUF(ctx->ep_config[index], sizeof(ep_cfg));
@@ -347,6 +357,7 @@ stall:
 		write (ctx->usb_device, &status, 0);
 }
 
+// GadgetFS mode handler
 int handle_ep0(usb_gadget * ctx)
 {
 	struct timeval timeout;
@@ -412,6 +423,108 @@ int handle_ep0(usb_gadget * ctx)
 				break;
 			case GADGETFS_NOP:
 			case GADGETFS_SUSPEND:
+				break;
+			}
+		}
+	}
+
+	ctx->stop = 1;
+
+end:
+	return 1;
+}
+
+// Function FS mode handler
+int handle_ffs_ep0(usb_gadget * ctx)
+{
+	struct timeval timeout;
+	int ret, nevents, i;
+	fd_set read_set;
+	struct usb_functionfs_event event;
+	int status;
+
+	PRINT_DEBUG("handle_ffs_ep0 : Entering...");
+	timeout.tv_sec = 40;
+	timeout.tv_usec = 0;
+
+	while (!ctx->stop)
+	{
+		FD_ZERO(&read_set);
+		FD_SET(ctx->usb_device, &read_set);
+
+		if(timeout.tv_sec)
+		{
+			ret = select(ctx->usb_device+1, &read_set, NULL, NULL, &timeout);
+		}
+		else
+		{
+			PRINT_DEBUG("Select without timeout");
+			ret = select(ctx->usb_device+1, &read_set, NULL, NULL, NULL);
+		}
+
+		if(ctx->wait_connection && ret == 0 )
+			continue;
+
+		if( ret <= 0 )
+			return ret;
+
+		timeout.tv_sec = 0;
+
+		ret = read(ctx->usb_device, &event, sizeof(event));
+
+		if (ret < 0)
+		{
+			PRINT_DEBUG("Read error %d (%m)", ret);
+			goto end;
+		}
+
+		nevents = ret / sizeof(event);
+
+		PRINT_DEBUG("%d event(s)", nevents);
+
+		for (i=0; i<nevents; i++)
+		{
+			switch (event.type)
+			{
+			case FUNCTIONFS_ENABLE:
+				PRINT_DEBUG("EP0 FFS ENABLE");
+
+				if (ctx->ep_handles[EP_DESCRIPTOR_IN] <= 0)
+				{
+					status = init_eps(ctx);
+				}
+				else
+					status = 0;
+
+				if (!status)
+				{
+					ctx->stop = 0;
+					if( ctx->thread_not_started )
+						ctx->thread_not_started = pthread_create(&ctx->thread, NULL, io_thread, ctx);
+				}
+				
+				break;
+			case FUNCTIONFS_DISABLE:
+				PRINT_DEBUG("EP0 FFS DISABLE");
+				// Set timeout for a reconnection during the enumeration...
+				timeout.tv_sec = 4;
+				timeout.tv_usec = 0;
+				break;
+			case FUNCTIONFS_SETUP:
+				PRINT_DEBUG("EP0 FFS SETUP");
+				handle_setup_request(ctx, &event.u.setup);
+				break;
+			case FUNCTIONFS_BIND:
+				PRINT_DEBUG("EP0 FFS BIND");
+				break;
+			case FUNCTIONFS_UNBIND:
+				PRINT_DEBUG("EP0 FFS UNBIND");
+				break;
+			case FUNCTIONFS_SUSPEND:
+				PRINT_DEBUG("EP0 FFS SUSPEND");
+				break;
+			case FUNCTIONFS_RESUME:
+				PRINT_DEBUG("EP0 FFS RESUME");
 				break;
 			}
 		}
@@ -569,7 +682,7 @@ usb_gadget * init_usb_mtp_gadget(mtp_ctx * ctx)
 
 			if( ret != ffs_str.header.length )
 			{
-				PRINT_ERROR("FunctionFS String Config write error (%d != %zu)",ret,ffs_str.header.length);
+				PRINT_ERROR("FunctionFS String Config write error (%d != %zu)",ret,(size_t)ffs_str.header.length);
 				goto init_error;
 			}
 		}
@@ -653,6 +766,12 @@ void deinit_usb_mtp_gadget(usb_gadget * usbctx)
 		{
 			free(usbctx->usb_config);
 			usbctx->usb_config = 0;
+		}
+
+		if(usbctx->usb_ffs_config)
+		{
+			free(usbctx->usb_ffs_config);
+			usbctx->usb_ffs_config = 0;
 		}
 
 		for(i=0;i<3;i++)

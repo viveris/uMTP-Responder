@@ -89,7 +89,14 @@ int main(int argc, char *argv[])
 		if(usb_ctx)
 		{
 			mtp_set_usb_handle(mtp_context, usb_ctx, mtp_context->usb_cfg.usb_max_packet_size);
-			handle_ep0(usb_ctx);
+			if( mtp_context->usb_cfg.usb_functionfs_mode )
+			{
+				handle_ffs_ep0(usb_ctx);
+			}
+			else
+			{
+				handle_ep0(usb_ctx);
+			}
 			deinit_usb_mtp_gadget(usb_ctx);
 		}
 		else

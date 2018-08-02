@@ -19,7 +19,7 @@
 
 /**
  * @file   usb_gadget_fct.h
- * @brief  USB gadget layer - Public functions declarations.
+ * @brief  USB gadget / FunctionFS layer - Public functions declarations.
  * @author Jean-François DEL NERO <Jean-Francois.DELNERO@viveris.fr>
  */
 
@@ -34,6 +34,7 @@ int read_usb(usb_gadget * ctx, unsigned char * buffer, int maxsize);
 int write_usb(usb_gadget * ctx, unsigned char * buffer, int size);
 
 int handle_ep0(usb_gadget * ctx);
+int handle_ffs_ep0(usb_gadget * ctx);
 int is_usb_up(usb_gadget * ctx);
 
 void deinit_usb_mtp_gadget(usb_gadget * usbctx);
