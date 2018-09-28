@@ -91,10 +91,12 @@ int main(int argc, char *argv[])
 			mtp_set_usb_handle(mtp_context, usb_ctx, mtp_context->usb_cfg.usb_max_packet_size);
 			if( mtp_context->usb_cfg.usb_functionfs_mode )
 			{
+				PRINT_DEBUG("uMTP Responder : FunctionFS Mode - entering handle_ffs_ep0");
 				handle_ffs_ep0(usb_ctx);
 			}
 			else
 			{
+				PRINT_DEBUG("uMTP Responder : GadgetFS Mode - entering handle_ep0");
 				handle_ep0(usb_ctx);
 			}
 			deinit_usb_mtp_gadget(usb_ctx);

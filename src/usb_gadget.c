@@ -431,6 +431,8 @@ int handle_ep0(usb_gadget * ctx)
 	ctx->stop = 1;
 
 end:
+	PRINT_DEBUG("handle_ep0 : Leaving (ctx->stop=%d)...",ctx->stop);
+
 	return 1;
 }
 
@@ -474,7 +476,7 @@ int handle_ffs_ep0(usb_gadget * ctx)
 
 		if (ret < 0)
 		{
-			PRINT_DEBUG("Read error %d (%m)", ret);
+			PRINT_DEBUG("handle_ffs_ep0 : Read error %d (%m)", ret);
 			goto end;
 		}
 
@@ -502,13 +504,23 @@ int handle_ffs_ep0(usb_gadget * ctx)
 					if( ctx->thread_not_started )
 						ctx->thread_not_started = pthread_create(&ctx->thread, NULL, io_thread, ctx);
 				}
-				
+
 				break;
 			case FUNCTIONFS_DISABLE:
 				PRINT_DEBUG("EP0 FFS DISABLE");
 				// Set timeout for a reconnection during the enumeration...
 				timeout.tv_sec = 4;
 				timeout.tv_usec = 0;
+
+				/*
+				ctx->stop = 1;
+				if( !ctx->thread_not_started )
+				{
+					pthread_join(ctx->thread, NULL);
+					ctx->thread_not_started = 1;
+				}
+				*/
+
 				break;
 			case FUNCTIONFS_SETUP:
 				PRINT_DEBUG("EP0 FFS SETUP");
@@ -533,6 +545,7 @@ int handle_ffs_ep0(usb_gadget * ctx)
 	ctx->stop = 1;
 
 end:
+	PRINT_DEBUG("handle_ffs_ep0 : Leaving... (ctx->stop=%d)",ctx->stop);
 	return 1;
 }
 
@@ -738,6 +751,8 @@ void deinit_usb_mtp_gadget(usb_gadget * usbctx)
 {
 	int i;
 
+	PRINT_DEBUG("entering deinit_usb_mtp_gadget\n");
+
 	if( usbctx )
 	{
 		usbctx->stop = 1;
@@ -745,19 +760,26 @@ void deinit_usb_mtp_gadget(usb_gadget * usbctx)
 		i = 0;
 		while( i < EP_NB_OF_DESCRIPTORS )
 		{
+
 			if( usbctx->ep_handles[i] >= 0 )
+			{
+				PRINT_DEBUG("Closing End Point %d...\n",i);
 				close(usbctx->ep_handles[i] );
+			}
 			i++;
 		}
 
 		if (usbctx->usb_device >= 0)
 		{
+			PRINT_DEBUG("Closing usb device...\n");
 			close(usbctx->usb_device);
 			usbctx->usb_device = - 1;
 		}
 
 		if( !usbctx->thread_not_started )
 		{
+			PRINT_DEBUG("Stopping USB Thread...\n");
+
 			pthread_join(usbctx->thread, NULL);
 			usbctx->thread_not_started = 1;
 		}
@@ -792,4 +814,7 @@ void deinit_usb_mtp_gadget(usb_gadget * usbctx)
 
 		free( usbctx );
 	}
+
+	PRINT_DEBUG("leaving deinit_usb_mtp_gadget\n");
+
 }
