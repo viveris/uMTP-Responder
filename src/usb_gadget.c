@@ -416,6 +416,15 @@ int handle_ep0(usb_gadget * ctx)
 				// Set timeout for a reconnection during the enumeration...
 				timeout.tv_sec = 1;
 				timeout.tv_usec = 0;
+
+				ctx->stop = 1;
+				if( !ctx->thread_not_started )
+				{
+					pthread_cancel(ctx->thread);
+					pthread_join(ctx->thread, NULL);
+					ctx->thread_not_started = 1;
+				}
+
 				break;
 			case GADGETFS_SETUP:
 				PRINT_DEBUG("EP0 SETUP");
@@ -779,7 +788,7 @@ void deinit_usb_mtp_gadget(usb_gadget * usbctx)
 		if( !usbctx->thread_not_started )
 		{
 			PRINT_DEBUG("Stopping USB Thread...\n");
-
+			pthread_cancel (usbctx->thread);
 			pthread_join(usbctx->thread, NULL);
 			usbctx->thread_not_started = 1;
 		}
