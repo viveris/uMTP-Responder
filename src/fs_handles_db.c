@@ -122,7 +122,7 @@ DIR * fs_find_first_file(char *folder, filefoundinfo* fileinfo)
 				strcat(tmpstr,d->d_name);
 
 				memset(&fileStat,0,sizeof(struct stat));
-				if( !lstat (tmpstr, &fileStat) )
+				if( !stat (tmpstr, &fileStat) )
 				{
 					if ( S_ISDIR ( fileStat.st_mode ) )
 						fileinfo->isdirectory = 1;
@@ -176,7 +176,7 @@ int fs_find_next_file(DIR* dir, char *folder, filefoundinfo* fileinfo)
 			strcat(tmpstr,"/");
 			strcat(tmpstr,d->d_name);
 
-			if( !lstat (tmpstr, &fileStat) )
+			if( !stat (tmpstr, &fileStat) )
 			{
 				if ( S_ISDIR ( fileStat.st_mode ) )
 					fileinfo->isdirectory = 1;
