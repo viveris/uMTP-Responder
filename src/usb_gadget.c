@@ -209,7 +209,7 @@ int init_ep(usb_gadget * ctx,int index)
 	fd = open(ctx->ep_path[index], O_RDWR);
 	if ( fd <= 0 )
 	{
-		PRINT_ERROR("Can't open endpoint %s (error %d)",ctx->ep_path[index],fd);
+		PRINT_ERROR("Endpoint %s (%d) init failed ! : Can't open the endpoint ! (error %d - %m)",ctx->ep_path[index],index,fd,fd);
 		goto init_ep_error;
 	}
 
@@ -235,7 +235,7 @@ int init_ep(usb_gadget * ctx,int index)
 
 	if (ret != sizeof(ep_cfg))
 	{
-		PRINT_DEBUG("Write error %d (%m)", ret);
+		PRINT_ERROR("Endpoint %s (%d) init failed ! : Write Error %d - %m",ctx->ep_path[index], index, ret, ret);
 		goto init_ep_error;
 	}
 
