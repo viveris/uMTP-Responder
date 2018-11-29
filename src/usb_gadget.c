@@ -150,6 +150,7 @@ void fill_if_descriptor(mtp_ctx * ctx, usb_gadget * usbctx, struct usb_interface
 	desc->bLength = sizeof(struct usb_interface_descriptor);
 	desc->bDescriptorType = USB_DT_INTERFACE;
 	desc->bInterfaceNumber = 0;
+	desc->iInterface = 1;
 	desc->bAlternateSetting = 0;
 	desc->bNumEndpoints = 3;
 
@@ -201,7 +202,7 @@ void fill_ep_descriptor(mtp_ctx * ctx, usb_gadget * usbctx,struct usb_endpoint_d
 	return;
 }
 
-int init_ep(usb_gadget * ctx,int index)
+int init_ep(usb_gadget * ctx,int index,int ffs_mode)
 {
 	int fd,ret;
 
@@ -209,7 +210,7 @@ int init_ep(usb_gadget * ctx,int index)
 	fd = open(ctx->ep_path[index], O_RDWR);
 	if ( fd <= 0 )
 	{
-		PRINT_ERROR("Endpoint %s (%d) init failed ! : Can't open the endpoint ! (error %d - %m)",ctx->ep_path[index],index,fd,fd);
+		PRINT_ERROR("init_ep : Endpoint %s (%d) init failed ! : Can't open the endpoint ! (error %d - %m)",ctx->ep_path[index],index,fd);
 		goto init_ep_error;
 	}
 
@@ -231,12 +232,19 @@ int init_ep(usb_gadget * ctx,int index)
 	PRINT_DEBUG("init_ep (%d):\n",index);
 	PRINT_DEBUG_BUF(ctx->ep_config[index], sizeof(ep_cfg));
 
-	ret = write(fd, ctx->ep_config[index], sizeof(ep_cfg));
-
-	if (ret != sizeof(ep_cfg))
+	if(!ffs_mode)
 	{
-		PRINT_ERROR("Endpoint %s (%d) init failed ! : Write Error %d - %m",ctx->ep_path[index], index, ret, ret);
-		goto init_ep_error;
+		ret = write(fd, ctx->ep_config[index], sizeof(ep_cfg));
+
+		if (ret != sizeof(ep_cfg))
+		{
+			PRINT_ERROR("init_ep : Endpoint %s (%d) init failed ! : Write Error %d - %m",ctx->ep_path[index], index, ret);
+			goto init_ep_error;
+		}
+	}
+	else
+	{
+		PRINT_DEBUG("init_ep (%d): FunctionFS Mode - Don't write the endpoint descriptor.\n",index);
 	}
 
 	return fd;
@@ -245,15 +253,15 @@ init_ep_error:
 	return 0;
 }
 
-int init_eps(usb_gadget * ctx)
+int init_eps(usb_gadget * ctx, int ffs_mode)
 {
-	if( !init_ep(ctx, EP_DESCRIPTOR_IN) )
+	if( !init_ep(ctx, EP_DESCRIPTOR_IN, ffs_mode) )
 		goto init_eps_error;
 
-	if( !init_ep(ctx, EP_DESCRIPTOR_OUT) )
+	if( !init_ep(ctx, EP_DESCRIPTOR_OUT, ffs_mode) )
 		goto init_eps_error;
 
-	if( !init_ep(ctx, EP_DESCRIPTOR_INT_IN) )
+	if( !init_ep(ctx, EP_DESCRIPTOR_INT_IN, ffs_mode) )
 		goto init_eps_error;
 
 	return 0;
@@ -274,6 +282,7 @@ static void handle_setup_request(usb_gadget * ctx, struct usb_ctrlrequest* setup
 	case USB_REQ_GET_DESCRIPTOR:
 		if (setup->bRequestType != USB_DIR_IN)
 			goto stall;
+
 		switch (setup->wValue >> 8)
 		{
 			case USB_DT_STRING:
@@ -283,7 +292,7 @@ static void handle_setup_request(usb_gadget * ctx, struct usb_ctrlrequest* setup
 				// Error
 				if (status < 0)
 				{
-					PRINT_DEBUG("String not found !!");
+					PRINT_ERROR("handle_setup_request : String id #%d (max length %d) not found !",setup->wValue & 0xff, setup->wLength);
 					break;
 				}
 				else
@@ -309,7 +318,7 @@ static void handle_setup_request(usb_gadget * ctx, struct usb_ctrlrequest* setup
 
 			if (ctx->ep_handles[EP_DESCRIPTOR_IN] <= 0)
 			{
-				status = init_eps(ctx);
+				status = init_eps(ctx,0);
 			}
 			else
 				status = 0;
@@ -396,7 +405,7 @@ int handle_ep0(usb_gadget * ctx)
 
 		if (ret < 0)
 		{
-			PRINT_DEBUG("Read error %d (%m)", ret);
+			PRINT_ERROR("handle_ep0 : Read error %d (%m)", ret);
 			goto end;
 		}
 
@@ -485,7 +494,7 @@ int handle_ffs_ep0(usb_gadget * ctx)
 
 		if (ret < 0)
 		{
-			PRINT_DEBUG("handle_ffs_ep0 : Read error %d (%m)", ret);
+			PRINT_ERROR("handle_ffs_ep0 : Read error %d (%m)", ret);
 			goto end;
 		}
 
@@ -502,7 +511,7 @@ int handle_ffs_ep0(usb_gadget * ctx)
 
 				if (ctx->ep_handles[EP_DESCRIPTOR_IN] <= 0)
 				{
-					status = init_eps(ctx);
+					status = init_eps(ctx,1);
 				}
 				else
 					status = 0;
@@ -646,7 +655,7 @@ usb_gadget * init_usb_mtp_gadget(mtp_ctx * ctx)
 
 		if (usbctx->usb_device <= 0)
 		{
-			PRINT_ERROR("Unable to open %s (%m)", ctx->usb_cfg.usb_device_path);
+			PRINT_ERROR("init_usb_mtp_gadget : Unable to open %s (%m)", ctx->usb_cfg.usb_device_path);
 			goto init_error;
 		}
 
