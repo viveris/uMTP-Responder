@@ -341,12 +341,12 @@ fs_entry * add_entry(fs_handles_db * db, filefoundinfo *fileinfo, uint32_t paren
 	if( entry )
 	{
 		// entry already there...
-		PRINT_DEBUG("add_entry : File already present (%s)\n",fileinfo->filename);
+		PRINT_DEBUG("add_entry : File already present (%s)",fileinfo->filename);
 	}
 	else
 	{
 		// add the entry
-		PRINT_DEBUG("add_entry : File not present - add entry (%s)\n",fileinfo->filename);
+		PRINT_DEBUG("add_entry : File not present - add entry (%s)",fileinfo->filename);
 
 		entry = alloc_entry( db, fileinfo, parent, storage_id);
 	}
@@ -363,18 +363,18 @@ int scan_and_add_folder(fs_handles_db * db, char * base, uint32_t parent, uint32
 	filefoundinfo fileinfo;
 	struct stat entrystat;
 
-	PRINT_DEBUG("scan_and_add_folder : %s, Parent : 0x%.8X, Storage ID : 0x%.8X\n",base,parent,storage_id);
+	PRINT_DEBUG("scan_and_add_folder : %s, Parent : 0x%.8X, Storage ID : 0x%.8X",base,parent,storage_id);
 
 	dir = fs_find_first_file(base, &fileinfo);
 	if( dir )
 	{
 		do
 		{
-			PRINT_DEBUG("---------------------\n");
-			PRINT_DEBUG("File : %s\n",fileinfo.filename);
-			PRINT_DEBUG("Size : %d\n",fileinfo.size);
-			PRINT_DEBUG("IsDir: %d\n",fileinfo.isdirectory);
-			PRINT_DEBUG("---------------------\n");
+			PRINT_DEBUG("---------------------");
+			PRINT_DEBUG("File : %s",fileinfo.filename);
+			PRINT_DEBUG("Size : %d",fileinfo.size);
+			PRINT_DEBUG("IsDir: %d",fileinfo.isdirectory);
+			PRINT_DEBUG("---------------------");
 
 			if( strcmp(fileinfo.filename,"..") && strcmp(fileinfo.filename,".") )
 			{
@@ -399,7 +399,7 @@ int scan_and_add_folder(fs_handles_db * db, char * base, uint32_t parent, uint32
                 ret = stat(path, &entrystat);
                 if(ret)
                 {
-                    PRINT_DEBUG("scan_and_add_folder : discard entry %s - stat error\n", path);
+                    PRINT_DEBUG("scan_and_add_folder : discard entry %s - stat error", path);
                     entry->flags |= ENTRY_IS_DELETED;
                 }
                 else
@@ -550,7 +550,7 @@ char * build_full_path(fs_handles_db * db,char * root_path,fs_entry * entry)
 			memcpy(&full_path[0],root_path,strlen(root_path));
 		}
 
-		PRINT_DEBUG("build_full_path : %s -> %s\n",entry->name, full_path);
+		PRINT_DEBUG("build_full_path : %s -> %s",entry->name, full_path);
 	}
 
 	return full_path;
@@ -569,7 +569,7 @@ FILE * entry_open(fs_handles_db * db, fs_entry * entry)
 		f = fopen(full_path,"rb");
 
 		if(!f)
-			PRINT_DEBUG("entry_open : Can't open %s !\n",full_path);
+			PRINT_DEBUG("entry_open : Can't open %s !",full_path);
 
 		free(full_path);
 	}

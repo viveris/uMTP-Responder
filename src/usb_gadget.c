@@ -137,7 +137,7 @@ void fill_dev_descriptor(mtp_ctx * ctx, usb_gadget * usbctx,struct usb_device_de
 	desc->iSerialNumber =   STRINGID_SERIAL;
 	desc->bNumConfigurations = 1; // Only one configuration
 
-	PRINT_DEBUG("fill_dev_descriptor:\n");
+	PRINT_DEBUG("fill_dev_descriptor:");
 	PRINT_DEBUG_BUF(desc, sizeof(struct usb_device_descriptor));
 
 	return;
@@ -166,7 +166,7 @@ void fill_if_descriptor(mtp_ctx * ctx, usb_gadget * usbctx, struct usb_interface
 		desc->iInterface = STRINGID_INTERFACE;
 	}
 
-	PRINT_DEBUG("fill_if_descriptor:\n");
+	PRINT_DEBUG("fill_if_descriptor:");
 	PRINT_DEBUG_BUF(desc, sizeof(struct usb_interface_descriptor));
 
 	return;
@@ -196,7 +196,7 @@ void fill_ep_descriptor(mtp_ctx * ctx, usb_gadget * usbctx,struct usb_endpoint_d
 		desc->bInterval = 6;
 	}
 
-	PRINT_DEBUG("fill_ep_descriptor:\n");
+	PRINT_DEBUG("fill_ep_descriptor:");
 	PRINT_DEBUG_BUF(desc, sizeof(struct usb_endpoint_descriptor_no_audio));
 
 	return;
@@ -229,7 +229,7 @@ int init_ep(usb_gadget * ctx,int index,int ffs_mode)
 		memcpy(&ctx->ep_config[index]->ep_desc[1], &ctx->usb_config->ep_desc[index],sizeof(struct usb_endpoint_descriptor_no_audio));
 	}
 
-	PRINT_DEBUG("init_ep (%d):\n",index);
+	PRINT_DEBUG("init_ep (%d):",index);
 	PRINT_DEBUG_BUF(ctx->ep_config[index], sizeof(ep_cfg));
 
 	if(!ffs_mode)
@@ -244,7 +244,7 @@ int init_ep(usb_gadget * ctx,int index,int ffs_mode)
 	}
 	else
 	{
-		PRINT_DEBUG("init_ep (%d): FunctionFS Mode - Don't write the endpoint descriptor.\n",index);
+		PRINT_DEBUG("init_ep (%d): FunctionFS Mode - Don't write the endpoint descriptor.",index);
 	}
 
 	return fd;
@@ -687,7 +687,7 @@ usb_gadget * init_usb_mtp_gadget(mtp_ctx * ctx)
 			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_ffs_config->ep_desc_hs[EP_DESCRIPTOR_OUT],EP_DESCRIPTOR_OUT+1,1,1,1);
 			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_ffs_config->ep_desc_hs[EP_DESCRIPTOR_INT_IN],EP_DESCRIPTOR_INT_IN+1,0,0,1);
 
-			PRINT_DEBUG("init_usb_mtp_gadget :\n");
+			PRINT_DEBUG("init_usb_mtp_gadget :");
 			PRINT_DEBUG_BUF(usbctx->usb_ffs_config, sizeof(usb_ffs_cfg));
 
 			ret = write(usbctx->usb_device, usbctx->usb_ffs_config, sizeof(usb_ffs_cfg));
@@ -706,7 +706,7 @@ usb_gadget * init_usb_mtp_gadget(mtp_ctx * ctx)
 			ffs_str.code = htole16(0x0409); // en-us
 			strcpy(ffs_str.string_data,ctx->usb_cfg.usb_string_interface);
 
-			PRINT_DEBUG("write string :\n");
+			PRINT_DEBUG("write string :");
 			PRINT_DEBUG_BUF(&ffs_str, sizeof(ffs_strings));
 
 			ret = write(usbctx->usb_device, &ffs_str, ffs_str.header.length);
@@ -740,7 +740,7 @@ usb_gadget * init_usb_mtp_gadget(mtp_ctx * ctx)
 
 			fill_dev_descriptor(ctx, usbctx,&usbctx->usb_config->dev_desc);
 
-			PRINT_DEBUG("init_usb_mtp_gadget :\n");
+			PRINT_DEBUG("init_usb_mtp_gadget :");
 			PRINT_DEBUG_BUF(usbctx->usb_config, sizeof(usb_cfg));
 
 			ret = write(usbctx->usb_device, usbctx->usb_config, sizeof(usb_cfg));
@@ -769,7 +769,7 @@ void deinit_usb_mtp_gadget(usb_gadget * usbctx)
 {
 	int i;
 
-	PRINT_DEBUG("entering deinit_usb_mtp_gadget\n");
+	PRINT_DEBUG("entering deinit_usb_mtp_gadget");
 
 	if( usbctx )
 	{
@@ -781,7 +781,7 @@ void deinit_usb_mtp_gadget(usb_gadget * usbctx)
 
 			if( usbctx->ep_handles[i] >= 0 )
 			{
-				PRINT_DEBUG("Closing End Point %d...\n",i);
+				PRINT_DEBUG("Closing End Point %d...",i);
 				close(usbctx->ep_handles[i] );
 			}
 			i++;
@@ -789,14 +789,14 @@ void deinit_usb_mtp_gadget(usb_gadget * usbctx)
 
 		if (usbctx->usb_device >= 0)
 		{
-			PRINT_DEBUG("Closing usb device...\n");
+			PRINT_DEBUG("Closing usb device...");
 			close(usbctx->usb_device);
 			usbctx->usb_device = - 1;
 		}
 
 		if( !usbctx->thread_not_started )
 		{
-			PRINT_DEBUG("Stopping USB Thread...\n");
+			PRINT_DEBUG("Stopping USB Thread...");
 			pthread_cancel (usbctx->thread);
 			pthread_join(usbctx->thread, NULL);
 			usbctx->thread_not_started = 1;
@@ -833,6 +833,6 @@ void deinit_usb_mtp_gadget(usb_gadget * usbctx)
 		free( usbctx );
 	}
 
-	PRINT_DEBUG("leaving deinit_usb_mtp_gadget\n");
+	PRINT_DEBUG("leaving deinit_usb_mtp_gadget");
 
 }

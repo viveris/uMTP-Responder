@@ -105,7 +105,7 @@ int build_storageinfo_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uint32_t 
 		}
 		else
 		{
-			PRINT_WARN("Failed to get statvfs for %s\n", storage_path);
+			PRINT_WARN("Failed to get statvfs for %s", storage_path);
 		}
 
 		poke(buffer, &ofs, 4, totalspace&0x00000000FFFFFFFF);                       // Max Capacity
@@ -123,7 +123,7 @@ int build_storageinfo_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uint32_t 
 	}
 	else
 	{
-		PRINT_WARN("build_storageinfo_dataset : Storage not found ! (0x%.8X)\n", storageid);
+		PRINT_WARN("build_storageinfo_dataset : Storage not found ! (0x%.8X)", storageid);
 	}
 
 	return ofs;

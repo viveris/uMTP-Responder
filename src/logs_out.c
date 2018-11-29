@@ -43,16 +43,18 @@ void printbuf(void * buf,int size)
 		memset(str, '\0', strMaxSz);
 		for(i=0;i<size;i++)
 		{
-			if(!(i&0xF))
+			if(!(i&0xF) && i)
 			{
-				strncat(str, "\n", strMaxSz);
+				PRINT_DEBUG("%s", str);
+				memset(str, '\0', strMaxSz);
 			}
 			snprintf(tmp, sizeof(tmp), "%02X ", ptr[i]);
 			strncat(str, tmp, strMaxSz);
 			memset(tmp, '\0', sizeof(tmp));
 		}
 
-		PRINT_DEBUG("%s", str);
+		if(strlen(str))
+			PRINT_DEBUG("%s", str);
 
 		free(str);
 	}

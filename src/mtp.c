@@ -57,7 +57,7 @@ mtp_ctx * mtp_init_responder()
 {
 	mtp_ctx * ctx;
 
-	PRINT_DEBUG("init_mtp_responder\n");
+	PRINT_DEBUG("init_mtp_responder");
 
 	ctx = malloc(sizeof(mtp_ctx));
 	if(ctx)
@@ -80,7 +80,7 @@ mtp_ctx * mtp_init_responder()
 		if(!ctx->temp_array)
 			goto init_error;
 
-		PRINT_DEBUG("init_mtp_responder : Ok !\n");
+		PRINT_DEBUG("init_mtp_responder : Ok !");
 
 		return ctx;
 	}
@@ -103,7 +103,7 @@ init_error:
 		free(ctx);
 	}
 
-	PRINT_ERROR("init_mtp_responder : Failed !\n");
+	PRINT_ERROR("init_mtp_responder : Failed !");
 
 	return 0;
 }
@@ -209,7 +209,7 @@ int parse_incomming_dataset(mtp_ctx * ctx,void * datain,int size,uint32_t * newh
 	if(parent_handle == 0xFFFFFFFF)
 		parent_handle = 0x00000000;
 
-	PRINT_DEBUG("Incoming dataset : %d bytes (raw) %d bytes, operation 0x%x, code 0x%x, tx_id: %x\n",size,tmp_hdr->length,tmp_hdr->operation,tmp_hdr->code ,tmp_hdr->tx_id );
+	PRINT_DEBUG("Incoming dataset : %d bytes (raw) %d bytes, operation 0x%x, code 0x%x, tx_id: %x",size,tmp_hdr->length,tmp_hdr->operation,tmp_hdr->code ,tmp_hdr->tx_id );
 
 	dataset_ptr = (datain + sizeof(MTP_PACKET_HEADER));
 
@@ -239,7 +239,7 @@ int parse_incomming_dataset(mtp_ctx * ctx,void * datain,int size,uint32_t * newh
 					tmp_str[i] = peek(dataset_ptr,0x35 + (i*2), 1);
 				}
 
-				PRINT_DEBUG("MTP_OPERATION_SEND_OBJECT_INFO : 0x%x objectformat Size %d, Parent 0x%.8x, type: %x, strlen %d str:%s\n",objectformat,objectsize,parent_handle,type,string_len,tmp_str);
+				PRINT_DEBUG("MTP_OPERATION_SEND_OBJECT_INFO : 0x%x objectformat Size %d, Parent 0x%.8x, type: %x, strlen %d str:%s",objectformat,objectsize,parent_handle,type,string_len,tmp_str);
 
 				entry = get_entry_by_handle_and_storageid(ctx->fs_db, parent_handle,storage_id);
 				if(entry)
@@ -252,7 +252,7 @@ int parse_incomming_dataset(mtp_ctx * ctx,void * datain,int size,uint32_t * newh
 
 						if(parent_folder)
 						{
-							PRINT_DEBUG("MTP_OPERATION_SEND_OBJECT_INFO : Parent folder %s\n",parent_folder);
+							PRINT_DEBUG("MTP_OPERATION_SEND_OBJECT_INFO : Parent folder %s",parent_folder);
 
 							tmp_path = malloc(strlen(parent_folder) + 1 + strlen(tmp_str) + 1);
 						}
@@ -260,11 +260,11 @@ int parse_incomming_dataset(mtp_ctx * ctx,void * datain,int size,uint32_t * newh
 						if(tmp_path)
 						{
 							sprintf(tmp_path,"%s/%s",parent_folder,tmp_str);
-							PRINT_DEBUG("MTP_OPERATION_SEND_OBJECT_INFO : Creating %s ...\n",tmp_path);
+							PRINT_DEBUG("MTP_OPERATION_SEND_OBJECT_INFO : Creating %s ...",tmp_path);
 
 							if( mkdir(tmp_path, 0700) )
 							{
-								PRINT_WARN("MTP_OPERATION_SEND_OBJECT_INFO : Can't create %s ...\n",tmp_path);
+								PRINT_WARN("MTP_OPERATION_SEND_OBJECT_INFO : Can't create %s ...",tmp_path);
 
 								if(parent_folder)
 									free(parent_folder);
@@ -316,7 +316,7 @@ int parse_incomming_dataset(mtp_ctx * ctx,void * datain,int size,uint32_t * newh
 					tmp_str[i] = peek(dataset_ptr,0x35 + (i*2), 1);
 				}
 
-				PRINT_DEBUG("MTP_OPERATION_SEND_OBJECT_INFO : 0x%x objectformat Size %d, Parent 0x%.8x, type: %x, strlen %d str:%s\n",objectformat,objectsize,parent_handle,type,string_len,tmp_str);
+				PRINT_DEBUG("MTP_OPERATION_SEND_OBJECT_INFO : 0x%x objectformat Size %d, Parent 0x%.8x, type: %x, strlen %d str:%s",objectformat,objectsize,parent_handle,type,string_len,tmp_str);
 
 				entry = get_entry_by_handle_and_storageid(ctx->fs_db, parent_handle,storage_id);
 				if(entry)
@@ -330,14 +330,14 @@ int parse_incomming_dataset(mtp_ctx * ctx,void * datain,int size,uint32_t * newh
 
 						if(parent_folder)
 						{
-							PRINT_DEBUG("MTP_OPERATION_SEND_OBJECT_INFO : Parent folder %s\n",parent_folder);
+							PRINT_DEBUG("MTP_OPERATION_SEND_OBJECT_INFO : Parent folder %s",parent_folder);
 							tmp_path = malloc(strlen(parent_folder) + 1 + strlen(tmp_str) + 1);
 						}
 
 						if( tmp_path )
 						{
 							sprintf(tmp_path,"%s/%s",parent_folder,tmp_str);
-							PRINT_DEBUG("MTP_OPERATION_SEND_OBJECT_INFO : Creating %s ...\n",tmp_path);
+							PRINT_DEBUG("MTP_OPERATION_SEND_OBJECT_INFO : Creating %s ...",tmp_path);
 
 							tmp_file_entry.isdirectory = 0;
 							strcpy(tmp_file_entry.filename,tmp_str);
@@ -346,7 +346,7 @@ int parse_incomming_dataset(mtp_ctx * ctx,void * datain,int size,uint32_t * newh
 							f = fopen(tmp_path,"wb");
 							if(!f)
 							{
-								PRINT_WARN("MTP_OPERATION_SEND_OBJECT_INFO : Can't create %s ...\n",tmp_path);
+								PRINT_WARN("MTP_OPERATION_SEND_OBJECT_INFO : Can't create %s ...",tmp_path);
 
 								if(parent_folder)
 									free(parent_folder);
@@ -398,7 +398,7 @@ int check_and_send_USB_ZLP(mtp_ctx * ctx , int size)
 	// USB ZLP needed ?
 	if( (size >= ctx->max_packet_size) && !(size % ctx->max_packet_size) )
 	{
-		PRINT_DEBUG("%d bytes transfert ended - ZLP packet needed\n", size);
+		PRINT_DEBUG("%d bytes transfert ended - ZLP packet needed", size);
 
 		// Yes - Send zero lenght packet.
 		write_usb(ctx->usb_ctx,ctx->wrbuffer,0);
@@ -435,7 +435,7 @@ int send_file_data( mtp_ctx * ctx, fs_entry * entry,uint32_t offset, uint32_t ma
 
 	k = ctx->max_packet_size;
 
-	PRINT_DEBUG("send_file_data : Offset 0x%.8X - Maxsize 0x%.8X - Size 0x%.8X - ActualSize 0x%.8X\n", offset,maxsize,entry->size,actualsize);
+	PRINT_DEBUG("send_file_data : Offset 0x%.8X - Maxsize 0x%.8X - Size 0x%.8X - ActualSize 0x%.8X", offset,maxsize,entry->size,actualsize);
 
 	f = entry_open(ctx->fs_db, entry);
 	if( f )
@@ -510,7 +510,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 				i++;
 			}
 
-			PRINT_DEBUG("Open session - ID 0x%.8x\n",ctx->session_id);
+			PRINT_DEBUG("Open session - ID 0x%.8x",ctx->session_id);
 
 			response_code = MTP_RESPONSE_OK;
 
@@ -602,11 +602,11 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 			parent_handle = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER)+ 8, 4);     // Get param 3 - parent handle
 
-			PRINT_DEBUG("MTP_OPERATION_GET_OBJECT_HANDLES - Parent Handle 0x%.8x, Storage ID 0x%.8x\n",parent_handle,storageid);
+			PRINT_DEBUG("MTP_OPERATION_GET_OBJECT_HANDLES - Parent Handle 0x%.8x, Storage ID 0x%.8x",parent_handle,storageid);
 
 			if(!mtp_get_storage_root(ctx,storageid))
 			{
-				PRINT_WARN("MTP_OPERATION_GET_OBJECT_HANDLES : INVALID STORAGE ID!\n");
+				PRINT_WARN("MTP_OPERATION_GET_OBJECT_HANDLES : INVALID STORAGE ID!");
 
 				response_code = MTP_RESPONSE_INVALID_STORAGE_ID;
 				break;
@@ -667,7 +667,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 					entry = get_next_child_handle(ctx->fs_db);
 					if(entry)
 					{
-						PRINT_DEBUG("File : %s Handle:%.8x\n",entry->name,entry->handle);
+						PRINT_DEBUG("File : %s Handle:%.8x",entry->name,entry->handle);
 						poke(ctx->wrbuffer, &ofs, 4, entry->handle);
 
 						handle_index++;
@@ -707,7 +707,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 			}
 			else
 			{
-				PRINT_WARN("MTP_OPERATION_GET_OBJECT_INFO ! : Entry/Handle not found (0x%.8X)\n", handle);
+				PRINT_WARN("MTP_OPERATION_GET_OBJECT_INFO ! : Entry/Handle not found (0x%.8X)", handle);
 
 				response_code = MTP_RESPONSE_INVALID_OBJECT_HANDLE;
 			}
@@ -721,7 +721,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 			maxsize = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER) + 8, 4); // Get param 2 - Max size in bytes
 			entry = get_entry_by_handle(ctx->fs_db, handle);
 
-			PRINT_DEBUG("MTP_OPERATION_GET_PARTIAL_OBJECT : handle 0x%.8X - Offset 0x%.8X - Maxsize 0x%.8X\n", handle,offset,maxsize);
+			PRINT_DEBUG("MTP_OPERATION_GET_PARTIAL_OBJECT : handle 0x%.8X - Offset 0x%.8X - Maxsize 0x%.8X", handle,offset,maxsize);
 
 			if(entry)
 			{
@@ -737,7 +737,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 			}
 			else
 			{
-				PRINT_WARN("MTP_OPERATION_GET_PARTIAL_OBJECT ! : Entry/Handle not found (0x%.8X)\n", handle);
+				PRINT_WARN("MTP_OPERATION_GET_PARTIAL_OBJECT ! : Entry/Handle not found (0x%.8X)", handle);
 
 				response_code = MTP_RESPONSE_INVALID_OBJECT_HANDLE;
 			}
@@ -758,7 +758,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 			}
 			else
 			{
-				PRINT_WARN("MTP_OPERATION_GET_OBJECT ! : Entry/Handle not found (0x%.8X)\n", handle);
+				PRINT_WARN("MTP_OPERATION_GET_OBJECT ! : Entry/Handle not found (0x%.8X)", handle);
 
 				response_code = MTP_RESPONSE_INVALID_OBJECT_HANDLE;
 			}
@@ -770,7 +770,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 			storageid = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER), 4);         // Get param 1 - storage id
 			parent_handle = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER) + 4, 4); // Get param 2 - parent handle
 
-			PRINT_DEBUG("MTP_OPERATION_SEND_OBJECT_INFO : Rx dataset...\n");
+			PRINT_DEBUG("MTP_OPERATION_SEND_OBJECT_INFO : Rx dataset...");
 
 			size = read_usb(ctx->usb_ctx, ctx->rdbuffer2, MAX_RX_BUFFER_SIZE);
 			PRINT_DEBUG_BUF(ctx->rdbuffer2, size);
@@ -778,7 +778,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 			response_code = parse_incomming_dataset(ctx,ctx->rdbuffer2,size,&new_handle,parent_handle,storageid);
 			if( response_code == MTP_RESPONSE_OK )
 			{
-				PRINT_DEBUG("MTP_OPERATION_SEND_OBJECT_INFO : Response - storageid: 0x%.8X, parent_handle: 0x%.8X, new_handle: 0x%.8X \n",storageid,parent_handle,new_handle);
+				PRINT_DEBUG("MTP_OPERATION_SEND_OBJECT_INFO : Response - storageid: 0x%.8X, parent_handle: 0x%.8X, new_handle: 0x%.8X ",storageid,parent_handle,new_handle);
 				params[0] = storageid;
 				params[1] = parent_handle;
 				params[2] = new_handle;
@@ -853,7 +853,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 			}
 			else
 			{
-				PRINT_WARN("MTP_OPERATION_SEND_OBJECT ! : Invalid Handle (0x%.8X)\n", ctx->SendObjInfoHandle);
+				PRINT_WARN("MTP_OPERATION_SEND_OBJECT ! : Invalid Handle (0x%.8X)", ctx->SendObjInfoHandle);
 
 				response_code = MTP_RESPONSE_INVALID_OBJECT_HANDLE;
 			}
@@ -876,7 +876,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 		default:
 
-			PRINT_WARN("MTP code unsupported ! : 0x%.4X (%s)\n", mtp_packet_hdr->code,mtp_get_operation_string(mtp_packet_hdr->code));
+			PRINT_WARN("MTP code unsupported ! : 0x%.4X (%s)", mtp_packet_hdr->code,mtp_get_operation_string(mtp_packet_hdr->code));
 
 			response_code = MTP_RESPONSE_OPERATION_NOT_SUPPORTED;
 
@@ -904,30 +904,28 @@ int mtp_incoming_packet(mtp_ctx * ctx)
 
 	if(size>=0)
 	{
-		PRINT_DEBUG("incoming_packet : %p - rawsize : %d\n",ctx->rdbuffer,size);
+		PRINT_DEBUG("incoming_packet : %p - rawsize : %d",ctx->rdbuffer,size);
 
 		if(!size)
 			return 0; // ZLP
 
 		mtp_packet_hdr = (MTP_PACKET_HEADER *)ctx->rdbuffer;
 
-		PRINT_DEBUG("MTP Packet size : %d bytes\n", mtp_packet_hdr->length);
-		PRINT_DEBUG("MTP Operation   : 0x%.4X (%s)\n", mtp_packet_hdr->operation, mtp_get_type_string(mtp_packet_hdr->operation) );
-		PRINT_DEBUG("MTP code        : 0x%.4X (%s)\n", mtp_packet_hdr->code,mtp_get_operation_string(mtp_packet_hdr->code));
-		PRINT_DEBUG("MTP Tx ID       : 0x%.8X\n", mtp_packet_hdr->tx_id);
+		PRINT_DEBUG("MTP Packet size : %d bytes", mtp_packet_hdr->length);
+		PRINT_DEBUG("MTP Operation   : 0x%.4X (%s)", mtp_packet_hdr->operation, mtp_get_type_string(mtp_packet_hdr->operation) );
+		PRINT_DEBUG("MTP code        : 0x%.4X (%s)", mtp_packet_hdr->code,mtp_get_operation_string(mtp_packet_hdr->code));
+		PRINT_DEBUG("MTP Tx ID       : 0x%.8X", mtp_packet_hdr->tx_id);
 
 		if( mtp_packet_hdr->length != size )
 		{
-			PRINT_DEBUG("Header Packet size and rawsize are not equal !: %d != %d\n",mtp_packet_hdr->length,size);
+			PRINT_DEBUG("Header Packet size and rawsize are not equal !: %d != %d",mtp_packet_hdr->length,size);
 		}
 
 		PRINT_DEBUG("Header : ");
 		PRINT_DEBUG_BUF(ctx->rdbuffer, sizeof(MTP_PACKET_HEADER));
-		PRINT_DEBUG("\n");
 
 		PRINT_DEBUG("Payload : ");
 		PRINT_DEBUG_BUF(ctx->rdbuffer + sizeof(MTP_PACKET_HEADER),size - sizeof(MTP_PACKET_HEADER));
-		PRINT_DEBUG("\n");
 
 		process_in_packet(ctx,mtp_packet_hdr,size);
 
@@ -935,7 +933,7 @@ int mtp_incoming_packet(mtp_ctx * ctx)
 	}
 	else
 	{
-		PRINT_ERROR("incoming_packet : Read Error (%d)!\n",size);
+		PRINT_ERROR("incoming_packet : Read Error (%d)!",size);
 	}
 
 	return -1;
@@ -951,7 +949,7 @@ uint32_t mtp_add_storage(mtp_ctx * ctx, char * path, char * description)
 {
 	int i;
 
-	PRINT_DEBUG("mtp_add_storage : %s\n", path );
+	PRINT_DEBUG("mtp_add_storage : %s", path );
 
 	i = 0;
 	while(i < MAX_STORAGE_NB)
@@ -967,7 +965,7 @@ uint32_t mtp_add_storage(mtp_ctx * ctx, char * path, char * description)
 				strcpy(ctx->storages[i].description,description);
 
 				ctx->storages[i].storage_id = i + 1;
-				PRINT_DEBUG("mtp_add_storage : Storage %.8X mapped to %s (%s)\n",
+				PRINT_DEBUG("mtp_add_storage : Storage %.8X mapped to %s (%s)",
 					    ctx->storages[i].storage_id,
 					    ctx->storages[i].root_path,
 					    ctx->storages[i].description );
@@ -998,7 +996,7 @@ char * mtp_get_storage_root(mtp_ctx * ctx, uint32_t storage_id)
 {
 	int i;
 
-	PRINT_DEBUG("mtp_get_storage_root : %.8X\n", storage_id );
+	PRINT_DEBUG("mtp_get_storage_root : %.8X", storage_id );
 
 	i = 0;
 	while(i < MAX_STORAGE_NB)
@@ -1007,7 +1005,7 @@ char * mtp_get_storage_root(mtp_ctx * ctx, uint32_t storage_id)
 		{
 			if( ctx->storages[i].storage_id == storage_id )
 			{
-				PRINT_DEBUG("mtp_get_storage_root : %.8X -> %s\n",
+				PRINT_DEBUG("mtp_get_storage_root : %.8X -> %s",
 					    storage_id,
 					    ctx->storages[i].root_path );
 				return ctx->storages[i].root_path;
@@ -1023,7 +1021,7 @@ char * mtp_get_storage_description(mtp_ctx * ctx, uint32_t storage_id)
 {
 	int i;
 
-	PRINT_DEBUG("mtp_get_storage_description : %.8X\n", storage_id );
+	PRINT_DEBUG("mtp_get_storage_description : %.8X", storage_id );
 
 	i = 0;
 	while(i < MAX_STORAGE_NB)
@@ -1032,7 +1030,7 @@ char * mtp_get_storage_description(mtp_ctx * ctx, uint32_t storage_id)
 		{
 			if( ctx->storages[i].storage_id == storage_id )
 			{
-				PRINT_DEBUG("mtp_get_storage_description : %.8X -> %s\n",
+				PRINT_DEBUG("mtp_get_storage_description : %.8X -> %s",
 					    storage_id,
 					    ctx->storages[i].description );
 				return ctx->storages[i].description;
