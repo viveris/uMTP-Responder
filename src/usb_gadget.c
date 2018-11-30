@@ -527,17 +527,18 @@ int handle_ffs_ep0(usb_gadget * ctx)
 			case FUNCTIONFS_DISABLE:
 				PRINT_DEBUG("EP0 FFS DISABLE");
 				// Set timeout for a reconnection during the enumeration...
-				timeout.tv_sec = 4;
+				timeout.tv_sec = 0;
 				timeout.tv_usec = 0;
 
-				/*
+				// Stop the main rx thread.
 				ctx->stop = 1;
 				if( !ctx->thread_not_started )
 				{
 					pthread_join(ctx->thread, NULL);
 					ctx->thread_not_started = 1;
 				}
-				*/
+				// But don't close the endpoints !
+				ctx->stop = 0;
 
 				break;
 			case FUNCTIONFS_SETUP:
