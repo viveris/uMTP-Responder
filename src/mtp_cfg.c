@@ -72,7 +72,9 @@ enum
 	INTERFACE_STRING_CMD,
 
 	WAIT_CONNECTION,
-	LOOP_ON_DISCONNECT
+	LOOP_ON_DISCONNECT,
+
+	SHOW_HIDDEN_FILES
 };
 
 typedef struct kw_list_
@@ -283,6 +285,10 @@ int get_hex_param(mtp_ctx * context, char * line,int cmd)
 			case LOOP_ON_DISCONNECT:
 				context->usb_cfg.loop_on_disconnect = param_value;
 			break;
+
+			case SHOW_HIDDEN_FILES:
+				context->usb_cfg.show_hidden_files = param_value;
+			break;
 		}
 	}
 
@@ -360,6 +366,9 @@ kw_list kwlist[] =
 
 	{"wait",                get_hex_param,      WAIT_CONNECTION},
 	{"loop_on_disconnect",  get_hex_param,      LOOP_ON_DISCONNECT},
+
+	{"show_hidden_files",   get_hex_param,      SHOW_HIDDEN_FILES},
+
 	{ 0, 0, 0 }
 };
 
@@ -435,6 +444,8 @@ int mtp_load_config_file(mtp_ctx * context)
 	context->usb_cfg.wait_connection = 0;
 	context->usb_cfg.loop_on_disconnect = 0;
 
+	context->usb_cfg.show_hidden_files = 1;
+
 	f = fopen(UMTPR_CONF_FILE,"r");
 	if(f)
 	{
@@ -482,6 +493,7 @@ int mtp_load_config_file(mtp_ctx * context)
 
 	PRINT_MSG("Wait for connection : %i",context->usb_cfg.wait_connection);
 	PRINT_MSG("Loop on disconnect : %i",context->usb_cfg.loop_on_disconnect);
+	PRINT_MSG("Show hidden files : %i",context->usb_cfg.show_hidden_files);
 
 	return err;
 }

@@ -376,7 +376,8 @@ int scan_and_add_folder(fs_handles_db * db, char * base, uint32_t parent, uint32
 			PRINT_DEBUG("IsDir: %d",fileinfo.isdirectory);
 			PRINT_DEBUG("---------------------");
 
-			if( strcmp(fileinfo.filename,"..") && strcmp(fileinfo.filename,".") )
+			if( strcmp(fileinfo.filename,"..") && strcmp(fileinfo.filename,".") && \
+				(((mtp_ctx *)db->mtp_ctx)->usb_cfg.show_hidden_files || fileinfo.filename[0] != '.') )
 			{
 				add_entry(db, &fileinfo, parent, storage_id);
 			}

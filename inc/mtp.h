@@ -68,6 +68,8 @@ typedef struct mtp_usb_cfg_
 	int wait_connection;
 	int loop_on_disconnect;
 
+	int show_hidden_files;
+
 }mtp_usb_cfg;
 
 typedef struct mtp_storage_
