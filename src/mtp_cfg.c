@@ -439,7 +439,7 @@ int mtp_load_config_file(mtp_ctx * context)
 	context->usb_cfg.usb_protocol        = USB_DEV_PROTOCOL;
 	context->usb_cfg.usb_dev_version     = USB_DEV_VERSION;
 	context->usb_cfg.usb_max_packet_size = MAX_PACKET_SIZE;
-	context->usb_cfg.usb_functionfs_mode = 0;
+	context->usb_cfg.usb_functionfs_mode = USB_FFS_MODE;
 
 	context->usb_cfg.wait_connection = 0;
 	context->usb_cfg.loop_on_disconnect = 0;

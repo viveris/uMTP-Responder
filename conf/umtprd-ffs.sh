@@ -1,3 +1,8 @@
+#/bin/sh
+
+# FunctionFS uMTPrd startup example/test script
+# Must be launched from a writable/temporary folder.
+
 modprobe libcomposite
 
 mkdir cfg
@@ -9,7 +14,8 @@ cd cfg/usb_gadget/g1
 mkdir configs/c.1
 
 mkdir functions/ffs.umtp
-mkdir functions/acm.usb0
+# Uncomment / Change the follow line to enable another usb gadget function
+#mkdir functions/acm.usb0
 
 mkdir strings/0x409
 mkdir configs/c.1/strings/0x409
@@ -24,16 +30,18 @@ echo "The Viveris Product !" > strings/0x409/product
 echo "Conf 1" > configs/c.1/strings/0x409/configuration
 echo 120 > configs/c.1/MaxPower
 
-ln -s functions/acm.usb0 configs/c.1
 ln -s functions/ffs.umtp configs/c.1
+# Uncomment / Change the follow line to enable another usb gadget function
+#ln -s functions/acm.usb0 configs/c.1
 
 mkdir /dev/ffs-umtp
-mount -t functionfs umtp /dev/ffs-umtp
-#./umtprd
+mount -t functionfs mtp /dev/ffs-umtp
+# Start the umtprd service
+umtprd &
 
 cd ../../..
 
-#ls  /sys/class/udc/
+sleep 1
 
-echo 300000.gadget > cfg/usb_gadget/g1/UDC
-
+# enable the usb functions
+ls /sys/class/udc/ > cfg/usb_gadget/g1/UDC
