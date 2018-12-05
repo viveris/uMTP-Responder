@@ -17,7 +17,7 @@ The uMTP-Responder allows files to be transferred to and from devices through th
 
 - As few dependencies as possible.
 
-- Hook to the Gadget FS Linux layer.
+- Hook to the FunctionFS/libcomposite or the Gadget FS Linux layer.
 
 - Dynamic handles allocation (No file-system pre-scan).
 
@@ -45,7 +45,7 @@ The uMTP-Responder allows files to be transferred to and from devices through th
 
 ## Which platforms are supported ?
 
-Any board with a USB device port should be compatible. The only requirement is to have the USB Gadget FS support enabled in your Linux kernel.
+Any board with a USB device port should be compatible. The only requirement is to have the USB FunctionFS or GadgetFS support enabled in your Linux kernel.
 
 ### Boards successfully tested
 
@@ -56,6 +56,10 @@ Any board with a USB device port should be compatible. The only requirement is t
 - BeagleBone Black.
 
 - Allwinner SoC based board.
+
+- Freescale i.MX6 SabreSD. (Kernel v4.14)
+
+- Samsung Artik710. (FunctionFS mode)
 
 ### Client operating systems successfully tested
 
@@ -73,7 +77,7 @@ Check the file [umtprd.conf](conf/umtprd.conf) file for details on available opt
 
 ## How to launch it ?
 
-Once you have configured the correct settings in umtprd.conf, you can use umtprd.sh to launch it or use udev to launch the deamon when the usb device port is connected.
+Once you have configured the correct settings in umtprd.conf, you can use umtprd_ffs.sh or umtprd_gfs.sh to launch it in FunctionFS/GadgetFS mode or use udev to launch the deamon when the usb device port is connected.
 
 ## License
 
