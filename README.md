@@ -39,9 +39,7 @@ The uMTP-Responder allows files to be transferred to and from devices through th
 
 - Up to 16 storage instances supported.
 
-### What is planned
-
-- libcomposite support.
+- GadgetFS and FunctionFS/libcomposite modes supported.
 
 ## Which platforms are supported ?
 
