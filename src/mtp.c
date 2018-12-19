@@ -50,6 +50,8 @@
 
 #include "mtp_support_def.h"
 
+#include "inotify.h"
+
 #define MAX_RX_BUFFER_SIZE (2*1024)
 #define MAX_TX_BUFFER_SIZE (2*1024)
 
@@ -79,6 +81,8 @@ mtp_ctx * mtp_init_responder()
 		ctx->temp_array = malloc( MAX_STORAGE_NB * sizeof(uint32_t) );
 		if(!ctx->temp_array)
 			goto init_error;
+
+		inotify_handler_init( ctx );
 
 		PRINT_DEBUG("init_mtp_responder : Ok !");
 
@@ -112,6 +116,8 @@ void mtp_deinit_responder(mtp_ctx * ctx)
 {
 	if( ctx )
 	{
+		inotify_handler_deinit( ctx );
+
 		if(ctx->wrbuffer)
 			free(ctx->wrbuffer);
 

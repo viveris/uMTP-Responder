@@ -103,6 +103,9 @@ typedef struct mtp_ctx_
 
 	mtp_storage storages[MAX_STORAGE_NB];
 
+	int inotify_fd;
+	pthread_t inotify_thread;
+
 }mtp_ctx;
 
 mtp_ctx * mtp_init_responder();

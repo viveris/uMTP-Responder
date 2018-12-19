@@ -5,7 +5,7 @@ all: output_dir umtprd
 
 umtprd: obj/umtprd.o obj/mtp.o obj/mtp_datasets.o obj/mtp_helpers.o \
 		obj/mtp_support_def.o obj/mtp_constant_strings.o obj/fs_handles_db.o \
-		obj/usb_gadget.o obj/logs_out.o obj/usbstring.o obj/mtp_cfg.o
+		obj/usb_gadget.o obj/logs_out.o obj/usbstring.o obj/mtp_cfg.o obj/inotify.o
 	${CC} -o $@    $^ $(LDFLAGS) -lpthread
 
 obj/umtprd.o: src/umtprd.c
@@ -39,6 +39,9 @@ obj/logs_out.o: src/logs_out.c
 	${CC} -o $@ $^ -c $(CFLAGS)
 
 obj/usbstring.o: src/usbstring.c
+	${CC} -o $@ $^ -c $(CFLAGS)
+
+obj/inotify.o: src/inotify.c
 	${CC} -o $@ $^ -c $(CFLAGS)
 
 output_dir:
