@@ -289,6 +289,8 @@ fs_entry * alloc_entry(fs_handles_db * db, filefoundinfo *fileinfo, uint32_t par
 
 		entry->size = fileinfo->size;
 
+		entry->watch_descriptor = -1;
+
 		if( fileinfo->isdirectory )
 			entry->flags = ENTRY_IS_DIR;
 		else
@@ -322,6 +324,9 @@ fs_entry * alloc_root_entry(fs_handles_db * db, uint32_t storage_id)
 		}
 
 		entry->size = 1;
+
+		entry->watch_descriptor = -1;
+
 		entry->flags = ENTRY_IS_DIR;
 
 		entry->next = db->entry_list;

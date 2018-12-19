@@ -62,13 +62,13 @@ void* inotify_thread(void* arg)
 
 	ctx = (mtp_ctx *)arg;
 
-	i = 0;
-
 	for (;;)
 	{
 		length = read(ctx->inotify_fd, buffer, sizeof buffer);
 		if (length >= 0)
 		{
+			i = 0;
+
 			while ( i < length )
 			{
 				event = ( struct inotify_event * ) &buffer[ i ];
@@ -118,7 +118,7 @@ int inotify_handler_init( mtp_ctx * ctx )
 
 		PRINT_DEBUG("init_inotify_handler : inotify_fd = %d", ctx->inotify_fd);
 
-		//pthread_create(&ctx->inotify_thread, NULL, inotify_thread, ctx);
+		pthread_create(&ctx->inotify_thread, NULL, inotify_thread, ctx);
 
 		return 1;
 	}
@@ -144,13 +144,11 @@ int inotify_handler_deinit( mtp_ctx * ctx )
 
 int inotify_handler_addwatch( mtp_ctx * ctx, char * path )
 {
-	int wd;
+	if( ctx->inotify_fd != -1 )
+	{
+		return inotify_add_watch( ctx->inotify_fd, path, IN_CREATE | IN_DELETE );
+	}
 
-	wd = inotify_add_watch( ctx->inotify_fd, path, IN_CREATE | IN_DELETE );
-
-	if( wd < 0 )
-		return 0;
-	else
-		return 1;
+	return -1;
 }
 

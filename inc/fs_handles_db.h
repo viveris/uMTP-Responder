@@ -38,6 +38,8 @@ struct fs_entry
 	uint32_t size;
 	uint32_t date;
 
+	int watch_descriptor;
+
 	fs_entry * next;
 };
 

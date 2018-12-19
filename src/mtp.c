@@ -620,6 +620,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 			tmp_str = 0;
 			full_path = 0;
+			entry = 0;
 			if(parent_handle && parent_handle!=0xFFFFFFFF)
 			{
 				entry = get_entry_by_handle(ctx->fs_db, parent_handle);
@@ -634,6 +635,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 				// root folder
 				parent_handle = 0x00000000;
 				full_path = mtp_get_storage_root(ctx,storageid);
+				entry = get_entry_by_handle(ctx->fs_db, parent_handle);
 			}
 
 			nb_of_handles = 0;
@@ -651,6 +653,15 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 				// Restart
 				init_search_handle(ctx->fs_db, parent_handle, storageid);
+
+				// Register a watch point.
+				if( entry )
+				{
+					if ( entry->flags & ENTRY_IS_DIR )
+					{
+						entry->watch_descriptor = inotify_handler_addwatch( ctx, full_path );
+					}
+				}
 
 				if (tmp_str)
 					free(tmp_str);
