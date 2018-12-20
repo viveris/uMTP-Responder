@@ -640,4 +640,3 @@ fs_entry * get_entry_by_wd( fs_handles_db * db, int watch_descriptor )
 
 	return 0;
 }
-
