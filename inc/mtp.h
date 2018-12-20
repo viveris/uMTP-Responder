@@ -126,6 +126,6 @@ int mtp_push_event(mtp_ctx * ctx, uint32_t event, int nbparams, uint32_t * param
 
 void mtp_deinit_responder(mtp_ctx * ctx);
 
-#define APP_VERSION "v0.9.2"
+#define APP_VERSION "v0.9.5"
 
 #endif
