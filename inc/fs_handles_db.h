@@ -76,7 +76,9 @@ fs_entry * init_search_handle(fs_handles_db * db, uint32_t parent, uint32_t stor
 fs_entry * get_next_child_handle(fs_handles_db * db);
 fs_entry * get_entry_by_handle(fs_handles_db * db, uint32_t handle);
 fs_entry * get_entry_by_handle_and_storageid(fs_handles_db * db, uint32_t handle, uint32_t storage_id);
+fs_entry * get_entry_by_wd(fs_handles_db * db, int watch_descriptor);
 fs_entry * add_entry(fs_handles_db * db, filefoundinfo *fileinfo, uint32_t parent, uint32_t storage_id);
+fs_entry * search_entry(fs_handles_db * db, filefoundinfo *fileinfo, uint32_t parent, uint32_t storage_id);
 fs_entry * alloc_root_entry(fs_handles_db * db, uint32_t storage_id);
 
 FILE * entry_open(fs_handles_db * db, fs_entry * entry);
@@ -86,5 +88,7 @@ void entry_close(FILE * f);
 char * build_full_path(fs_handles_db * db,char * root_path,fs_entry * entry);
 
 int fs_remove_tree( char *folder );
+
+int fs_entry_stat(char *path, filefoundinfo* fileinfo);
 
 #endif

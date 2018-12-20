@@ -101,11 +101,44 @@ int fs_remove_tree( char *folder )
 	return del_fail;
 }
 
+int fs_entry_stat(char *path, filefoundinfo* fileinfo)
+{
+	struct stat fileStat;
+	int i;
+
+	memset(&fileStat,0,sizeof(struct stat));
+	if( !stat (path, &fileStat) )
+	{
+		if ( S_ISDIR ( fileStat.st_mode ) )
+			fileinfo->isdirectory = 1;
+		else
+			fileinfo->isdirectory = 0;
+
+		fileinfo->size = fileStat.st_size;
+
+		i = strlen(path);
+		while( i )
+		{
+			if( path[i] == '/' )
+			{
+				i++;
+				break;
+			}
+			i--;
+		}
+
+		strncpy(fileinfo->filename,&path[i],256);
+
+		return 1;
+	}
+
+	return 0;
+}
+
 DIR * fs_find_first_file(char *folder, filefoundinfo* fileinfo)
 {
 	struct dirent *d;
 	DIR * dir;
-	struct stat fileStat;
 	char * tmpstr;
 
 	dir = opendir (folder);
@@ -121,20 +154,11 @@ DIR * fs_find_first_file(char *folder, filefoundinfo* fileinfo)
 				strcat(tmpstr,"/");
 				strcat(tmpstr,d->d_name);
 
-				memset(&fileStat,0,sizeof(struct stat));
-				if( !stat (tmpstr, &fileStat) )
+				if( fs_entry_stat(tmpstr, fileinfo) )
 				{
-					if ( S_ISDIR ( fileStat.st_mode ) )
-						fileinfo->isdirectory = 1;
-					else
-						fileinfo->isdirectory = 0;
-
-					fileinfo->size = fileStat.st_size;
-
-					strncpy(fileinfo->filename,d->d_name,256);
-
 					free(tmpstr);
 					return (void*)dir;
+
 				}
 
 				free(tmpstr);
@@ -160,7 +184,6 @@ int fs_find_next_file(DIR* dir, char *folder, filefoundinfo* fileinfo)
 {
 	int ret;
 	struct dirent *d;
-	struct stat fileStat;
 	char * tmpstr;
 
 	d = readdir (dir);
@@ -176,16 +199,8 @@ int fs_find_next_file(DIR* dir, char *folder, filefoundinfo* fileinfo)
 			strcat(tmpstr,"/");
 			strcat(tmpstr,d->d_name);
 
-			if( !stat (tmpstr, &fileStat) )
+			if( fs_entry_stat( tmpstr, fileinfo ) )
 			{
-				if ( S_ISDIR ( fileStat.st_mode ) )
-					fileinfo->isdirectory = 1;
-				else
-					fileinfo->isdirectory = 0;
-
-				fileinfo->size=fileStat.st_size;
-				strncpy(fileinfo->filename,d->d_name,256);
-
 				ret = 1;
 				free(tmpstr);
 				return ret;
@@ -362,9 +377,9 @@ fs_entry * add_entry(fs_handles_db * db, filefoundinfo *fileinfo, uint32_t paren
 int scan_and_add_folder(fs_handles_db * db, char * base, uint32_t parent, uint32_t storage_id)
 {
 	fs_entry * entry;
-    char * path;
+	char * path;
 	DIR* dir;
-    int ret;
+	int ret;
 	filefoundinfo fileinfo;
 	struct stat entrystat;
 
@@ -391,32 +406,32 @@ int scan_and_add_folder(fs_handles_db * db, char * base, uint32_t parent, uint32
 		fs_find_close(dir);
 	}
 
-    // Scan the DB to find and remove deleted files...
-    init_search_handle(db, parent, storage_id);
-    do
-    {
-        entry = get_next_child_handle(db);
-        if(entry)
-        {
-            path = build_full_path(db, mtp_get_storage_root(db->mtp_ctx, entry->storage_id), entry);
+	// Scan the DB to find and remove deleted files...
+	init_search_handle(db, parent, storage_id);
+	do
+	{
+		entry = get_next_child_handle(db);
+		if(entry)
+		{
+			path = build_full_path(db, mtp_get_storage_root(db->mtp_ctx, entry->storage_id), entry);
 
-            if(path)
-            {
-                ret = stat(path, &entrystat);
-                if(ret)
-                {
-                    PRINT_DEBUG("scan_and_add_folder : discard entry %s - stat error", path);
-                    entry->flags |= ENTRY_IS_DELETED;
-                }
-                else
-                {
-                    entry->size = entrystat.st_size;
-                }
+			if(path)
+			{
+				ret = stat(path, &entrystat);
+				if(ret)
+				{
+					PRINT_DEBUG("scan_and_add_folder : discard entry %s - stat error", path);
+					entry->flags |= ENTRY_IS_DELETED;
+				}
+				else
+				{
+					entry->size = entrystat.st_size;
+				}
 
-                free(path);
-            }
-        }
-    }while(entry);
+				free(path);
+			}
+		}
+	}while(entry);
 
 	return 0;
 }
@@ -605,5 +620,24 @@ void entry_close(FILE * f)
 {
 	if( f )
 		fclose(f);
+}
+
+fs_entry * get_entry_by_wd( fs_handles_db * db, int watch_descriptor )
+{
+	fs_entry * entry_list;
+
+	entry_list = db->entry_list;
+
+	while( entry_list )
+	{
+		if( !( entry_list->flags & ENTRY_IS_DELETED ) && ( entry_list->watch_descriptor == watch_descriptor ) )
+		{
+			return entry_list;
+		}
+
+		entry_list = entry_list->next;
+	}
+
+	return 0;
 }
 
