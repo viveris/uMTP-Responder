@@ -31,5 +31,6 @@
 int build_deviceinfo_dataset(mtp_ctx * ctx,void * buffer, int maxsize);
 int build_storageinfo_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uint32_t storageid);
 int build_objectinfo_dataset(mtp_ctx * ctx, void * buffer, int maxsize,fs_entry * entry);
+int build_event_dataset(mtp_ctx * ctx, void * buffer, int maxsize, uint32_t event, uint32_t session, uint32_t transaction, int nbparams, uint32_t * parameters);
 
 #endif

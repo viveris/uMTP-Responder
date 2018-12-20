@@ -203,3 +203,25 @@ int build_objectinfo_dataset(mtp_ctx * ctx, void * buffer, int maxsize,fs_entry 
 	}
 	return ofs;
 }
+
+int build_event_dataset(mtp_ctx * ctx, void * buffer, int maxsize, uint32_t event, uint32_t session, uint32_t transaction, int nbparams, uint32_t * parameters)
+{
+	int ofs,i;
+
+	ofs = 0;
+
+	poke(buffer, &ofs, 4, 0);                                            // Size
+	poke(buffer, &ofs, 2, MTP_CONTAINER_TYPE_EVENT);                     // Type
+	poke(buffer, &ofs, 2, event );                                       // Event Code
+	poke(buffer, &ofs, 4, transaction);                                  // MTP Transaction ID
+	for(i=0;i<nbparams;i++)
+	{
+		poke(buffer, &ofs, 4, parameters[i]);
+	}
+
+	// Update size
+	i = 0;
+	poke(buffer, &i, 4, ofs);
+
+	return ofs;
+}
