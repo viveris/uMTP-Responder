@@ -1068,12 +1068,12 @@ int mtp_push_event(mtp_ctx * ctx, uint32_t event, int nbparams, uint32_t * param
 
 	size = build_event_dataset( ctx, event_buffer, sizeof(event_buffer), event , ctx->session_id, 0xFFFFFFFF, nbparams, parameters);
 
-	PRINT_DEBUG("mtp_push_event : Event packet buffer - %d Bytes :");
+	PRINT_DEBUG("mtp_push_event : Event packet buffer - %d Bytes :",size);
 	PRINT_DEBUG_BUF(event_buffer, size);
 
 	ret = write_usb(ctx->usb_ctx,EP_DESCRIPTOR_INT_IN,event_buffer,size);
 
-	PRINT_DEBUG("write_usb return:%d", ret );
+	PRINT_DEBUG("write_usb return: %d", ret );
 
 	return ret;
 }
