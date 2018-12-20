@@ -76,16 +76,18 @@ int read_usb(usb_gadget * ctx, unsigned char * buffer, int maxsize)
 	return ret;
 }
 
-int write_usb(usb_gadget * ctx, unsigned char * buffer, int size)
+int write_usb(usb_gadget * ctx, int channel, unsigned char * buffer, int size)
 {
 	int ret;
 
 	ret = -1;
-	if(ctx->ep_handles[EP_DESCRIPTOR_IN] >= 0 && buffer)
+	if ( channel < EP_NB_OF_DESCRIPTORS )
 	{
-		ret = write (ctx->ep_handles[EP_DESCRIPTOR_IN], buffer, size);
+		if(ctx->ep_handles[channel] >= 0 && buffer)
+		{
+			ret = write (ctx->ep_handles[channel], buffer, size);
+		}
 	}
-
 	return ret;
 }
 

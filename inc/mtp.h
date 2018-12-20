@@ -119,6 +119,8 @@ uint32_t mtp_add_storage(mtp_ctx * ctx, char * path, char * description);
 char * mtp_get_storage_description(mtp_ctx * ctx, uint32_t storage_id);
 char * mtp_get_storage_root(mtp_ctx * ctx, uint32_t storage_id);
 
+int mtp_push_event(mtp_ctx * ctx, uint32_t event, int nbparams, uint32_t * parameters );
+
 void mtp_deinit_responder(mtp_ctx * ctx);
 
 #define APP_VERSION "v0.9.2"

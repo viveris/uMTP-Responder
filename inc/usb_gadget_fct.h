@@ -31,7 +31,7 @@
 usb_gadget * init_usb_mtp_gadget(mtp_ctx * ctx);
 
 int read_usb(usb_gadget * ctx, unsigned char * buffer, int maxsize);
-int write_usb(usb_gadget * ctx, unsigned char * buffer, int size);
+int write_usb(usb_gadget * ctx, int channel, unsigned char * buffer, int size);
 
 int handle_ep0(usb_gadget * ctx);
 int handle_ffs_ep0(usb_gadget * ctx);

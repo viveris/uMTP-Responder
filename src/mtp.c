@@ -407,7 +407,7 @@ int check_and_send_USB_ZLP(mtp_ctx * ctx , int size)
 		PRINT_DEBUG("%d bytes transfert ended - ZLP packet needed", size);
 
 		// Yes - Send zero lenght packet.
-		write_usb(ctx->usb_ctx,ctx->wrbuffer,0);
+		write_usb(ctx->usb_ctx,EP_DESCRIPTOR_IN,ctx->wrbuffer,0);
 
 		return 1;
 	}
@@ -460,7 +460,7 @@ int send_file_data( mtp_ctx * ctx, fs_entry * entry,uint32_t offset, uint32_t ma
 
 			PRINT_DEBUG("---> %d (%d)",j,ofs);
 
-			write_usb(ctx->usb_ctx,ctx->wrbuffer,ofs);
+			write_usb(ctx->usb_ctx,EP_DESCRIPTOR_IN,ctx->wrbuffer,ofs);
 
 			ofs = 0;
 
@@ -541,7 +541,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 			ofs = 0;
 			poke(ctx->wrbuffer, &ofs, 4, size);
 
-			write_usb(ctx->usb_ctx,ctx->wrbuffer,size);
+			write_usb(ctx->usb_ctx,EP_DESCRIPTOR_IN,ctx->wrbuffer,size);
 
 			check_and_send_USB_ZLP(ctx , size );
 
@@ -567,7 +567,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 			ofs = 0;
 			poke(ctx->wrbuffer, &ofs, 4, size);
 
-			write_usb(ctx->usb_ctx,ctx->wrbuffer,size);
+			write_usb(ctx->usb_ctx,EP_DESCRIPTOR_IN,ctx->wrbuffer,size);
 
 			check_and_send_USB_ZLP(ctx , size );
 
@@ -588,7 +588,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 				ofs = 0;
 				poke(ctx->wrbuffer, &ofs, 4, size);
 
-				write_usb(ctx->usb_ctx,ctx->wrbuffer,size);
+				write_usb(ctx->usb_ctx,EP_DESCRIPTOR_IN,ctx->wrbuffer,size);
 
 				check_and_send_USB_ZLP(ctx , size );
 
@@ -692,7 +692,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 				}while( ofs < ctx->max_packet_size && handle_index < nb_of_handles);
 
 				// Current usb packet full, need to send it.
-				write_usb(ctx->usb_ctx,ctx->wrbuffer,ofs);
+				write_usb(ctx->usb_ctx,EP_DESCRIPTOR_IN,ctx->wrbuffer,ofs);
 
 				ofs = 0;
 
@@ -716,7 +716,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 				i = 0;
 				poke(ctx->wrbuffer, &i, 4, size);
-				write_usb(ctx->usb_ctx,ctx->wrbuffer,size);
+				write_usb(ctx->usb_ctx,EP_DESCRIPTOR_IN,ctx->wrbuffer,size);
 
 				check_and_send_USB_ZLP(ctx , size );
 
@@ -904,8 +904,9 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 	if(!no_response)
 	{
 		size = build_response(ctx, mtp_packet_hdr->tx_id,MTP_CONTAINER_TYPE_RESPONSE, response_code, ctx->wrbuffer,&params,sizeof(params));
-		write_usb(ctx->usb_ctx,ctx->wrbuffer,size);
+		write_usb(ctx->usb_ctx,EP_DESCRIPTOR_IN,ctx->wrbuffer,size);
 	}
+
 	return 0; // TODO Return usb error code.
 }
 
@@ -1059,3 +1060,20 @@ char * mtp_get_storage_description(mtp_ctx * ctx, uint32_t storage_id)
 	return NULL;
 }
 
+int mtp_push_event(mtp_ctx * ctx, uint32_t event, int nbparams, uint32_t * parameters )
+{
+	unsigned char event_buffer[64];
+	int size;
+	int ret;
+
+	size = build_event_dataset( ctx, event_buffer, sizeof(event_buffer), event , ctx->session_id, 0xFFFFFFFF, nbparams, parameters);
+
+	PRINT_DEBUG("mtp_push_event : Event packet buffer - %d Bytes :");
+	PRINT_DEBUG_BUF(event_buffer, size);
+
+	ret = write_usb(ctx->usb_ctx,EP_DESCRIPTOR_INT_IN,event_buffer,size);
+
+	PRINT_DEBUG("write_usb return:%d", ret );
+
+	return ret;
+}
