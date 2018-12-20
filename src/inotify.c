@@ -51,6 +51,8 @@
 
 #include "inotify.h"
 
+#include "mtp_constant.h"
+
 #define INOTIFY_RD_BUF_SIZE ( 1024 * (  ( sizeof (struct inotify_event) ) + 16 ) )
 
 static int get_file_info(mtp_ctx * ctx, const struct inotify_event *event, fs_entry * entry, filefoundinfo * fileinfo, int deleted)
@@ -102,7 +104,7 @@ void* inotify_thread(void* arg)
 	fs_entry * deleted_entry;
 	fs_entry * new_entry;
 	filefoundinfo fileinfo;
-
+	uint32_t handle[3];
 	char buffer[INOTIFY_RD_BUF_SIZE] __attribute__ ((aligned(__alignof__(struct inotify_event))));
 	const struct inotify_event *event;
 
@@ -127,7 +129,10 @@ void* inotify_thread(void* arg)
 						{
 							new_entry = add_entry( ctx->fs_db, &fileinfo, entry->handle, entry->storage_id );
 
-							// TODO HERE -> Send an "ObjectAdded" (0x4002) MTP event message with the entry handle.
+							// Send an "ObjectAdded" (0x4002) MTP event message with the entry handle.
+							handle[0] = new_entry->handle;
+
+							mtp_push_event( ctx, MTP_EVENT_OBJECT_ADDED, 1, (uint32_t *)&handle );
 
 							PRINT_DEBUG( "inotify_thread : Entry %s created (Handle 0x%.8X)", event->name, new_entry->handle );
 						}
@@ -144,7 +149,9 @@ void* inotify_thread(void* arg)
 								{
 									deleted_entry->flags |= ENTRY_IS_DELETED;
 
-									// TODO HERE -> Send an "ObjectRemoved" (0x4003) MTP event message with the entry handle.
+									// Send an "ObjectRemoved" (0x4003) MTP event message with the entry handle.
+									handle[0] = new_entry->handle;
+									mtp_push_event( ctx, MTP_EVENT_OBJECT_REMOVED, 1, (uint32_t *)&handle );
 
 									PRINT_DEBUG( "inotify_thread : Entry %s deleted (Handle 0x%.8X)", event->name, deleted_entry->handle);
 								}
