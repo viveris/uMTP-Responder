@@ -74,7 +74,10 @@ enum
 	WAIT_CONNECTION,
 	LOOP_ON_DISCONNECT,
 
-	SHOW_HIDDEN_FILES
+	SHOW_HIDDEN_FILES,
+
+	NO_INOTIFY
+
 };
 
 typedef struct kw_list_
@@ -289,6 +292,11 @@ int get_hex_param(mtp_ctx * context, char * line,int cmd)
 			case SHOW_HIDDEN_FILES:
 				context->usb_cfg.show_hidden_files = param_value;
 			break;
+
+			case NO_INOTIFY:
+				context->no_inotify = param_value;
+			break;
+
 		}
 	}
 
@@ -369,6 +377,8 @@ kw_list kwlist[] =
 
 	{"show_hidden_files",   get_hex_param,      SHOW_HIDDEN_FILES},
 
+	{"no_inotify",          get_hex_param,      NO_INOTIFY},
+
 	{ 0, 0, 0 }
 };
 
@@ -446,6 +456,8 @@ int mtp_load_config_file(mtp_ctx * context)
 
 	context->usb_cfg.show_hidden_files = 1;
 
+	context->no_inotify = 0;
+
 	f = fopen(UMTPR_CONF_FILE,"r");
 	if(f)
 	{
@@ -494,6 +506,7 @@ int mtp_load_config_file(mtp_ctx * context)
 	PRINT_MSG("Wait for connection : %i",context->usb_cfg.wait_connection);
 	PRINT_MSG("Loop on disconnect : %i",context->usb_cfg.loop_on_disconnect);
 	PRINT_MSG("Show hidden files : %i",context->usb_cfg.show_hidden_files);
+	PRINT_MSG("inotify : %s",context->no_inotify?"no":"yes");
 
 	return err;
 }
