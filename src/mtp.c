@@ -34,6 +34,8 @@
 
 #include <sys/types.h>
 
+#include <pthread.h>
+
 #include "logs_out.h"
 
 #include "mtp_helpers.h"
@@ -81,6 +83,8 @@ mtp_ctx * mtp_init_responder()
 		ctx->temp_array = malloc( MAX_STORAGE_NB * sizeof(uint32_t) );
 		if(!ctx->temp_array)
 			goto init_error;
+
+		pthread_mutex_init ( &ctx->inotify_mutex, NULL);
 
 		inotify_handler_init( ctx );
 
@@ -153,7 +157,14 @@ int delete_tree(mtp_ctx * ctx,uint32_t handle)
 				ret = fs_remove_tree( path );
 
 				if(!ret)
+				{
 					entry->flags |= ENTRY_IS_DELETED;
+					if( entry->watch_descriptor != -1 )
+					{
+						inotify_handler_rmwatch( ctx, entry->watch_descriptor );
+						entry->watch_descriptor = -1;
+					}
+				}
 				else
 					scan_and_add_folder(ctx->fs_db, path, handle, entry->storage_id); // partially deleted ? update/sync the db.
 			}
@@ -161,7 +172,14 @@ int delete_tree(mtp_ctx * ctx,uint32_t handle)
 			{
 				ret = remove(path);
 				if(!ret)
+				{
 					entry->flags |= ENTRY_IS_DELETED;
+					if( entry->watch_descriptor != -1 )
+					{
+						inotify_handler_rmwatch( ctx, entry->watch_descriptor );
+						entry->watch_descriptor = -1;
+					}
+				}
 			}
 
 			free(path);
@@ -511,7 +529,9 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 			i = 0;
 			while( (i < MAX_STORAGE_NB) && ctx->storages[i].root_path)
 			{
+				pthread_mutex_lock( &ctx->inotify_mutex );
 				alloc_root_entry(ctx->fs_db, ctx->storages[i].storage_id);
+				pthread_mutex_unlock( &ctx->inotify_mutex );
 
 				i++;
 			}
@@ -524,6 +544,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 		case MTP_OPERATION_CLOSE_SESSION:
 
+			inotify_handler_deinit( ctx );
 			deinit_fs_db(ctx->fs_db);
 
 			ctx->fs_db = 0;
@@ -602,6 +623,8 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 		case MTP_OPERATION_GET_OBJECT_HANDLES:
 
+			pthread_mutex_lock( &ctx->inotify_mutex );
+
 			storageid = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER) + 0, 4);        // Get param 1 - Storage ID
 
 			i = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer,0,0);
@@ -648,7 +671,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 				while( get_next_child_handle(ctx->fs_db) )
 				{
-				   nb_of_handles++;
+					nb_of_handles++;
 				}
 
 				// Restart
@@ -698,6 +721,8 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 			}while( handle_index < nb_of_handles);
 
+			pthread_mutex_unlock( &ctx->inotify_mutex );
+
 			// Total size = Header size + nb of handles field (uint32_t) + all handles
 			check_and_send_USB_ZLP(ctx , sizeof(MTP_PACKET_HEADER) + sizeof(uint32_t) + (nb_of_handles * sizeof(uint32_t)) );
 
@@ -706,6 +731,8 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 		break;
 
 		case MTP_OPERATION_GET_OBJECT_INFO:
+
+			pthread_mutex_lock( &ctx->inotify_mutex );
 
 			handle = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER), 4); // Get param 1 - object handle
 			entry = get_entry_by_handle(ctx->fs_db, handle);
@@ -729,9 +756,13 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 				response_code = MTP_RESPONSE_INVALID_OBJECT_HANDLE;
 			}
 
+			pthread_mutex_unlock( &ctx->inotify_mutex );
+
 		break;
 
 		case MTP_OPERATION_GET_PARTIAL_OBJECT:
+
+			pthread_mutex_lock( &ctx->inotify_mutex );
 
 			handle = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER), 4);      // Get param 1 - Object handle
 			offset = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER) + 4, 4);  // Get param 2 - Offset in bytes
@@ -759,9 +790,13 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 				response_code = MTP_RESPONSE_INVALID_OBJECT_HANDLE;
 			}
 
+			pthread_mutex_unlock( &ctx->inotify_mutex );
+
 		break;
 
 		case MTP_OPERATION_GET_OBJECT:
+
+			pthread_mutex_lock( &ctx->inotify_mutex );
 
 			handle = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER), 4); // Get param 1 - object handle
 			entry = get_entry_by_handle(ctx->fs_db, handle);
@@ -780,9 +815,13 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 				response_code = MTP_RESPONSE_INVALID_OBJECT_HANDLE;
 			}
 
+			pthread_mutex_unlock( &ctx->inotify_mutex );
+
 		break;
 
 		case MTP_OPERATION_SEND_OBJECT_INFO:
+
+			pthread_mutex_lock( &ctx->inotify_mutex );
 
 			storageid = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER), 4);         // Get param 1 - storage id
 			parent_handle = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER) + 4, 4); // Get param 2 - parent handle
@@ -801,9 +840,13 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 				params[2] = new_handle;
 			}
 
+			pthread_mutex_unlock( &ctx->inotify_mutex );
+
 		break;
 
 		case MTP_OPERATION_SEND_OBJECT:
+
+			pthread_mutex_lock( &ctx->inotify_mutex );
 
 			response_code = MTP_RESPONSE_GENERAL_ERROR;
 
@@ -874,9 +917,14 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 				response_code = MTP_RESPONSE_INVALID_OBJECT_HANDLE;
 			}
+
+			pthread_mutex_unlock( &ctx->inotify_mutex );
+
 		break;
 
 		case MTP_OPERATION_DELETE_OBJECT:
+
+			pthread_mutex_lock( &ctx->inotify_mutex );
 
 			handle = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER), 4); // Get param 1 - object handle
 
@@ -888,6 +936,8 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 			{
 				response_code = MTP_RESPONSE_OK;
 			}
+
+			pthread_mutex_unlock( &ctx->inotify_mutex );
 
 		break;
 

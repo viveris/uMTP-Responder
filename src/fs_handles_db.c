@@ -35,6 +35,7 @@
 #include "logs_out.h"
 #include "fs_handles_db.h"
 #include "mtp.h"
+#include "inotify.h"
 
 int fs_remove_tree( char *folder )
 {
@@ -422,6 +423,11 @@ int scan_and_add_folder(fs_handles_db * db, char * base, uint32_t parent, uint32
 				{
 					PRINT_DEBUG("scan_and_add_folder : discard entry %s - stat error", path);
 					entry->flags |= ENTRY_IS_DELETED;
+					if( entry->watch_descriptor != -1 )
+					{
+						inotify_handler_rmwatch( db->mtp_ctx, entry->watch_descriptor );
+						entry->watch_descriptor = -1;
+					}
 				}
 				else
 				{

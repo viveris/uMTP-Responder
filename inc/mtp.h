@@ -105,6 +105,9 @@ typedef struct mtp_ctx_
 
 	int inotify_fd;
 	pthread_t inotify_thread;
+	pthread_mutex_t inotify_mutex;
+
+	int no_inotify;
 
 }mtp_ctx;
 

@@ -38,6 +38,8 @@
 #include <unistd.h>
 #include <sys/types.h>
 
+#include <signal.h>
+
 #include "logs_out.h"
 
 #include "mtp_helpers.h"
@@ -96,6 +98,11 @@ static int get_file_info(mtp_ctx * ctx, const struct inotify_event *event, fs_en
 	return 0;
 }
 
+void *inotify_gotsig(int sig, siginfo_t *info, void *ucontext)
+{
+	return NULL;
+}
+
 void* inotify_thread(void* arg)
 {
 	mtp_ctx * ctx;
@@ -107,8 +114,19 @@ void* inotify_thread(void* arg)
 	uint32_t handle[3];
 	char buffer[INOTIFY_RD_BUF_SIZE] __attribute__ ((aligned(__alignof__(struct inotify_event))));
 	const struct inotify_event *event;
+	struct sigaction sa;
 
 	ctx = (mtp_ctx *)arg;
+
+	sa.sa_handler = NULL;
+	sa.sa_sigaction =  (void *)inotify_gotsig;
+	sa.sa_flags = SA_SIGINFO;
+	sigemptyset(&sa.sa_mask);
+
+	if (sigaction(SIGUSR1, &sa, NULL) < 0)
+	{
+		return (void *)-1;
+	}
 
 	for (;;)
 	{
@@ -124,6 +142,7 @@ void* inotify_thread(void* arg)
 				{
 					if ( event->mask & IN_CREATE )
 					{
+						pthread_mutex_lock( &ctx->inotify_mutex );
 						entry = get_entry_by_wd( ctx->fs_db, event->wd );
 						if ( get_file_info( ctx, event, entry, &fileinfo, 0 ) )
 						{
@@ -136,11 +155,14 @@ void* inotify_thread(void* arg)
 
 							PRINT_DEBUG( "inotify_thread : Entry %s created (Handle 0x%.8X)", event->name, new_entry->handle );
 						}
+						pthread_mutex_unlock( &ctx->inotify_mutex );
 					}
 					else
 					{
 						if ( event->mask & IN_DELETE )
 						{
+							pthread_mutex_lock( &ctx->inotify_mutex );
+
 							entry = get_entry_by_wd( ctx->fs_db, event->wd );
 							if ( get_file_info( ctx, event, entry, &fileinfo, 1 ) )
 							{
@@ -148,6 +170,11 @@ void* inotify_thread(void* arg)
 								if( deleted_entry )
 								{
 									deleted_entry->flags |= ENTRY_IS_DELETED;
+									if( deleted_entry->watch_descriptor != -1 )
+									{
+										inotify_handler_rmwatch( ctx, deleted_entry->watch_descriptor );
+										deleted_entry->watch_descriptor = -1;
+									}
 
 									// Send an "ObjectRemoved" (0x4003) MTP event message with the entry handle.
 									handle[0] = new_entry->handle;
@@ -156,6 +183,8 @@ void* inotify_thread(void* arg)
 									PRINT_DEBUG( "inotify_thread : Entry %s deleted (Handle 0x%.8X)", event->name, deleted_entry->handle);
 								}
 							}
+
+							pthread_mutex_unlock( &ctx->inotify_mutex );
 						}
 					}
 
@@ -163,10 +192,14 @@ void* inotify_thread(void* arg)
 				}
 			}
 		}
+		else
+		{
+			PRINT_DEBUG( "inotify_thread : read error %d",length );
+			return NULL;
+		}
 	}
 
 	return NULL;
-
 }
 
 int inotify_handler_init( mtp_ctx * ctx )
@@ -187,10 +220,14 @@ int inotify_handler_init( mtp_ctx * ctx )
 
 int inotify_handler_deinit( mtp_ctx * ctx )
 {
+	void * ret;
+
 	if( ctx )
 	{
 		if( ctx->inotify_fd != -1 )
 		{
+			pthread_kill( ctx->inotify_thread, SIGUSR1);
+			pthread_join( ctx->inotify_thread, &ret);
 			close( ctx->inotify_fd );
 			ctx->inotify_fd = -1;
 		}
@@ -205,9 +242,21 @@ int inotify_handler_addwatch( mtp_ctx * ctx, char * path )
 {
 	if( ctx->inotify_fd != -1 )
 	{
-		return inotify_add_watch( ctx->inotify_fd, path, IN_CREATE | IN_DELETE );
+		if( !ctx->no_inotify )
+		{
+			return inotify_add_watch( ctx->inotify_fd, path, IN_CREATE | IN_DELETE );
+		}
 	}
 
 	return -1;
 }
 
+int inotify_handler_rmwatch( mtp_ctx * ctx, int wd )
+{
+	if( ctx->inotify_fd != -1 && wd != -1 )
+	{
+		return inotify_rm_watch( ctx->inotify_fd, wd );
+	}
+
+	return -1;
+}
