@@ -69,12 +69,12 @@ static int get_file_info(mtp_ctx * ctx, const struct inotify_event *event, fs_en
 		path = build_full_path( ctx->fs_db, mtp_get_storage_root( ctx, entry->storage_id), entry);
 		if( path )
 		{
-			tmp_path = malloc( strlen(path) + strlen(event->name) + 3 );
+			tmp_path = malloc( strlen(path) + event->len + 3 );
 			if( tmp_path )
 			{
 				strcpy( tmp_path, path );
 				strcat( tmp_path, "/" );
-				strcat( tmp_path, event->name );
+				strncat( tmp_path, event->name, event->len );
 
 				if( !deleted )
 				{
@@ -113,7 +113,7 @@ void* inotify_thread(void* arg)
 	fs_entry * old_entry;
 	filefoundinfo fileinfo;
 	uint32_t handle[3];
-	char buffer[INOTIFY_RD_BUF_SIZE] __attribute__ ((aligned(__alignof__(struct inotify_event))));
+	char inotify_buffer[INOTIFY_RD_BUF_SIZE] __attribute__ ((aligned(__alignof__(struct inotify_event))));
 	const struct inotify_event *event;
 	struct sigaction sa;
 
@@ -131,7 +131,8 @@ void* inotify_thread(void* arg)
 
 	for (;;)
 	{
-		length = read(ctx->inotify_fd, buffer, sizeof(buffer));
+		memset(inotify_buffer,0,sizeof(inotify_buffer));
+		length = read(ctx->inotify_fd, inotify_buffer, sizeof(inotify_buffer));
 
 		if ( length >= 0 )
 		{
@@ -141,8 +142,10 @@ void* inotify_thread(void* arg)
 			i = 0;
 			while ( i < length && i < INOTIFY_RD_BUF_SIZE )
 			{
-				event = ( struct inotify_event * ) &buffer[ i ];
-				if ( event->len )
+				event = ( struct inotify_event * ) &inotify_buffer[ i ];
+
+				// Sanity check to prevent possible buffer overrun/overflow.
+				if ( event->len && (i + (( sizeof (struct inotify_event) ) + event->len) < sizeof(inotify_buffer)) )
 				{
 					if ( event->mask & IN_CREATE )
 					{
