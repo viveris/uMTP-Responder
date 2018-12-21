@@ -55,7 +55,7 @@
 
 #include "mtp_constant.h"
 
-#define INOTIFY_RD_BUF_SIZE ( 1024 * (  ( sizeof (struct inotify_event) ) + 16 ) )
+#define INOTIFY_RD_BUF_SIZE ( 32*1024 )
 
 static int get_file_info(mtp_ctx * ctx, const struct inotify_event *event, fs_entry * entry, filefoundinfo * fileinfo, int deleted)
 {
@@ -110,6 +110,7 @@ void* inotify_thread(void* arg)
 	fs_entry * entry;
 	fs_entry * deleted_entry;
 	fs_entry * new_entry;
+	fs_entry * old_entry;
 	filefoundinfo fileinfo;
 	uint32_t handle[3];
 	char buffer[INOTIFY_RD_BUF_SIZE] __attribute__ ((aligned(__alignof__(struct inotify_event))));
@@ -130,12 +131,15 @@ void* inotify_thread(void* arg)
 
 	for (;;)
 	{
-		length = read(ctx->inotify_fd, buffer, sizeof buffer);
-		if (length >= 0)
-		{
-			i = 0;
+		length = read(ctx->inotify_fd, buffer, sizeof(buffer));
 
-			while ( i < length )
+		if ( length >= 0 )
+		{
+			if(!length)
+				PRINT_DEBUG( "inotify_thread : Null sized packet ?");
+
+			i = 0;
+			while ( i < length && i < INOTIFY_RD_BUF_SIZE )
 			{
 				event = ( struct inotify_event * ) &buffer[ i ];
 				if ( event->len )
@@ -146,14 +150,27 @@ void* inotify_thread(void* arg)
 						entry = get_entry_by_wd( ctx->fs_db, event->wd );
 						if ( get_file_info( ctx, event, entry, &fileinfo, 0 ) )
 						{
-							new_entry = add_entry( ctx->fs_db, &fileinfo, entry->handle, entry->storage_id );
+							old_entry = search_entry(ctx->fs_db, &fileinfo, entry->handle, entry->storage_id);
+							if( !old_entry )
+							{
+								// If the entry is not in the db, add it and trigger an MTP_EVENT_OBJECT_ADDED event
+								new_entry = add_entry( ctx->fs_db, &fileinfo, entry->handle, entry->storage_id );
 
-							// Send an "ObjectAdded" (0x4002) MTP event message with the entry handle.
-							handle[0] = new_entry->handle;
+								// Send an "ObjectAdded" (0x4002) MTP event message with the entry handle.
+								handle[0] = new_entry->handle;
 
-							mtp_push_event( ctx, MTP_EVENT_OBJECT_ADDED, 1, (uint32_t *)&handle );
+								mtp_push_event( ctx, MTP_EVENT_OBJECT_ADDED, 1, (uint32_t *)&handle );
 
-							PRINT_DEBUG( "inotify_thread : Entry %s created (Handle 0x%.8X)", event->name, new_entry->handle );
+								PRINT_DEBUG( "inotify_thread (IN_CREATE): Entry %s created (Handle 0x%.8X)", event->name, new_entry->handle );
+							}
+							else
+							{
+								PRINT_DEBUG( "inotify_thread (IN_CREATE): Entry %s already in the db ! (Handle 0x%.8X)", event->name, new_entry->handle );
+							}
+						}
+						else
+						{
+							PRINT_DEBUG( "inotify_thread (IN_CREATE): Watch point descriptor not found in the db ! (Descriptor 0x%.8X)", event->wd );
 						}
 						pthread_mutex_unlock( &ctx->inotify_mutex );
 					}
@@ -177,19 +194,23 @@ void* inotify_thread(void* arg)
 									}
 
 									// Send an "ObjectRemoved" (0x4003) MTP event message with the entry handle.
-									handle[0] = new_entry->handle;
+									handle[0] = deleted_entry->handle;
 									mtp_push_event( ctx, MTP_EVENT_OBJECT_REMOVED, 1, (uint32_t *)&handle );
 
-									PRINT_DEBUG( "inotify_thread : Entry %s deleted (Handle 0x%.8X)", event->name, deleted_entry->handle);
+									PRINT_DEBUG( "inotify_thread (IN_DELETE): Entry %s deleted (Handle 0x%.8X)", event->name, deleted_entry->handle);
 								}
+							}
+							else
+							{
+								PRINT_DEBUG( "inotify_thread (IN_DELETE): Watch point descriptor not found in the db ! (Descriptor 0x%.8X)", event->wd );
 							}
 
 							pthread_mutex_unlock( &ctx->inotify_mutex );
 						}
 					}
-
-					i +=  (( sizeof (struct inotify_event) ) + event->len);
 				}
+
+				i +=  (( sizeof (struct inotify_event) ) + event->len);
 			}
 		}
 		else
