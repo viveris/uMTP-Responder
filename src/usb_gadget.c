@@ -62,6 +62,7 @@ static struct usb_gadget_strings strings = {
 };
 
 extern void* io_thread(void* arg);
+extern mtp_ctx * mtp_context;
 
 int read_usb(usb_gadget * ctx, unsigned char * buffer, int maxsize)
 {
@@ -541,6 +542,12 @@ int handle_ffs_ep0(usb_gadget * ctx)
 				}
 				// But don't close the endpoints !
 				ctx->stop = 0;
+
+				// Drop the file system db
+				pthread_mutex_lock( &mtp_context->inotify_mutex );
+				deinit_fs_db(mtp_context->fs_db);
+				mtp_context->fs_db = 0;
+				pthread_mutex_unlock( &mtp_context->inotify_mutex );
 
 				break;
 			case FUNCTIONFS_SETUP:
