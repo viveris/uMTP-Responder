@@ -226,6 +226,8 @@ fs_handles_db * init_fs_db(void * mtp_ctx)
 {
 	fs_handles_db * db;
 
+	PRINT_DEBUG("init_fs_db called");
+
 	db = (fs_handles_db *)malloc(sizeof(fs_handles_db));
 	if( db )
 	{
@@ -240,6 +242,8 @@ fs_handles_db * init_fs_db(void * mtp_ctx)
 void deinit_fs_db(fs_handles_db * fsh)
 {
 	fs_entry * next_entry;
+
+	PRINT_DEBUG("deinit_fs_db called");
 
 	if( fsh )
 	{
