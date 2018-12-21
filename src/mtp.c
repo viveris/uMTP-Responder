@@ -544,7 +544,6 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 		case MTP_OPERATION_CLOSE_SESSION:
 
-			inotify_handler_deinit( ctx );
 			deinit_fs_db(ctx->fs_db);
 
 			ctx->fs_db = 0;

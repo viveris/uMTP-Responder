@@ -247,6 +247,13 @@ void deinit_fs_db(fs_handles_db * fsh)
 		{
 			next_entry = fsh->entry_list->next;
 
+			if( fsh->entry_list->watch_descriptor != -1 )
+			{
+				// Disable the inotify watch point
+				inotify_handler_rmwatch( fsh->mtp_ctx, fsh->entry_list->watch_descriptor );
+				fsh->entry_list->watch_descriptor = -1;
+			}
+
 			if( fsh->entry_list->name )
 				free( fsh->entry_list->name );
 
