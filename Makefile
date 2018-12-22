@@ -1,5 +1,5 @@
 
-override CFLAGS += -I./inc -lpthread -Wall
+override CFLAGS += -I./inc -lpthread -Wall -O3
 
 all: output_dir umtprd
 
