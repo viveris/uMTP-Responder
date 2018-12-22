@@ -213,7 +213,7 @@ int build_event_dataset(mtp_ctx * ctx, void * buffer, int maxsize, uint32_t even
 	poke(buffer, &ofs, 4, 0);                                            // Size
 	poke(buffer, &ofs, 2, MTP_CONTAINER_TYPE_EVENT);                     // Type
 	poke(buffer, &ofs, 2, event );                                       // Event Code
-	poke(buffer, &ofs, 4, transaction);                                  // MTP Transaction ID
+	poke(buffer, &ofs, 4, ctx->session_id);                              // MTP Session ID
 	for(i=0;i<nbparams;i++)
 	{
 		poke(buffer, &ofs, 4, parameters[i]);
