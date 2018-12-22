@@ -561,6 +561,9 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 			ofs = 0;
 			poke(ctx->wrbuffer, &ofs, 4, size);
 
+			PRINT_DEBUG("MTP_OPERATION_GET_DEVICE_INFO response (%d Bytes):",size);
+			PRINT_DEBUG_BUF(ctx->wrbuffer, size);
+
 			write_usb(ctx->usb_ctx,EP_DESCRIPTOR_IN,ctx->wrbuffer,size);
 
 			check_and_send_USB_ZLP(ctx , size );
@@ -587,6 +590,9 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 			ofs = 0;
 			poke(ctx->wrbuffer, &ofs, 4, size);
 
+			PRINT_DEBUG("MTP_OPERATION_GET_STORAGE_IDS response (%d Bytes):",size);
+			PRINT_DEBUG_BUF(ctx->wrbuffer, size);
+
 			write_usb(ctx->usb_ctx,EP_DESCRIPTOR_IN,ctx->wrbuffer,size);
 
 			check_and_send_USB_ZLP(ctx , size );
@@ -607,6 +613,9 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 				// Update packet size
 				ofs = 0;
 				poke(ctx->wrbuffer, &ofs, 4, size);
+
+				PRINT_DEBUG("MTP_OPERATION_GET_STORAGE_INFO response (%d Bytes):",size);
+				PRINT_DEBUG_BUF(ctx->wrbuffer, size);
 
 				write_usb(ctx->usb_ctx,EP_DESCRIPTOR_IN,ctx->wrbuffer,size);
 
@@ -698,6 +707,8 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 			poke(ctx->wrbuffer, &ofs, 4, nb_of_handles);
 
+			PRINT_DEBUG("MTP_OPERATION_GET_OBJECT_HANDLES response :");
+
 			handle_index = 0;
 			do
 			{
@@ -713,6 +724,8 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 					}
 				}while( ofs < ctx->max_packet_size && handle_index < nb_of_handles);
 
+				PRINT_DEBUG_BUF(ctx->wrbuffer, ofs);
+
 				// Current usb packet full, need to send it.
 				write_usb(ctx->usb_ctx,EP_DESCRIPTOR_IN,ctx->wrbuffer,ofs);
 
@@ -720,10 +733,10 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 			}while( handle_index < nb_of_handles);
 
-			pthread_mutex_unlock( &ctx->inotify_mutex );
-
 			// Total size = Header size + nb of handles field (uint32_t) + all handles
 			check_and_send_USB_ZLP(ctx , sizeof(MTP_PACKET_HEADER) + sizeof(uint32_t) + (nb_of_handles * sizeof(uint32_t)) );
+
+			pthread_mutex_unlock( &ctx->inotify_mutex );
 
 			response_code = MTP_RESPONSE_OK;
 
@@ -742,6 +755,10 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 				i = 0;
 				poke(ctx->wrbuffer, &i, 4, size);
+
+				PRINT_DEBUG("MTP_OPERATION_GET_OBJECT_INFO response (%d Bytes):",size);
+				PRINT_DEBUG_BUF(ctx->wrbuffer, size);
+
 				write_usb(ctx->usb_ctx,EP_DESCRIPTOR_IN,ctx->wrbuffer,size);
 
 				check_and_send_USB_ZLP(ctx , size );
@@ -953,6 +970,10 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 	if(!no_response)
 	{
 		size = build_response(ctx, mtp_packet_hdr->tx_id,MTP_CONTAINER_TYPE_RESPONSE, response_code, ctx->wrbuffer,&params,sizeof(params));
+
+		PRINT_DEBUG("Status response (%d Bytes):",size);
+		PRINT_DEBUG_BUF(ctx->wrbuffer, size);
+
 		write_usb(ctx->usb_ctx,EP_DESCRIPTOR_IN,ctx->wrbuffer,size);
 	}
 
@@ -1115,7 +1136,7 @@ int mtp_push_event(mtp_ctx * ctx, uint32_t event, int nbparams, uint32_t * param
 	int size;
 	int ret;
 
-	size = build_event_dataset( ctx, event_buffer, sizeof(event_buffer), event , ctx->session_id, 0xFFFFFFFF, nbparams, parameters);
+	size = build_event_dataset( ctx, event_buffer, sizeof(event_buffer), event , ctx->session_id, 0x00000000, nbparams, parameters);
 
 	PRINT_DEBUG("mtp_push_event : Event packet buffer - %d Bytes :",size);
 	PRINT_DEBUG_BUF(event_buffer, size);
