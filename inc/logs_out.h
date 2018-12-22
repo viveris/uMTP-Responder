@@ -61,19 +61,19 @@
 
 #define PRINT_MSG(fmt, args...)   {                               \
                                     fprintf(stdout,               \
-                                            "[uMTPrd - Info] " fmt "\r\n", \
+                                            "[uMTPrd - Info] " fmt "\n", \
                                             ## args);             \
                                     fflush(stdout);               \
                                   }
 #define PRINT_ERROR(fmt, args...) {                                 \
                                     fprintf(stderr,                 \
-                                            "[uMTPrd - Error] " fmt "\r\n",  \
+                                            "[uMTPrd - Error] " fmt "\n",  \
                                             ## args);               \
                                     fflush(stderr);                 \
                                   }
 #define PRINT_WARN(fmt, args...)  {                                 \
                                     fprintf(stdout,                 \
-                                            "[uMTPrd - Warning] " fmt "\r\n",\
+                                            "[uMTPrd - Warning] " fmt "\n",\
                                             ## args);               \
                                     fflush(stdout);                 \
                                   }
@@ -81,7 +81,7 @@
 #ifdef DEBUG
 #define PRINT_DEBUG(fmt, args...) {                                 \
                                     fprintf(stdout,                 \
-                                            "[uMTPrd - Debug] " fmt "\r\n",  \
+                                            "[uMTPrd - Debug] " fmt "\n",  \
                                             ## args);               \
                                     fflush(stdout);                 \
                                   }
