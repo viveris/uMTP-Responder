@@ -379,14 +379,14 @@ stall:
 	{
 		if ( read (ctx->usb_device, &status, 0) < 0 )
 		{
-			PRINT_ERROR("handle_setup_request - stall : usb device read error !");
+			PRINT_DEBUG("handle_setup_request - stall : usb device read error !");
 		}
 	}
 	else
 	{
 		if ( write (ctx->usb_device, &status, 0) < 0 )
 		{
-			PRINT_ERROR("handle_setup_request - stall : usb device write error !");
+			PRINT_DEBUG("handle_setup_request - stall : usb device write error !");
 		}
 	}
 }
