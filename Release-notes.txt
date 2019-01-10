@@ -1,8 +1,17 @@
 =================================================
 * uMTP Responder
-* Copyright (c) 2018 Viveris Technologies
+* Copyright (c) 2018 - 2019 Viveris Technologies
 * Release notes
 =================================================
+
+Noteworthy changes in release v0.9.7 (2019-1-10)
+=================================================
+
+* MTP event support added :
+
+    * The MTP initiator is now notified when files/folders are removed or added from the responder.
+
+* Various debug messages fixes and improvements.
 
 Noteworthy changes in release v0.9.2 (2018-12-5)
 =================================================
@@ -26,7 +35,7 @@ Noteworthy changes in release v0.8.6 (2018-6-30)
 
     * Severals memory leaks in daemon mode fixed.
 
-    * GadgetFs init/deinit reworked.
+    * GadgetFS init/deinit reworked.
 
 Noteworthy changes in release v0.8.1 (2018-5-9)
 =================================================
