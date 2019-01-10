@@ -69,7 +69,7 @@ A simple "make" should be enough if you build uMTPrd directly on the target.
 
 If you are using a cross-compile environment, set the "CC" variable to your GCC cross compiler.
 
-You can also enable the syslog support with the C flag "USE_SYSLOG" and the verbose/debug outputs with the "DEBUG" C flag.
+You can also enable the syslog support with the C flag "USE_SYSLOG" and the verbose/debug output with the "DEBUG" C flag.
 
 examples:
 
@@ -79,15 +79,15 @@ On a cross-compile environment :
 make CC=armv6j-hardfloat-linux-gnueabi-gcc
 ```
 
-On a cross-compile environment with both syslog support and debug outputs options enabled :
+On a cross-compile environment with both syslog support and debug output options enabled :
 
 ```c
 make CC=armv6j-hardfloat-linux-gnueabi-gcc CFLAGS="-DUSE_SYSLOG -DDEBUG"
 ```
 
-Note: Syslogs and debug outputs options can be enabled separately.
+Note: syslog support and debug output options can be enabled separately.
 
-(replace "armv6j-hardfloat-linux-gnueabi-gcc" with the target gcc cross-compiler)
+(replace "armv6j-hardfloat-linux-gnueabi-gcc" with your target gcc cross-compiler)
 
 ## How to set it up ?
 
