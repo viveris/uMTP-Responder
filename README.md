@@ -17,7 +17,7 @@ The uMTP-Responder allows files to be transferred to and from devices through th
 
 - As few dependencies as possible.
 
-- Hook to the FunctionFS/libcomposite or the Gadget FS Linux layer.
+- Hook to the FunctionFS/libcomposite or the GadgetFS Linux layer.
 
 - Dynamic handles allocation (No file-system pre-scan).
 
@@ -65,8 +65,30 @@ Any board with a USB device port should be compatible. The only requirement is t
 
 ## How to build it ?
 
-A simple "make" should be enough. If you are using a cross-compile environment, set the "CC" variable to your GCC cross compiler.
- 
+A simple "make" should be enough if you build uMTPrd directly on the target.
+
+If you are using a cross-compile environment, set the "CC" variable to your GCC cross compiler.
+
+You can also enable the syslog support with the C flag "USE_SYSLOG" and the verbose/debug outputs with the "DEBUG" C flag.
+
+examples:
+
+On a cross-compile environment :
+
+```c
+make CC=armv6j-hardfloat-linux-gnueabi-gcc
+```
+
+On a cross-compile environment with both syslog support and debug outputs options enabled :
+
+```c
+make CC=armv6j-hardfloat-linux-gnueabi-gcc CFLAGS="-DUSE_SYSLOG -DDEBUG"
+```
+
+Note: Syslogs and debug outputs options can be enabled separately.
+
+(replace "armv6j-hardfloat-linux-gnueabi-gcc" with the target gcc cross-compiler)
+
 ## How to set it up ?
 
 A config file should copied into the folder /etc/umtprd/umtprd.conf
@@ -80,4 +102,3 @@ Once you have configured the correct settings in umtprd.conf, you can use umtprd
 ## License
 
 This project is licensed under the GNU General Public License version 3 - see the [LICENSE](LICENSE) file for details
-
