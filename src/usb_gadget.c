@@ -303,7 +303,13 @@ static void handle_setup_request(usb_gadget * ctx, struct usb_ctrlrequest* setup
 					PRINT_DEBUG("Found %d bytes", status);
 					PRINT_DEBUG_BUF(buffer, status);
 				}
-				write (ctx->usb_device, buffer, status);
+
+				if ( write (ctx->usb_device, buffer, status) < 0 )
+				{
+					PRINT_ERROR("handle_setup_request - USB_REQ_GET_DESCRIPTOR : usb device write error !");
+					break;
+				}
+
 				return;
 		default:
 			PRINT_DEBUG("Cannot return descriptor %d", (setup->wValue >> 8));
@@ -348,7 +354,13 @@ static void handle_setup_request(usb_gadget * ctx, struct usb_ctrlrequest* setup
 	case USB_REQ_GET_INTERFACE:
 		PRINT_DEBUG("GET_INTERFACE");
 		buffer[0] = 0;
-		write (ctx->usb_device, buffer, 1);
+
+		if ( write (ctx->usb_device, buffer, 1) < 0 )
+		{
+			PRINT_ERROR("handle_setup_request - USB_REQ_GET_INTERFACE : usb device write error !");
+			break;
+		}
+
 		return;
 	case USB_REQ_SET_INTERFACE:
 		PRINT_DEBUG("SET_INTERFACE");
@@ -364,9 +376,19 @@ stall:
 	PRINT_DEBUG("Stalled");
 	// Error
 	if (setup->bRequestType & USB_DIR_IN)
-		read (ctx->usb_device, &status, 0);
+	{
+		if ( read (ctx->usb_device, &status, 0) < 0 )
+		{
+			PRINT_ERROR("handle_setup_request - stall : usb device read error !");
+		}
+	}
 	else
-		write (ctx->usb_device, &status, 0);
+	{
+		if ( write (ctx->usb_device, &status, 0) < 0 )
+		{
+			PRINT_ERROR("handle_setup_request - stall : usb device write error !");
+		}
+	}
 }
 
 // GadgetFS mode handler

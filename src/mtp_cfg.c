@@ -463,9 +463,12 @@ int mtp_load_config_file(mtp_ctx * context)
 	{
 		do
 		{
-			fgets(line,sizeof(line),f);
+			if(!fgets(line,sizeof(line),f))
+				break;
+
 			if(feof(f))
 				break;
+
 			execute_line(context, line);
 		}while(1);
 

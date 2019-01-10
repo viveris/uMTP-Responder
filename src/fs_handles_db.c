@@ -623,9 +623,14 @@ int entry_read(fs_handles_db * db, FILE * f, unsigned char * buffer_out, int off
 	{
 		fseek(f,offset,SEEK_SET);
 
-		fread(buffer_out,size,1,f);
-
-		totalread = ftell(f) - offset;
+		if( fread(buffer_out,size,1,f) > 0 )
+		{
+			totalread = ftell(f) - offset;
+		}
+		else
+		{
+			totalread = 0;
+		}
 
 		return totalread;
 	}
