@@ -43,7 +43,11 @@ The uMTP-Responder allows files to be transferred to and from devices through th
 
 ## Which platforms are supported ?
 
-Any board with a USB device port should be compatible. The only requirement is to have the USB FunctionFS or GadgetFS support enabled in your Linux kernel.
+Any board with a USB device port should be compatible. The only requirement is to have the USB FunctionFS (CONFIG_USB_FUNCTIONFS) or GadgetFS (CONFIG_USB_GADGETFS) support enabled in your Linux kernel.
+You also need to enable the board-specific USB device port driver (eg. dwc2 for the RaspberryPi Zero).
+
+uMTP-Responder is currently tested with various 4.x.x Linux kernel versions.
+This may work with earlier kernels (v3.x.x and some v2.6.x versions) but without any guarantee.
 
 ### Boards successfully tested
 
