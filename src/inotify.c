@@ -168,7 +168,7 @@ void* inotify_thread(void* arg)
 							}
 							else
 							{
-								PRINT_DEBUG( "inotify_thread (IN_CREATE): Entry %s already in the db ! (Handle 0x%.8X)", event->name, new_entry->handle );
+								PRINT_DEBUG( "inotify_thread (IN_CREATE): Entry %s already in the db ! (Handle 0x%.8X)", event->name, old_entry->handle );
 							}
 						}
 						else
