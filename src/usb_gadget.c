@@ -278,7 +278,7 @@ static void handle_setup_request(usb_gadget * ctx, struct usb_ctrlrequest* setup
 	int status;
 	uint8_t buffer[512];
 
-	PRINT_DEBUG("Setup request %d", setup->bRequest);
+	PRINT_DEBUG("Setup request 0x%.2X", setup->bRequest);
 
 	switch (setup->bRequest)
 	{
