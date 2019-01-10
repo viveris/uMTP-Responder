@@ -1,6 +1,6 @@
 /*
  * uMTP Responder
- * Copyright (c) 2018 Viveris Technologies
+ * Copyright (c) 2018 - 2019 Viveris Technologies
  *
  * uMTP Responder is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public
@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
 	PRINT_MSG("Version: %s compiled the %s@%s", APP_VERSION,
 		  __DATE__, __TIME__);
 
-	PRINT_MSG("(c) 2018 Viveris Technologies");
+	PRINT_MSG("(c) 2018 - 2019 Viveris Technologies");
 
 	mtp_context = mtp_init_responder();
 	if(!mtp_context)
