@@ -703,8 +703,12 @@ usb_gadget * init_usb_mtp_gadget(mtp_ctx * ctx)
 
 			memset(usbctx->usb_ffs_config,0,sizeof(usb_ffs_cfg));
 
+#ifdef OLD_FUNCTIONFS_DESCRIPTORS // Kernel < v3.15
+			usbctx->usb_ffs_config->magic = htole32(FUNCTIONFS_DESCRIPTORS_MAGIC);
+#else
 			usbctx->usb_ffs_config->magic = htole32(FUNCTIONFS_DESCRIPTORS_MAGIC_V2);
 			usbctx->usb_ffs_config->flags = htole32(FUNCTIONFS_HAS_FS_DESC | FUNCTIONFS_HAS_HS_DESC);
+#endif
 			usbctx->usb_ffs_config->fs_count = htole32(4),
 			usbctx->usb_ffs_config->hs_count = htole32(4),
 			usbctx->usb_ffs_config->length = htole32(sizeof(usb_ffs_cfg));

@@ -64,7 +64,9 @@ typedef struct _usb_ffs_cfg
 {
 	uint32_t magic;
 	uint32_t length;
+#ifndef OLD_FUNCTIONFS_DESCRIPTORS // Kernel > v3.14
 	uint32_t flags;
+#endif
 	uint32_t fs_count;
 	uint32_t hs_count;
 
