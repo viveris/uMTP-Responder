@@ -93,7 +93,7 @@ Note: syslog support and debug output options can be enabled separately.
 
 (replace "armv6j-hardfloat-linux-gnueabi-gcc" with your target gcc cross-compiler)
 
-If you want to use it on an Kernel version < 3.15 you need to tell it to use the old-style FunctionFS descriptors :
+If you want to use it on a Kernel version < 3.15 you need to compile uMTPrd with old-style FunctionFS descriptors support:
 
 ```c
 make CC=armv6j-hardfloat-linux-gnueabi-gcc CFLAGS="-DOLD_FUNCTIONFS_DESCRIPTORS"
