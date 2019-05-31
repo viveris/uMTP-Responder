@@ -847,6 +847,8 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 			size = read_usb(ctx->usb_ctx, ctx->rdbuffer2, MAX_RX_BUFFER_SIZE);
 			PRINT_DEBUG_BUF(ctx->rdbuffer2, size);
 
+			new_handle = 0xFFFFFFFF;
+
 			response_code = parse_incomming_dataset(ctx,ctx->rdbuffer2,size,&new_handle,parent_handle,storageid);
 			if( response_code == MTP_RESPONSE_OK )
 			{
