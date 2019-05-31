@@ -30,7 +30,6 @@
 #include <linux/usb/gadgetfs.h>
 #include <linux/usb/functionfs.h>
 
-#include <pthread.h>
 #include "usbstring.h"
 
 enum

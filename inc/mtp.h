@@ -26,8 +26,6 @@
 #ifndef _INC_MTP_H_
 #define _INC_MTP_H_
 
-#include <pthread.h>
-
 #define MAX_STORAGE_NB 16
 #define MAX_CFG_STRING_SIZE 512
 

@@ -30,6 +30,8 @@
 
 #include <errno.h>
 
+#include <pthread.h>
+
 #include "mtp.h"
 
 

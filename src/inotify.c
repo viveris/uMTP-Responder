@@ -40,6 +40,8 @@
 
 #include <signal.h>
 
+#include <pthread.h>
+
 #include "logs_out.h"
 
 #include "mtp_helpers.h"
