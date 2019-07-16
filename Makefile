@@ -3,7 +3,7 @@ override CFLAGS += -I./inc -lpthread -Wall -O3
 
 all: output_dir umtprd
 
-umtprd: obj/umtprd.o obj/mtp.o obj/mtp_datasets.o obj/mtp_helpers.o \
+umtprd: obj/umtprd.o obj/mtp.o obj/mtp_datasets.o obj/mtp_properties.o obj/mtp_helpers.o \
 		obj/mtp_support_def.o obj/mtp_constant_strings.o obj/fs_handles_db.o \
 		obj/usb_gadget.o obj/logs_out.o obj/usbstring.o obj/mtp_cfg.o obj/inotify.o
 	${CC} -o $@    $^ $(LDFLAGS) -lpthread
@@ -15,6 +15,9 @@ obj/mtp.o: src/mtp.c
 	${CC} -o $@ $^ -c $(CFLAGS)
 
 obj/mtp_datasets.o: src/mtp_datasets.c
+	${CC} -o $@ $^ -c $(CFLAGS)
+
+obj/mtp_properties.o: src/mtp_properties.c
 	${CC} -o $@ $^ -c $(CFLAGS)
 
 obj/mtp_helpers.o: src/mtp_helpers.c
