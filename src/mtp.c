@@ -500,7 +500,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 	uint32_t params[5],storageid;
 	uint32_t handle,parent_handle,new_handle;
 	uint32_t response_code;
-	uint32_t property_id;
+	uint32_t property_id,format_id;
 	int i,size,offset,maxsize,actualsize;
 	int handle_index;
 	int nb_of_handles;
@@ -964,12 +964,12 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 			pthread_mutex_lock( &ctx->inotify_mutex );
 
 			property_id = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER), 4);  // Get param 1 - property id
-			handle = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER) + 4, 4); // Get param 2 - object handle
+			format_id = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER) + 4, 4); // Get param 2 - object handle
 
 			switch(property_id)
 			{
 				default:
-					PRINT_WARN("MTP_OPERATION_GET_OBJECT_PROP_DESC : Property unsupported ! : 0x%.4X (%s) (Handle : 0x%.4X)", property_id,mtp_get_property_string(property_id),handle);
+					PRINT_WARN("MTP_OPERATION_GET_OBJECT_PROP_DESC : Property unsupported ! : 0x%.4X (%s) (Format : 0x%.4X - %s )", property_id, mtp_get_property_string(property_id), format_id, mtp_get_format_string(format_id));
 
 					response_code = MTP_RESPONSE_OPERATION_NOT_SUPPORTED;
 				break;
