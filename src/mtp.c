@@ -44,6 +44,7 @@
 
 #include "mtp.h"
 #include "mtp_datasets.h"
+#include "mtp_properties.h"
 
 #include "usb_gadget_fct.h"
 
@@ -960,21 +961,83 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 		break;
 
+		case MTP_OPERATION_GET_OBJECT_PROPS_SUPPORTED:
+
+			format_id = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER), 4); // Get param 1 - format
+
+			size = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer,0,0);
+			size += build_properties_supported_dataset(ctx,ctx->wrbuffer + sizeof(MTP_PACKET_HEADER), 2048, format_id);
+
+			// Update packet size
+			ofs = 0;
+			poke(ctx->wrbuffer, &ofs, 4, size);
+
+			PRINT_DEBUG("MTP_OPERATION_GET_OBJECT_PROPS_SUPPORTED response (%d Bytes):",size);
+			PRINT_DEBUG_BUF(ctx->wrbuffer, size);
+
+			write_usb(ctx->usb_ctx,EP_DESCRIPTOR_IN,ctx->wrbuffer,size);
+
+			check_and_send_USB_ZLP(ctx , size );
+
+			response_code = MTP_RESPONSE_OK;
+
+		break;
+
 		case MTP_OPERATION_GET_OBJECT_PROP_DESC:
 			pthread_mutex_lock( &ctx->inotify_mutex );
 
 			property_id = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER), 4);  // Get param 1 - property id
 			format_id = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER) + 4, 4); // Get param 2 - format
 
-			switch(property_id)
-			{
-				default:
-					PRINT_WARN("MTP_OPERATION_GET_OBJECT_PROP_DESC : Property unsupported ! : 0x%.4X (%s) (Format : 0x%.4X - %s )", property_id, mtp_get_property_string(property_id), format_id, mtp_get_format_string(format_id));
+			size = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer,0,0);
+			size += build_properties_dataset(ctx,ctx->wrbuffer + sizeof(MTP_PACKET_HEADER), 2048, property_id,format_id);
 
+			if ( size > sizeof(MTP_PACKET_HEADER) )
+			{
+				// Update packet size
+				ofs = 0;
+				poke(ctx->wrbuffer, &ofs, 4, size);
+
+				PRINT_DEBUG("MTP_OPERATION_GET_OBJECT_PROP_DESC response (%d Bytes):",size);
+				PRINT_DEBUG_BUF(ctx->wrbuffer, size);
+
+				write_usb(ctx->usb_ctx,EP_DESCRIPTOR_IN,ctx->wrbuffer,size);
+
+				check_and_send_USB_ZLP(ctx , size );
+
+				response_code = MTP_RESPONSE_OK;
+			}
+			else
+			{
+				PRINT_WARN("MTP_OPERATION_GET_OBJECT_PROP_DESC : Property unsupported ! : 0x%.4X (%s) (Format : 0x%.4X - %s )", property_id, mtp_get_property_string(property_id), format_id, mtp_get_format_string(format_id));
+
+				response_code = MTP_RESPONSE_OPERATION_NOT_SUPPORTED;
+			}
+
+			pthread_mutex_unlock( &ctx->inotify_mutex );
+		break;
+
+		case MTP_OPERATION_SET_OBJECT_PROP_VALUE:
+			switch(mtp_packet_hdr->operation)
+			{
+				case MTP_CONTAINER_TYPE_COMMAND:
+
+					ctx->SetObjectPropValue_Handle = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER), 4);  // Get param 1 - handle
+					ctx->SetObjectPropValue_PropCode = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER) + 4, 4); // Get param 2 - PropCode
+
+					// no response to send, wait for the data...
+					response_code = MTP_RESPONSE_OK;
+					no_response = 1;
+				break;
+
+				case MTP_CONTAINER_TYPE_DATA:
+					response_code = MTP_RESPONSE_OK;
+				break;
+
+				default:
 					response_code = MTP_RESPONSE_OPERATION_NOT_SUPPORTED;
 				break;
 			}
-			pthread_mutex_unlock( &ctx->inotify_mutex );
 		break;
 
 		default:

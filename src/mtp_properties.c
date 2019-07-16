@@ -51,6 +51,25 @@
 
 #include "mtp_support_def.h"
 
+uint16_t supported_properties[]=
+{
+	/*MTP_PROPERTY_STORAGE_ID,
+	MTP_PROPERTY_OBJECT_FORMAT,
+	MTP_PROPERTY_PROTECTION_STATUS,
+	MTP_PROPERTY_OBJECT_SIZE,
+	MTP_PROPERTY_ASSOCIATION_TYPE,
+	MTP_PROPERTY_ASSOCIATION_DESC,*/
+	MTP_PROPERTY_OBJECT_FILE_NAME,
+	/*MTP_PROPERTY_DATE_CREATED,
+	MTP_PROPERTY_DATE_MODIFIED,
+	MTP_PROPERTY_KEYWORDS,
+	MTP_PROPERTY_PARENT_OBJECT,
+	MTP_PROPERTY_ALLOWED_FOLDER_CONTENTS,
+	MTP_PROPERTY_HIDDEN,
+	MTP_PROPERTY_SYSTEM_OBJECT,*/
+	0xFFFF
+};
+
 int build_properties_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uint32_t property_id,uint32_t format_id)
 {
 	int ofs;
@@ -69,6 +88,32 @@ int build_properties_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uint32_t p
 			poke(buffer, &ofs, 4, 0x0000000);                          // GroupCode
 			poke(buffer, &ofs, 1, 0x00);                               // FormFlag : None
 		break;
+	}
+
+	return ofs;
+}
+
+int build_properties_supported_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uint32_t format_id)
+{
+	int ofs,i;
+	int nb_supported_prop;
+
+	PRINT_DEBUG("build_properties_supported_dataset : (Format : 0x%.4X - %s )", format_id, mtp_get_format_string(format_id));
+
+	nb_supported_prop = 0;
+
+	while( supported_properties[nb_supported_prop] != 0xFFFF )
+		nb_supported_prop++;
+
+	ofs = 0;
+
+	poke(buffer, &ofs, 2, nb_supported_prop);
+
+	i = 0;
+	while( supported_properties[i] != 0xFFFF )
+	{
+		poke(buffer, &ofs, 2, supported_properties[i]);
+		i++;
 	}
 
 	return ofs;

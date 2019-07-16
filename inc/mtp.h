@@ -99,6 +99,9 @@ typedef struct mtp_ctx_
 	uint32_t SendObjInfoHandle;
 	uint32_t SendObjInfoSize;
 
+	uint32_t SetObjectPropValue_Handle;
+	uint32_t SetObjectPropValue_PropCode;
+
 	uint32_t max_packet_size;
 
 	mtp_storage storages[MAX_STORAGE_NB];
