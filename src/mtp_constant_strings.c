@@ -52,6 +52,12 @@ typedef struct _propertystring
 	uint16_t property_id;
 }propertystring;
 
+typedef struct _formatstring
+{
+	const char * str;
+	uint16_t format_id;
+}formatstring;
+
 typedef struct _packettypestring
 {
 	const char * str;
@@ -278,6 +284,84 @@ const propertystring property_codes[]=
 	{ 0, 0 }
 };
 
+// MTP Format Codes
+const formatstring format_codes[]=
+{
+	{ "MTP_FORMAT_UNDEFINED",                          0x3000 },   // Undefined object
+	{ "MTP_FORMAT_ASSOCIATION",                        0x3001 },   // Association (for example, a folder)
+	{ "MTP_FORMAT_SCRIPT",                             0x3002 },   // Device model-specific script
+	{ "MTP_FORMAT_EXECUTABLE",                         0x3003 },   // Device model-specific binary executable
+	{ "MTP_FORMAT_TEXT",                               0x3004 },   // Text file
+	{ "MTP_FORMAT_HTML",                               0x3005 },   // Hypertext Markup Language file (text)
+	{ "MTP_FORMAT_DPOF",                               0x3006 },   // Digital Print Order Format file (text)
+	{ "MTP_FORMAT_AIFF",                               0x3007 },   // Audio clip
+	{ "MTP_FORMAT_WAV",                                0x3008 },   // Audio clip
+	{ "MTP_FORMAT_MP3",                                0x3009 },   // Audio clip
+	{ "MTP_FORMAT_AVI",                                0x300A },   // Video clip
+	{ "MTP_FORMAT_MPEG",                               0x300B },   // Video clip
+	{ "MTP_FORMAT_ASF",                                0x300C },   // Microsoft Advanced Streaming Format (video)
+	{ "MTP_FORMAT_DEFINED",                            0x3800 },   // Unknown image object
+	{ "MTP_FORMAT_EXIF_JPEG",                          0x3801 },   // Exchangeable File Format, JEIDA standard
+	{ "MTP_FORMAT_TIFF_EP",                            0x3802 },   // Tag Image File Format for Electronic Photography
+	{ "MTP_FORMAT_FLASHPIX",                           0x3803 },   // Structured Storage Image Format
+	{ "MTP_FORMAT_BMP",                                0x3804 },   // Microsoft Windows Bitmap file
+	{ "MTP_FORMAT_CIFF",                               0x3805 },   // Canon Camera Image File Format
+	{ "MTP_FORMAT_GIF",                                0x3807 },   // Graphics Interchange Format
+	{ "MTP_FORMAT_JFIF",                               0x3808 },   // JPEG File Interchange Format
+	{ "MTP_FORMAT_CD",                                 0x3809 },   // PhotoCD Image Pac
+	{ "MTP_FORMAT_PICT",                               0x380A },   // Quickdraw Image Format
+	{ "MTP_FORMAT_PNG",                                0x380B },   // Portable Network Graphics
+	{ "MTP_FORMAT_TIFF",                               0x380D },   // Tag Image File Format
+	{ "MTP_FORMAT_TIFF_IT",                            0x380E },   // Tag Image File Format for Information Technology (graphic arts)
+	{ "MTP_FORMAT_JP2",                                0x380F },   // JPEG2000 Baseline File Format
+	{ "MTP_FORMAT_JPX",                                0x3810 },   // JPEG2000 Extended File Format
+	{ "MTP_FORMAT_DNG",                                0x3811 },   // Digital Negative
+	{ "MTP_FORMAT_HEIF",                               0x3812 },   // HEIF images
+	{ "MTP_FORMAT_UNDEFINED_FIRMWARE",                 0xB802 },
+	{ "MTP_FORMAT_WINDOWS_IMAGE_FORMAT",               0xB881 },
+	{ "MTP_FORMAT_UNDEFINED_AUDIO",                    0xB900 },
+	{ "MTP_FORMAT_WMA",                                0xB901 },
+	{ "MTP_FORMAT_OGG",                                0xB902 },
+	{ "MTP_FORMAT_AAC",                                0xB903 },
+	{ "MTP_FORMAT_AUDIBLE",                            0xB904 },
+	{ "MTP_FORMAT_FLAC",                               0xB906 },
+	{ "MTP_FORMAT_UNDEFINED_VIDEO",                    0xB980 },
+	{ "MTP_FORMAT_WMV",                                0xB981 },
+	{ "MTP_FORMAT_MP4_CONTAINER",                      0xB982 },  // ISO 14496-1
+	{ "MTP_FORMAT_MP2",                                0xB983 },
+	{ "MTP_FORMAT_3GP_CONTAINER",                      0xB984 },  // 3GPP file format. Details: http://www.3gpp.org/ftp/Specs/html-info/26244.htm (page title - \u201cTransparent end-to-end packet switched streaming service, 3GPP file format\u201d).
+	{ "MTP_FORMAT_UNDEFINED_COLLECTION",               0xBA00 },
+	{ "MTP_FORMAT_ABSTRACT_MULTIMEDIA_ALBUM",          0xBA01 },
+	{ "MTP_FORMAT_ABSTRACT_IMAGE_ALBUM",               0xBA02 },
+	{ "MTP_FORMAT_ABSTRACT_AUDIO_ALBUM",               0xBA03 },
+	{ "MTP_FORMAT_ABSTRACT_VIDEO_ALBUM",               0xBA04 },
+	{ "MTP_FORMAT_ABSTRACT_AV_PLAYLIST",               0xBA05 },
+	{ "MTP_FORMAT_ABSTRACT_CONTACT_GROUP",             0xBA06 },
+	{ "MTP_FORMAT_ABSTRACT_MESSAGE_FOLDER",            0xBA07 },
+	{ "MTP_FORMAT_ABSTRACT_CHAPTERED_PRODUCTION",      0xBA08 },
+	{ "MTP_FORMAT_ABSTRACT_AUDIO_PLAYLIST",            0xBA09 },
+	{ "MTP_FORMAT_ABSTRACT_VIDEO_PLAYLIST",            0xBA0A },
+	{ "MTP_FORMAT_ABSTRACT_MEDIACAST",                 0xBA0B }, // For use with mediacasts; references multimedia enclosures of RSS feeds or episodic content
+	{ "MTP_FORMAT_WPL_PLAYLIST",                       0xBA10 },
+	{ "MTP_FORMAT_M3U_PLAYLIST",                       0xBA11 },
+	{ "MTP_FORMAT_MPL_PLAYLIST",                       0xBA12 },
+	{ "MTP_FORMAT_ASX_PLAYLIST",                       0xBA13 },
+	{ "MTP_FORMAT_PLS_PLAYLIST",                       0xBA14 },
+	{ "MTP_FORMAT_UNDEFINED_DOCUMENT",                 0xBA80 },
+	{ "MTP_FORMAT_ABSTRACT_DOCUMENT",                  0xBA81 },
+	{ "MTP_FORMAT_XML_DOCUMENT",                       0xBA82 },
+	{ "MTP_FORMAT_MS_WORD_DOCUMENT",                   0xBA83 },
+	{ "MTP_FORMAT_MHT_COMPILED_HTML_DOCUMENT",         0xBA84 },
+	{ "MTP_FORMAT_MS_EXCEL_SPREADSHEET",               0xBA85 },
+	{ "MTP_FORMAT_MS_POWERPOINT_PRESENTATION",         0xBA86 },
+	{ "MTP_FORMAT_UNDEFINED_MESSAGE",                  0xBB00 },
+	{ "MTP_FORMAT_ABSTRACT_MESSSAGE",                  0xBB01 },
+	{ "MTP_FORMAT_UNDEFINED_CONTACT",                  0xBB80 },
+	{ "MTP_FORMAT_ABSTRACT_CONTACT",                   0xBB81 },
+	{ "MTP_FORMAT_VCARD_2",                            0xBB82 },
+	{ 0, 0 }
+};
+
 const packettypestring packet_types[]=
 {
 	{ "UNDEFINED",   0},
@@ -322,6 +406,25 @@ const char * mtp_get_property_string(uint16_t property)
 
 	if(property_codes[i].str)
 		strptr = property_codes[i].str;
+
+	return strptr;
+}
+
+const char * mtp_get_format_string(uint16_t format)
+{
+	int i;
+	const char * strptr;
+
+	strptr = "????";
+
+	i = 0;
+	while( format_codes[i].str && format_codes[i].format_id != format )
+	{
+		i++;
+	}
+
+	if(format_codes[i].str)
+		strptr = format_codes[i].str;
 
 	return strptr;
 }

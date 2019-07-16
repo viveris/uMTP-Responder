@@ -28,5 +28,6 @@ extern const char DevInfos_MTP_Extensions[];
 
 const char * mtp_get_operation_string(uint16_t operation);
 const char * mtp_get_property_string(uint16_t property);
+const char * mtp_get_format_string(uint16_t format);
 const char * mtp_get_type_string(uint16_t type);
 #endif
