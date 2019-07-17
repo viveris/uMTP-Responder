@@ -240,3 +240,102 @@ int unicode2charstring(char * str, uint16_t * unicodestr, int maxstrsize)
 
 	return ret;
 }
+
+static int utf8_size(char c)
+{
+	int count = 0;
+
+	while (c & 0x80)
+	{
+		c = c << 1;
+		count++;
+	}
+
+	if(!count)
+		count = 1;
+
+	return count;
+}
+
+uint16_t utf2unicode(const unsigned char* pInput, int * ofs)
+{
+	uint8_t b1, b2, b3;
+	int utfsize;
+	uint16_t unicode_out;
+
+	*ofs = 0;
+
+	utfsize = utf8_size(*pInput);
+
+	switch ( utfsize )
+	{
+		case 1:
+			unicode_out = *pInput;
+			*ofs = 1;
+			return unicode_out;
+		break;
+
+		case 2:
+			b1 = *pInput++;
+			b2 = *pInput++;
+
+			if ( (b2 & 0xE0) != 0x80 )
+				return 0x0000;
+
+			unicode_out =  ( ( (b1 & 0x1F) << 6 ) | (b2 & 0x3F) ) & 0xFF;
+			unicode_out |= (uint16_t)((b1 & 0x1F) >> 2) << 8;
+			*ofs = 2;
+			return unicode_out;
+		break;
+
+		case 3:
+			b1 = *pInput++;
+			b2 = *pInput++;
+			b3 = *pInput++;
+
+			if ( ((b2 & 0xC0) != 0x80) || ((b3 & 0xC0) != 0x80) )
+				return 0x0000;
+
+			unicode_out =    (uint16_t)( ((b2 & 0x3F) << 6) |  (b3 & 0x3F) ) & 0x00FF;
+			unicode_out |=   (uint16_t)( ((b1 &  0xF) << 4) | ((b2 & 0x3F) >> 2 ) ) << 8;
+
+			*ofs = 3;
+
+			return unicode_out;
+		break;
+
+		default:
+			*ofs = 0;
+
+			return 0x0000;
+		break;
+	}
+
+	return 0x0000;
+}
+
+int char2unicodestring(char * unicodestr, char * str, int unicodestrsize)
+{
+	uint16_t unicode;
+	int ofs, i, len;
+
+	len = 0;
+	i = 0;
+	ofs = 0;
+	do{
+		unicode = utf2unicode((unsigned char*)str, &ofs);
+		str = str + ofs;
+		unicodestr[i++] = unicode & 0xFF;
+		unicodestr[i++] = (unicode >> 8) & 0xFF;
+		len++;
+	}while(unicode && ofs && i < unicodestrsize*2);
+
+	if( i >= unicodestrsize*2)
+	{
+		unicodestr[(unicodestrsize*2)-2] = 0x00;
+		unicodestr[(unicodestrsize*2)-1] = 0x00;
+		len = unicodestrsize;
+	}
+
+	return len;
+}

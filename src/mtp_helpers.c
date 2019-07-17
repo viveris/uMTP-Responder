@@ -25,6 +25,7 @@
 
 #include <stdint.h>
 #include "mtp_helpers.h"
+#include "usbstring.h"
 
 void poke(void * buffer, int * index, int typesize, unsigned long data)
 {
@@ -67,11 +68,10 @@ uint32_t peek(void * buffer, int index, int typesize)
 void poke_string(void * buffer, int * index, const char *str)
 {
 	unsigned char *ptr;
-	int i,sizeposition;
+	int sizeposition;
+	int len;
 
 	ptr = ((unsigned char *)buffer);
-
-	i = 0;
 
 	// Reserve string size .
 	sizeposition = *index;
@@ -80,26 +80,12 @@ void poke_string(void * buffer, int * index, const char *str)
 	*index += 1;
 
 	// Char to unicode...
-	while( str[i] )
-	{
-		ptr[*index] = str[i];
-		*index += 1;
+	len = char2unicodestring((char*)&ptr[*index], (char*)str, 256);
 
-		ptr[*index] = 0x00;
-		*index += 1;
-
-		i++;
-	}
-
-	ptr[*index] = 0x00;
-	*index += 1;
-	ptr[*index] = 0x00;
-	*index += 1;
-
-	i++;
+	*index += (len*2);
 
 	// Update size position
-	ptr[sizeposition] = i;
+	ptr[sizeposition] = len;
 }
 
 void poke_array(void * buffer, int * index, int size, int elementsize, const unsigned char *bufferin,int prefixed)
