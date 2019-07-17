@@ -4,6 +4,15 @@
 * Release notes
 =================================================
 
+Noteworthy changes in release v0.10.1 (2019-7-17)
+=================================================
+
+* True Unicode support.
+
+* Files/Folders renaming support.
+
+* Fixes and improvements.
+
 Noteworthy changes in release v0.9.7 (2019-1-10)
 =================================================
 

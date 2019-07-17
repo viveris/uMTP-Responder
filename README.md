@@ -21,6 +21,8 @@ The uMTP-Responder allows files to be transferred to and from devices through th
 
 - Dynamic handles allocation (No file-system pre-scan).
 
+- Unicode support.
+
 - (Optional) Syslog support.
 
 ## Current status
@@ -36,6 +38,8 @@ The uMTP-Responder allows files to be transferred to and from devices through th
 - Files & Folders download.
 
 - Files & Folders deletion.
+
+- Files & Folders renaming.
 
 - Up to 16 storage instances supported.
 
