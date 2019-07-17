@@ -220,7 +220,7 @@ int unicode2charstring(char * str, uint16_t * unicodestr, int maxstrsize)
 			chunksize = 1;
 		}
 
-		if( (i + chunksize + 1) < maxstrsize )
+		if( (i + chunksize) < maxstrsize )
 		{
 			for( j = 0 ; j < chunksize ; j++ )
 			{
@@ -230,13 +230,14 @@ int unicode2charstring(char * str, uint16_t * unicodestr, int maxstrsize)
 		}
 		else
 		{
-			str[i] = 0;
+			str[ maxstrsize - 1 ] = 0;
 			ret = 1;
 			break;
 		}
 	};
 
-	str[i] = 0;
+	if( i < maxstrsize )
+		str[i] = 0;
 
 	return ret;
 }
