@@ -156,3 +156,87 @@ int usb_gadget_get_string (struct usb_gadget_strings *table, int id, uint8_t *bu
 	buf [1] = USB_DT_STRING;
 	return buf [0];
 }
+
+int utf8_encode(char *out, uint32_t unicode)
+{
+	if (unicode <= 0x7F)
+	{
+		// ASCII
+		*out++ = (char) unicode;
+		*out++ = 0;
+		return 1;
+	}
+	else if (unicode <= 0x07FF)
+	{
+		// 2-bytes unicode
+		*out++ = (char) (((unicode >> 6) & 0x1F) | 0xC0);
+		*out++ = (char) (((unicode >> 0) & 0x3F) | 0x80);
+		*out++ = 0;
+		return 2;
+	}
+	else if (unicode <= 0xFFFF)
+	{
+		// 3-bytes unicode
+		*out++ = (char) (((unicode >> 12) & 0x0F) | 0xE0);
+		*out++ = (char) (((unicode >>  6) & 0x3F) | 0x80);
+		*out++ = (char) (((unicode >>  0) & 0x3F) | 0x80);
+		*out++ = 0;
+		return 3;
+	}
+	else if (unicode <= 0x10FFFF)
+	{
+		// 4-bytes unicode
+		*out++ = (char) (((unicode >> 18) & 0x07) | 0xF0);
+		*out++ = (char) (((unicode >> 12) & 0x3F) | 0x80);
+		*out++ = (char) (((unicode >>  6) & 0x3F) | 0x80);
+		*out++ = (char) (((unicode >>  0) & 0x3F) | 0x80);
+		*out++ = 0;
+
+		return 4;
+	}
+	else
+	{
+		// error
+		return 0;
+	}
+}
+
+int unicode2charstring(char * str, uint16_t * unicodestr, int maxstrsize)
+{
+	int i,j,ret;
+	int chunksize;
+	char tmpstr[8];
+
+	ret = 0;
+	i = 0;
+	while( *unicodestr )
+	{
+		chunksize = utf8_encode((char*)&tmpstr, *unicodestr++);
+
+		if(!chunksize)
+		{	// Error -> default character
+			tmpstr[0] = '?';
+			tmpstr[1] = 0;
+			chunksize = 1;
+		}
+
+		if( (i + chunksize + 1) < maxstrsize )
+		{
+			for( j = 0 ; j < chunksize ; j++ )
+			{
+				str[i] = tmpstr[j];
+				i++;
+			}
+		}
+		else
+		{
+			str[i] = 0;
+			ret = 1;
+			break;
+		}
+	};
+
+	str[i] = 0;
+
+	return ret;
+}

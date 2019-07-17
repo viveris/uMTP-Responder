@@ -37,5 +37,5 @@ struct usb_gadget_strings {
 };
 
 int usb_gadget_get_string (struct usb_gadget_strings *table, int id, uint8_t *buf);
-
+int unicode2charstring(char * str, uint16_t * unicodestr, int maxstrsize);
 #endif

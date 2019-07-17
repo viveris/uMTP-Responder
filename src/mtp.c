@@ -85,6 +85,8 @@ mtp_ctx * mtp_init_responder()
 		if(!ctx->temp_array)
 			goto init_error;
 
+		ctx->SetObjectPropValue_Handle = 0xFFFFFFFF;
+
 		pthread_mutex_init ( &ctx->inotify_mutex, NULL);
 
 		inotify_handler_init( ctx );
@@ -219,6 +221,7 @@ int parse_incomming_dataset(mtp_ctx * ctx,void * datain,int size,uint32_t * newh
 #endif
 	unsigned char string_len;
 	char tmp_str[256+1];
+	uint16_t unicode_str[256+1];
 	char * parent_folder;
 	char * tmp_path;
 	int i,ret_code;
@@ -249,7 +252,7 @@ int parse_incomming_dataset(mtp_ctx * ctx,void * datain,int size,uint32_t * newh
 #ifdef DEBUG
 				type = peek(dataset_ptr,0x2A, 2);          // Association Type
 #else
-				peek(dataset_ptr,0x2A, 2);          // Association Type
+				peek(dataset_ptr,0x2A, 2);                 // Association Type
 #endif
 
 				string_len = peek(dataset_ptr,0x34, 1);    // File name
@@ -257,12 +260,12 @@ int parse_incomming_dataset(mtp_ctx * ctx,void * datain,int size,uint32_t * newh
 				if(string_len > 255)
 					string_len = 255;
 
-				memset(tmp_str,0,sizeof(tmp_str));
-
+				memset(unicode_str,0,sizeof(unicode_str));
 				for(i=0;i<string_len;i++)
 				{
-					tmp_str[i] = peek(dataset_ptr,0x35 + (i*2), 1);
+					unicode_str[i] = peek(dataset_ptr,0x35 + (i*2), 2);
 				}
+				unicode2charstring(tmp_str, unicode_str, sizeof(tmp_str));
 
 				PRINT_DEBUG("MTP_OPERATION_SEND_OBJECT_INFO : 0x%x objectformat Size %d, Parent 0x%.8x, type: %x, strlen %d str:%s",objectformat,objectsize,parent_handle,type,string_len,tmp_str);
 
@@ -334,12 +337,12 @@ int parse_incomming_dataset(mtp_ctx * ctx,void * datain,int size,uint32_t * newh
 
 				string_len = peek(dataset_ptr,0x34, 1);    // File name
 
-				memset(tmp_str,0,sizeof(tmp_str));
-
+				memset(unicode_str,0,sizeof(unicode_str));
 				for(i=0;i<string_len;i++)
 				{
-					tmp_str[i] = peek(dataset_ptr,0x35 + (i*2), 1);
+					unicode_str[i] = peek(dataset_ptr,0x35 + (i*2), 2);
 				}
+				unicode2charstring(tmp_str, unicode_str, sizeof(tmp_str));
 
 				PRINT_DEBUG("MTP_OPERATION_SEND_OBJECT_INFO : 0x%x objectformat Size %d, Parent 0x%.8x, type: %x, strlen %d str:%s",objectformat,objectsize,parent_handle,type,string_len,tmp_str);
 
@@ -1031,7 +1034,18 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 				break;
 
 				case MTP_CONTAINER_TYPE_DATA:
-					response_code = MTP_RESPONSE_OK;
+					if( ctx->SetObjectPropValue_Handle != 0xFFFFFFFF )
+					{
+
+						response_code = MTP_RESPONSE_OK;
+					}
+					else
+					{
+
+						response_code = MTP_RESPONSE_INVALID_OBJECT_HANDLE;				
+					}
+
+					ctx->SetObjectPropValue_Handle = 0xFFFFFFFF;
 				break;
 
 				default:
