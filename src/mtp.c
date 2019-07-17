@@ -1034,16 +1034,8 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 				break;
 
 				case MTP_CONTAINER_TYPE_DATA:
-					if( ctx->SetObjectPropValue_Handle != 0xFFFFFFFF )
-					{
 
-						response_code = MTP_RESPONSE_OK;
-					}
-					else
-					{
-
-						response_code = MTP_RESPONSE_INVALID_OBJECT_HANDLE;				
-					}
+					response_code = setObjectPropValue(ctx, mtp_packet_hdr, ctx->SetObjectPropValue_Handle, ctx->SetObjectPropValue_PropCode);
 
 					ctx->SetObjectPropValue_Handle = 0xFFFFFFFF;
 				break;

@@ -25,6 +25,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 
 #include <inttypes.h>
 #include <sys/types.h>
@@ -117,4 +118,80 @@ int build_properties_supported_dataset(mtp_ctx * ctx,void * buffer, int maxsize,
 	}
 
 	return ofs;
+}
+
+int setObjectPropValue(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, uint32_t handle,uint32_t prop_code)
+{
+	fs_entry * entry;
+	char * path;
+	char * path2;
+	char tmpstr[256+1];
+	unsigned int stringlen;
+
+	PRINT_DEBUG("setObjectPropValue : (Handle : 0x%.8X - Prop code : 0x%.4X )", handle, prop_code);
+
+	if( handle != 0xFFFFFFFF )
+	{
+		switch( prop_code )
+		{
+			case MTP_PROPERTY_OBJECT_FILE_NAME:
+				entry = get_entry_by_handle(ctx->fs_db, handle);
+				if(!entry)
+					return MTP_RESPONSE_INVALID_OBJECT_HANDLE;
+
+				path = build_full_path(ctx->fs_db, mtp_get_storage_root(ctx, entry->storage_id), entry);
+				if(!path)
+					return MTP_RESPONSE_GENERAL_ERROR;
+
+				memset(tmpstr,0,sizeof(tmpstr));
+
+				stringlen = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER), 1);
+
+				if( stringlen > sizeof(tmpstr))
+					stringlen = sizeof(tmpstr);
+
+				unicode2charstring(tmpstr, (uint16_t *) ((char*)(mtp_packet_hdr) + sizeof(MTP_PACKET_HEADER) + 1), stringlen);
+
+				if( entry->name )
+				{
+					free(entry->name);
+					entry->name = NULL;
+				}
+
+				entry->name = malloc(strlen(tmpstr)+1);
+				if( entry->name )
+				{
+					strcpy(entry->name,tmpstr);
+				}
+
+				path2 = build_full_path(ctx->fs_db, mtp_get_storage_root(ctx, entry->storage_id), entry);
+				if(!path2)
+				{
+					free(path);
+					return MTP_RESPONSE_GENERAL_ERROR;
+				}
+
+				if(rename(path, path2))
+				{
+					PRINT_ERROR("setObjectPropValue : Can't rename %s to %s", path, path2);
+
+					free(path);
+					free(path2);
+					return MTP_RESPONSE_GENERAL_ERROR;
+				}
+
+				free(path);
+				free(path2);
+				return MTP_RESPONSE_OK;
+			break;
+
+			default:
+				return MTP_RESPONSE_INVALID_OBJECT_PROP_CODE;
+			break;
+		}
+	}
+	else
+	{
+		return MTP_RESPONSE_INVALID_OBJECT_HANDLE;
+	}
 }
