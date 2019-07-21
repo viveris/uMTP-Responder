@@ -504,7 +504,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 	uint32_t params[5],storageid;
 	uint32_t handle,parent_handle,new_handle;
 	uint32_t response_code;
-	uint32_t property_id,format_id;
+	uint32_t property_id,format_id,prop_code;
 	int i,size,offset,maxsize,actualsize;
 	int handle_index;
 	int nb_of_handles;
@@ -1018,6 +1018,43 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 			}
 
 			pthread_mutex_unlock( &ctx->inotify_mutex );
+		break;
+
+		case MTP_OPERATION_GET_OBJECT_PROP_VALUE:
+			pthread_mutex_lock( &ctx->inotify_mutex );
+
+			handle = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER), 4);        // Get param 1 - object handle
+			prop_code = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER) + 4, 4); // Get param 2 - PropCode
+
+			PRINT_WARN("MTP_OPERATION_GET_OBJECT_PROP_VALUE : (Handle : 0x%.8X - Prop code : 0x%.4X )", handle, prop_code);
+
+			entry = get_entry_by_handle(ctx->fs_db, handle);
+			if( entry )
+			{
+				size = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer,0,0);
+				size += build_ObjectPropValue_dataset(ctx,ctx->wrbuffer + sizeof(MTP_PACKET_HEADER), 2048, handle, prop_code);
+
+				i = 0;
+				poke(ctx->wrbuffer, &i, 4, size);
+
+				PRINT_DEBUG("MTP_OPERATION_GET_OBJECT_PROP_VALUE response (%d Bytes):",size);
+				PRINT_DEBUG_BUF(ctx->wrbuffer, size);
+
+				write_usb(ctx->usb_ctx,EP_DESCRIPTOR_IN,ctx->wrbuffer,size);
+
+				check_and_send_USB_ZLP(ctx , size );
+
+				response_code = MTP_RESPONSE_OK;
+			}
+			else
+			{
+				PRINT_WARN("MTP_OPERATION_GET_OBJECT_PROP_VALUE ! : Entry/Handle not found (0x%.8X)", handle);
+
+				response_code = MTP_RESPONSE_INVALID_OBJECT_HANDLE;
+			}
+
+			pthread_mutex_unlock( &ctx->inotify_mutex );
+
 		break;
 
 		case MTP_OPERATION_SET_OBJECT_PROP_VALUE:

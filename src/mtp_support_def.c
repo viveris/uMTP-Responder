@@ -57,7 +57,7 @@ const unsigned short supported_op[]=
 	MTP_OPERATION_INITIATE_OPEN_CAPTURE                  ,//0x101C
 	MTP_OPERATION_GET_OBJECT_PROPS_SUPPORTED             ,//0x9801
 	MTP_OPERATION_GET_OBJECT_PROP_DESC                   ,//0x9802
-	//MTP_OPERATION_GET_OBJECT_PROP_VALUE                  ,//0x9803
+	MTP_OPERATION_GET_OBJECT_PROP_VALUE                  ,//0x9803
 	MTP_OPERATION_SET_OBJECT_PROP_VALUE                  ,//0x9804
 	/*MTP_OPERATION_GET_OBJECT_PROP_LIST                   ,//0x9805
 	MTP_OPERATION_SET_OBJECT_PROP_LIST                   ,//0x9806
@@ -105,7 +105,10 @@ const int supported_property_size=sizeof(supported_property);
 const unsigned short supported_formats[]=
 {
 	MTP_FORMAT_UNDEFINED                     , //    0x3000   // Undefined object
-	MTP_FORMAT_ASSOCIATION                     //    0x3001   // Association (for example, a folder)
+	MTP_FORMAT_ASSOCIATION                   , //    0x3001   // Association (for example, a folder)
+	MTP_FORMAT_SCRIPT                        , //    0x3002   // Device model-specific script
+	MTP_FORMAT_EXECUTABLE                    , //    0x3003   // Device model-specific binary executable
+	MTP_FORMAT_TEXT
 };
 
 const int supported_formats_size=sizeof(supported_formats);
