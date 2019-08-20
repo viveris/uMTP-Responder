@@ -26,7 +26,22 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <time.h>
 #include "logs_out.h"
+
+
+void timestamp(char * timestr, int maxsize)
+{
+	time_t ltime;
+	struct tm * local_time;
+
+	ltime = time(NULL);
+	timestr[0] = 0;
+
+	local_time = localtime(&ltime);
+
+	snprintf(timestr, maxsize, "%.2d:%.2d:%.2d",local_time->tm_hour, local_time->tm_min, local_time->tm_sec );
+}
 
 #ifdef DEBUG
 void printbuf(void * buf,int size)

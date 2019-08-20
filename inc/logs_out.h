@@ -26,6 +26,8 @@
 #ifndef _INC_DEBUG_OUT_H_
 #define _INC_DEBUG_OUT_H_
 
+void timestamp(char * timestr, int maxsize);
+
 #ifdef USE_SYSLOG
 
 #include <syslog.h>
@@ -59,29 +61,39 @@
 
 #else // Stdout usage
 
-#define PRINT_MSG(fmt, args...)   {                               \
-                                    fprintf(stdout,               \
-                                            "[uMTPrd - Info] " fmt "\n", \
-                                            ## args);             \
-                                    fflush(stdout);               \
+#define PRINT_MSG(fmt, args...)   {                                 \
+                                    char timestr[32];               \
+                                    timestamp((char*)&timestr, sizeof(timestr)); \
+                                    fprintf(stdout,                 \
+                                            "[uMTPrd - %s - Info] " fmt "\n",(char*)&timestr, \
+                                            ## args);               \
+                                    fflush(stdout);                 \
                                   }
+
 #define PRINT_ERROR(fmt, args...) {                                 \
+                                    char timestr[32];               \
+                                    timestamp((char*)&timestr, sizeof(timestr)); \
                                     fprintf(stderr,                 \
-                                            "[uMTPrd - Error] " fmt "\n",  \
+                                            "[uMTPrd - %s - Error] " fmt "\n",(char*)&timestr, \
                                             ## args);               \
                                     fflush(stderr);                 \
                                   }
+
 #define PRINT_WARN(fmt, args...)  {                                 \
+                                    char timestr[32];               \
+                                    timestamp((char*)&timestr, sizeof(timestr)); \
                                     fprintf(stdout,                 \
-                                            "[uMTPrd - Warning] " fmt "\n",\
+                                            "[uMTPrd - %s - Warning] " fmt "\n",(char*)&timestr, \
                                             ## args);               \
                                     fflush(stdout);                 \
                                   }
 
 #ifdef DEBUG
 #define PRINT_DEBUG(fmt, args...) {                                 \
+                                    char timestr[32];               \
+                                    timestamp((char*)&timestr, sizeof(timestr)); \
                                     fprintf(stdout,                 \
-                                            "[uMTPrd - Debug] " fmt "\n",  \
+                                            "[uMTPrd - %s - Debug] " fmt "\n",(char*)&timestr, \
                                             ## args);               \
                                     fflush(stdout);                 \
                                   }
