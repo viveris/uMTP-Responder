@@ -470,7 +470,7 @@ fs_entry * get_next_child_handle(fs_handles_db * db)
 
 	while( entry_list )
 	{
-		if( !( entry_list->flags & ENTRY_IS_DELETED ) && ( entry_list->parent == db->handle_search ) && ( entry_list->storage_id == db->storage_search ) )
+		if( !( entry_list->flags & ENTRY_IS_DELETED ) && ( entry_list->parent == db->handle_search ) && ( entry_list->storage_id == db->storage_search ) && ( entry_list->handle != entry_list->parent ) )
 		{
 			db->search_entry = entry_list->next;
 
