@@ -44,35 +44,68 @@ void timestamp(char * timestr, int maxsize)
 }
 
 #ifdef DEBUG
-void printbuf(void * buf,int size)
+int is_printable_char(unsigned char c)
 {
 	int i;
-	char *str = NULL;
-	char *ptr = buf;
-	char tmp[10] = { '\0' };
-	int strMaxSz = (size*4)+2;
+	unsigned char specialchar[]={"&#{}()|_@=$!?;+*-"};
 
-	str = malloc(strMaxSz);
-	if(NULL != str)
+	if( (c >= 'A' && c <= 'Z') ||
+		(c >= 'a' && c <= 'z') ||
+		(c >= '0' && c <= '9') )
 	{
-		memset(str, '\0', strMaxSz);
-		for(i=0;i<size;i++)
+		return 1;
+	}
+
+	i = 0;
+	while(specialchar[i])
+	{
+		if(specialchar[i] == c)
 		{
-			if(!(i&0xF) && i)
-			{
-				PRINT_DEBUG("%s", str);
-				memset(str, '\0', strMaxSz);
-			}
-			snprintf(tmp, sizeof(tmp), "%02X ", ptr[i]);
-			strncat(str, tmp, strMaxSz);
-			memset(tmp, '\0', sizeof(tmp));
+			return 1;
 		}
 
-		if(strlen(str))
-			PRINT_DEBUG("%s", str);
-
-		free(str);
+		i++;
 	}
+
+	return 0;
+}
+
+void printbuf(void * buf,int size)
+{
+	#define PRINTBUF_HEXPERLINE 16
+	#define PRINTBUF_MAXLINE_SIZE ((3*PRINTBUF_HEXPERLINE)+1+PRINTBUF_HEXPERLINE+2)
+
+	int i,j;
+	char *ptr = buf;
+	char tmp[8];
+	char str[PRINTBUF_MAXLINE_SIZE];
+
+	memset(str, ' ', PRINTBUF_MAXLINE_SIZE);
+	str[PRINTBUF_MAXLINE_SIZE-1] = 0;
+
+	j = 0;
+	for(i=0;i<size;i++)
+	{
+		if(!(i&(PRINTBUF_HEXPERLINE-1)) && i)
+		{
+			PRINT_DEBUG("%s", str);
+			memset(str, ' ', PRINTBUF_MAXLINE_SIZE);
+			str[PRINTBUF_MAXLINE_SIZE-1] = 0;
+			j = 0;
+		}
+
+		snprintf(tmp, sizeof(tmp), "%02X", ptr[i]);
+		memcpy(&str[j*3],tmp,2);
+
+		if( is_printable_char(ptr[i]) )
+			str[3*PRINTBUF_HEXPERLINE + 1 + j] = ptr[i];
+		else
+			str[3*PRINTBUF_HEXPERLINE + 1 + j] = '.';
+
+		j++;
+	}
+
+	PRINT_DEBUG("%s", str);
 }
 #endif
 
