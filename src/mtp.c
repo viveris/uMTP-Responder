@@ -501,7 +501,8 @@ int send_file_data( mtp_ctx * ctx, fs_entry * entry,uint32_t offset, uint32_t ma
 int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int rawsize)
 {
 	fs_entry * entry;
-	uint32_t params[5],storageid;
+	uint32_t params[5],params_size;
+	uint32_t storageid;
 	uint32_t handle,parent_handle,new_handle;
 	uint32_t response_code;
 	uint32_t property_id,format_id,prop_code;
@@ -519,6 +520,8 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 	params[2] = 0x000000;
 	params[3] = 0x000000;
 	params[4] = 0x000000;
+
+	params_size = sizeof(params);
 
 	no_response = 0;
 
@@ -543,6 +546,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 			PRINT_DEBUG("Open session - ID 0x%.8x",ctx->session_id);
 
+			params_size = 0; // No response parameter
 			response_code = MTP_RESPONSE_OK;
 
 		break;
@@ -573,6 +577,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 			check_and_send_USB_ZLP(ctx , size );
 
+			params_size = 0; // No response parameter
 			response_code = MTP_RESPONSE_OK;
 
 		break;
@@ -687,6 +692,8 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 					nb_of_handles++;
 				}
 
+				PRINT_DEBUG("MTP_OPERATION_GET_OBJECT_HANDLES - %d objects found",nb_of_handles);
+
 				// Restart
 				init_search_handle(ctx->fs_db, parent_handle, storageid);
 
@@ -743,6 +750,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 			pthread_mutex_unlock( &ctx->inotify_mutex );
 
+			params_size = 0; // No response parameter
 			response_code = MTP_RESPONSE_OK;
 
 		break;
@@ -982,6 +990,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 			check_and_send_USB_ZLP(ctx , size );
 
+			params_size = 0; // No response parameter
 			response_code = MTP_RESPONSE_OK;
 
 		break;
@@ -1026,7 +1035,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 			handle = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER), 4);        // Get param 1 - object handle
 			prop_code = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER) + 4, 4); // Get param 2 - PropCode
 
-			PRINT_WARN("MTP_OPERATION_GET_OBJECT_PROP_VALUE : (Handle : 0x%.8X - Prop code : 0x%.4X )", handle, prop_code);
+			PRINT_DEBUG("MTP_OPERATION_GET_OBJECT_PROP_VALUE : (Handle : 0x%.8X - Prop code : 0x%.4X )", handle, prop_code);
 
 			entry = get_entry_by_handle(ctx->fs_db, handle);
 			if( entry )
@@ -1095,7 +1104,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 	// Send the status response
 	if(!no_response)
 	{
-		size = build_response(ctx, mtp_packet_hdr->tx_id,MTP_CONTAINER_TYPE_RESPONSE, response_code, ctx->wrbuffer,&params,sizeof(params));
+		size = build_response(ctx, mtp_packet_hdr->tx_id,MTP_CONTAINER_TYPE_RESPONSE, response_code, ctx->wrbuffer,&params,params_size);
 
 		PRINT_DEBUG("Status response (%d Bytes):",size);
 		PRINT_DEBUG_BUF(ctx->wrbuffer, size);
@@ -1118,7 +1127,8 @@ int mtp_incoming_packet(mtp_ctx * ctx)
 
 	if(size>=0)
 	{
-		PRINT_DEBUG("incoming_packet : %p - rawsize : %d",ctx->rdbuffer,size);
+		PRINT_DEBUG("--------------------------------------------------");
+		PRINT_DEBUG("Incoming_packet : %p - rawsize : %d",ctx->rdbuffer,size);
 
 		if(!size)
 			return 0; // ZLP
