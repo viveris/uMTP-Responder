@@ -64,7 +64,7 @@ int build_deviceinfo_dataset(mtp_ctx * ctx, void * buffer, int maxsize)
 	poke_array(buffer, &ofs, supported_op_size, 2, (void*)&supported_op,1);              // Operations Supported
 	poke_array(buffer, &ofs, supported_event_size, 2, (void*)&supported_event,1);        // Events Supported
 	poke_array(buffer, &ofs, supported_property_size, 2, (void*)&supported_property,1);  // Device Properties Supported
-	poke_array(buffer, &ofs, supported_formats_size, 2, (void*)&supported_formats,1);    // Capture Formats
+	poke(buffer, &ofs, 4, 0x00000000);                                                   // No Capture Formats...
 	poke_array(buffer, &ofs, supported_formats_size, 2, (void*)&supported_formats,1);    // Playback Formats
 
 	poke_string(buffer, &ofs, ctx->usb_cfg.usb_string_manufacturer);                     // Manufacturer
