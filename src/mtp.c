@@ -505,7 +505,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 	uint32_t storageid;
 	uint32_t handle,parent_handle,new_handle;
 	uint32_t response_code;
-	uint32_t property_id,format_id,prop_code
+	uint32_t property_id,format_id,prop_code;
 	uint32_t prop_group_code,depth;
 	int i,size,offset,maxsize,actualsize;
 	int handle_index;
