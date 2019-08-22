@@ -59,13 +59,10 @@ uint16_t supported_properties[]=
 	MTP_PROPERTY_PROTECTION_STATUS                     , //  0xDC03
 	MTP_PROPERTY_OBJECT_SIZE                           , //  0xDC04
 	MTP_PROPERTY_ASSOCIATION_TYPE                      , //  0xDC05
-	MTP_PROPERTY_ASSOCIATION_DESC                      , //  0xDC06
 	MTP_PROPERTY_OBJECT_FILE_NAME                      , //  0xDC07
 	MTP_PROPERTY_DATE_CREATED                          , //  0xDC08
 	MTP_PROPERTY_DATE_MODIFIED                         , //  0xDC09
 	MTP_PROPERTY_PARENT_OBJECT                         , //  0xDC0B
-	MTP_PROPERTY_HIDDEN                                , //  0xDC0D
-	MTP_PROPERTY_SYSTEM_OBJECT                         , //  0xDC0E
 	0xFFFF
 };
 
@@ -208,6 +205,67 @@ int build_properties_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uint32_t p
 
 	return ofs;
 }
+
+int build_device_properties_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uint32_t property_id)
+{
+	int ofs;
+
+	ofs = 0;
+
+	PRINT_DEBUG("build_device_properties_dataset : 0x%.4X (%s)", property_id, mtp_get_property_string(property_id));
+
+	switch(property_id)
+	{
+		case MTP_DEVICE_PROPERTY_SYNCHRONIZATION_PARTNER:
+			poke(buffer, &ofs, 2, MTP_DEVICE_PROPERTY_SYNCHRONIZATION_PARTNER);  // PropertyCode
+			poke(buffer, &ofs, 2, MTP_TYPE_UINT32);                    // DataType
+			poke(buffer, &ofs, 1, 0x00);                               // Get
+			poke(buffer, &ofs, 4, 0x00000000);                         // DefaultValue
+			poke(buffer, &ofs, 4, 0x00000001);                         // GroupCode
+			poke(buffer, &ofs, 1, 0x00);                               // FormFlag : None
+		break;
+
+		case MTP_DEVICE_PROPERTY_IMAGE_SIZE:
+			poke(buffer, &ofs, 2, MTP_DEVICE_PROPERTY_IMAGE_SIZE);  // PropertyCode
+			poke(buffer, &ofs, 2, MTP_TYPE_UINT32);                    // DataType
+			poke(buffer, &ofs, 1, 0x00);                               // Get
+			poke(buffer, &ofs, 4, 0x00000000);                         // DefaultValue
+			poke(buffer, &ofs, 4, 0x00000001);                         // GroupCode
+			poke(buffer, &ofs, 1, 0x00);                               // FormFlag : None
+		break;
+
+		case MTP_DEVICE_PROPERTY_BATTERY_LEVEL:
+			poke(buffer, &ofs, 2, MTP_DEVICE_PROPERTY_BATTERY_LEVEL);         // PropertyCode
+			poke(buffer, &ofs, 2, MTP_TYPE_UINT16);                    // DataType
+			poke(buffer, &ofs, 1, 0x00);                               // Get
+			poke(buffer, &ofs, 2, 0x3000);                             // DefaultValue
+			poke(buffer, &ofs, 4, 0x00000001);                         // GroupCode
+			poke(buffer, &ofs, 1, 0x00);                               // FormFlag : None
+		break;
+
+		case MTP_DEVICE_PROPERTY_DEVICE_FRIENDLY_NAME:
+			poke(buffer, &ofs, 2, MTP_DEVICE_PROPERTY_DEVICE_FRIENDLY_NAME);      // PropertyCode
+			poke(buffer, &ofs, 2, MTP_TYPE_STR);                       // DataType
+			poke(buffer, &ofs, 1, 0x01);                               // Get/Set
+			poke(buffer, &ofs, 1, 0x00);                               // DefaultValue : Null sized strcat
+
+			poke(buffer, &ofs, 1, 0x05);                               // "uMTP". TODO : Add an option in the config file to change this.
+			poke(buffer, &ofs, 1, 0x75);
+			poke(buffer, &ofs, 1, 0x00);
+			poke(buffer, &ofs, 1, 0x4D);
+			poke(buffer, &ofs, 1, 0x00);
+			poke(buffer, &ofs, 1, 0x54);
+			poke(buffer, &ofs, 1, 0x00);
+			poke(buffer, &ofs, 1, 0x50);
+			poke(buffer, &ofs, 1, 0x00);
+			poke(buffer, &ofs, 1, 0x00);
+			poke(buffer, &ofs, 1, 0x00);
+		break;
+	}
+
+	return ofs;
+}
+
 
 int build_properties_supported_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uint32_t format_id)
 {

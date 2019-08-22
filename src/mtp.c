@@ -505,7 +505,8 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 	uint32_t storageid;
 	uint32_t handle,parent_handle,new_handle;
 	uint32_t response_code;
-	uint32_t property_id,format_id,prop_code;
+	uint32_t property_id,format_id,prop_code
+	uint32_t prop_group_code,depth;
 	int i,size,offset,maxsize,actualsize;
 	int handle_index;
 	int nb_of_handles;
@@ -607,6 +608,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 			check_and_send_USB_ZLP(ctx , size );
 
+			params_size = 0; // No response parameter
 			response_code = MTP_RESPONSE_OK;
 
 		break;
@@ -631,12 +633,47 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 				check_and_send_USB_ZLP(ctx , size );
 
+				params_size = 0; // No response parameter
 				response_code = MTP_RESPONSE_OK;
 			}
 			else
 			{
 				response_code = MTP_RESPONSE_INVALID_STORAGE_ID;
 			}
+		break;
+
+		case MTP_OPERATION_GET_DEVICE_PROP_DESC:
+			pthread_mutex_lock( &ctx->inotify_mutex );
+
+			property_id = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER), 4);  // Get param 1 - property id
+
+			size = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer,0,0);
+			size += build_device_properties_dataset(ctx,ctx->wrbuffer + sizeof(MTP_PACKET_HEADER), 2048, property_id);
+
+			if ( size > sizeof(MTP_PACKET_HEADER) )
+			{
+				// Update packet size
+				ofs = 0;
+				poke(ctx->wrbuffer, &ofs, 4, size);
+
+				PRINT_DEBUG("MTP_OPERATION_GET_DEVICE_PROP_DESC response (%d Bytes):",size);
+				PRINT_DEBUG_BUF(ctx->wrbuffer, size);
+
+				write_usb(ctx->usb_ctx,EP_DESCRIPTOR_IN,ctx->wrbuffer,size);
+
+				check_and_send_USB_ZLP(ctx , size );
+
+				params_size = 0; // No response parameter
+				response_code = MTP_RESPONSE_OK;
+			}
+			else
+			{
+				PRINT_WARN("MTP_OPERATION_GET_DEVICE_PROP_DESC : Property unsupported ! : 0x%.4X (%s)", property_id, mtp_get_property_string(property_id));
+
+				response_code = MTP_RESPONSE_OPERATION_NOT_SUPPORTED;
+			}
+
+			pthread_mutex_unlock( &ctx->inotify_mutex );
 		break;
 
 		case MTP_OPERATION_GET_OBJECT_HANDLES:
@@ -1090,6 +1127,55 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 					response_code = MTP_RESPONSE_OPERATION_NOT_SUPPORTED;
 				break;
 			}
+		break;
+
+		case MTP_OPERATION_GET_OBJECT_PROP_LIST:
+
+			pthread_mutex_lock( &ctx->inotify_mutex );
+
+			handle = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER), 4);
+			format_id = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER) + 4, 4);
+			prop_code = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER) + 8, 4);
+			prop_group_code = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER) + 12, 4);
+			depth = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER) + 16, 4);
+
+			PRINT_DEBUG("MTP_OPERATION_GET_OBJECT_PROP_LIST :(Handle: 0x%.8X FormatCode: 0x%.8X ObjPropCode: 0x%.8X ObjPropGroupCode: 0x%.8X Depth: %d)", handle, format_id, prop_code, prop_group_code, depth);
+
+			if( format_id != 0x00000000 )
+			{   // Specification by format not currently supported
+				params_size = 0; // No response parameter
+				response_code = MTP_RESPONSE_SPECIFICATION_BY_FORMAT_UNSUPPORTED;
+			}
+
+			if( prop_code == 0x00000000 )
+			{   // ObjectPropGroupCode not currently supported
+
+				if( prop_group_code == 0x00000000 )
+				{
+					params_size = 0; // No response parameter
+					response_code = MTP_RESPONSE_PARAMETER_NOT_SUPPORTED;
+				}
+				else
+				{
+					params_size = 0; // No response parameter
+					response_code = MTP_RESPONSE_SPECIFICATION_BY_GROUP_UNSUPPORTED;
+				}
+
+				PRINT_DEBUG("MTP_OPERATION_GET_OBJECT_PROP_LIST : ObjectPropGroupCode not currently supported !");
+
+				pthread_mutex_unlock( &ctx->inotify_mutex );
+
+				break;
+			}
+
+			entry = get_entry_by_handle(ctx->fs_db, handle);
+
+
+			params_size = 0; // No response parameter
+			response_code = MTP_RESPONSE_OK;
+
+			pthread_mutex_unlock( &ctx->inotify_mutex );
+
 		break;
 
 		default:
