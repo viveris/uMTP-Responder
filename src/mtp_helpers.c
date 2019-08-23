@@ -24,8 +24,12 @@
  */
 
 #include <stdint.h>
+#include <errno.h>
+
 #include "mtp_helpers.h"
 #include "usbstring.h"
+
+#include "mtp_constant.h"
 
 void poke(void * buffer, int * index, int typesize, unsigned long data)
 {
@@ -117,4 +121,135 @@ void poke_array(void * buffer, int * index, int size, int elementsize, const uns
 
 		i++;
 	}
+}
+
+uint16_t posix_to_mtp_errcode(int err)
+{
+	uint16_t code;
+
+	code = MTP_RESPONSE_GENERAL_ERROR;
+
+	switch(err)
+	{
+		case EBUSY:
+			return MTP_RESPONSE_DEVICE_BUSY;
+		break;
+		case ETXTBSY:
+			return MTP_RESPONSE_DEVICE_BUSY;
+		break;
+		case EACCES:
+			return MTP_RESPONSE_ACCESS_DENIED;
+		break;
+		case EPERM:
+			return MTP_RESPONSE_ACCESS_DENIED;
+		break;
+		case EINPROGRESS:
+			return MTP_RESPONSE_DEVICE_BUSY;
+		break;
+		case EAGAIN:
+			return MTP_RESPONSE_DEVICE_BUSY;
+		break;
+		case EBADF:
+			return MTP_RESPONSE_INVALID_OBJECT_HANDLE;
+		break;
+		case EBADFD:
+			return MTP_RESPONSE_INVALID_OBJECT_HANDLE;
+		break;
+		case ENOENT:
+			return MTP_RESPONSE_INVALID_OBJECT_HANDLE;
+		break;
+		case ECANCELED:
+			return MTP_RESPONSE_INCOMPLETE_TRANSFER;
+		break;
+		case EDQUOT:
+			return MTP_RESPONSE_STORAGE_FULL;
+		break;
+		case EEXIST:
+		break;
+		case EFBIG:
+			return MTP_RESPONSE_STORAGE_FULL;
+		break;
+		case EHWPOISON:
+			return MTP_RESPONSE_GENERAL_ERROR;
+		break;
+		case EINTR:
+			return MTP_RESPONSE_GENERAL_ERROR;
+		break;
+		case EINVAL:
+			return MTP_RESPONSE_INVALID_PARAMETER;
+		break;
+		case EREMOTEIO:
+		case EIO:
+			return MTP_RESPONSE_GENERAL_ERROR;
+		break;
+		case EISDIR:
+			return MTP_RESPONSE_INVALID_PARAMETER;
+		break;
+		case ELIBACC:
+		case ELIBBAD:
+		case ELIBSCN:
+		case ELIBMAX:
+		case ELIBEXEC:
+		case ENOEXEC:
+		case ENOPKG:
+		case ENOSYS:
+		case ENOTRECOVERABLE:
+		case ENOTSUP:
+		case EPIPE:
+			return MTP_RESPONSE_GENERAL_ERROR;
+		break;
+		case ELOOP:
+			return MTP_RESPONSE_INCOMPLETE_TRANSFER;
+		break;
+		case EMEDIUMTYPE:
+			return MTP_RESPONSE_INVALID_OBJECT_HANDLE;
+		break;
+		case EMFILE:
+			return MTP_RESPONSE_STORAGE_FULL;
+		break;
+		case EMLINK:
+			return MTP_RESPONSE_STORAGE_FULL;
+		break;
+		case ENOSPC:
+			return MTP_RESPONSE_STORAGE_FULL;
+		break;
+		case ENOMEM:
+			return MTP_RESPONSE_GENERAL_ERROR;
+		break;
+		case ENAMETOOLONG:
+			return MTP_RESPONSE_INVALID_PARAMETER;
+		break;
+		case ENFILE:
+			return MTP_RESPONSE_GENERAL_ERROR;
+		break;
+		case ENODEV:
+			return MTP_RESPONSE_INVALID_PARAMETER;
+		break;
+		case ENOLINK:
+			return MTP_RESPONSE_INVALID_OBJECT_HANDLE;
+		break;
+		case ENOMEDIUM:
+			return MTP_RESPONSE_INVALID_OBJECT_HANDLE;
+		break;
+		case ENOTBLK:
+			return MTP_RESPONSE_INVALID_OBJECT_HANDLE;
+		break;
+		case ENOTDIR:
+			return MTP_RESPONSE_ACCESS_DENIED;
+		break;
+		case ENOTEMPTY:
+			return MTP_RESPONSE_PARTIAL_DELETION;
+		break;
+		case EROFS:
+			return MTP_RESPONSE_STORE_READ_ONLY;
+		break;
+		case ESPIPE:
+			return MTP_RESPONSE_GENERAL_ERROR;
+		break;
+		case ESTALE:
+			return MTP_RESPONSE_INVALID_OBJECT_HANDLE;
+		break;
+	}
+
+	return code;
 }
