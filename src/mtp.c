@@ -395,12 +395,14 @@ int parse_incomming_dataset(mtp_ctx * ctx,void * datain,int size,uint32_t * newh
 						{
 							ctx->SendObjInfoHandle = entry->handle;
 							ctx->SendObjInfoSize = objectsize;
+							ctx->SendObjInfoOffset = 0;
 							*newhandle = entry->handle;
 						}
 						else
 						{
 							ctx->SendObjInfoHandle = 0xFFFFFFFF;
-							ctx->SendObjInfoSize = 0x00000000;
+							ctx->SendObjInfoSize = 0;
+							ctx->SendObjInfoOffset = 0;
 						}
 
 						if( parent_folder )
@@ -923,11 +925,18 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 		break;
 
+		case MTP_OPERATION_SEND_PARTIAL_OBJECT:
 		case MTP_OPERATION_SEND_OBJECT:
-
 			pthread_mutex_lock( &ctx->inotify_mutex );
 
 			response_code = MTP_RESPONSE_GENERAL_ERROR;
+
+			if( mtp_packet_hdr->code == MTP_OPERATION_SEND_PARTIAL_OBJECT && mtp_packet_hdr->operation == MTP_CONTAINER_TYPE_COMMAND )
+			{
+				ctx->SendObjInfoHandle = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER), 4);      // Get param 1 - Object handle
+				ctx->SendObjInfoOffset = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER) + 4, 8);   // Get param 2 - Offset in bytes
+				ctx->SendObjInfoSize = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER) + 12, 4); // Get param 3 - Max size in bytes
+			}
 
 			if( ctx->SendObjInfoHandle != 0xFFFFFFFF )
 			{
@@ -940,14 +949,20 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 							full_path = build_full_path(ctx->fs_db, mtp_get_storage_root(ctx, entry->storage_id), entry);
 							if(full_path)
 							{
-								f = fopen(full_path,"wb");
+								if( mtp_packet_hdr->code == MTP_OPERATION_SEND_PARTIAL_OBJECT )
+									f = fopen(full_path,"r+b");
+								else
+									f = fopen(full_path,"wb");
+
 								if(f)
 								{
+									fseek(f, ctx->SendObjInfoOffset, SEEK_SET);
+
 									size = rawsize - sizeof(MTP_PACKET_HEADER);
 									tmp_ptr = ((unsigned char*)mtp_packet_hdr) ;
 									tmp_ptr += sizeof(MTP_PACKET_HEADER);
 
-									if(size)
+									if(size > 0)
 									{
 										fwrite(tmp_ptr,size, 1 ,f);
 										ctx->SendObjInfoSize -= size;
@@ -955,6 +970,11 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 									tmp_ptr = ctx->rdbuffer2;
 									if( size == ( MAX_RX_BUFFER_SIZE - sizeof(MTP_PACKET_HEADER) ) )
+									{
+										size = MAX_RX_BUFFER_SIZE;
+									}
+
+									if( mtp_packet_hdr->code == MTP_OPERATION_SEND_PARTIAL_OBJECT && ctx->SendObjInfoSize )
 									{
 										size = MAX_RX_BUFFER_SIZE;
 									}
@@ -982,6 +1002,8 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 						}
 					break;
 					case MTP_CONTAINER_TYPE_COMMAND:
+						PRINT_DEBUG("SEND_OBJECT : Handle 0x%.8x, Offset 0x%.8x, Size 0x%.8x",ctx->SendObjInfoHandle,ctx->SendObjInfoOffset,ctx->SendObjInfoSize);
+
 						// no response to send, wait for the data...
 						response_code = MTP_RESPONSE_OK;
 						no_response = 1;
@@ -1260,6 +1282,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 				full_path = build_full_path(ctx->fs_db, mtp_get_storage_root(ctx, entry->storage_id), entry);
 				if(full_path)
 				{
+					PRINT_DEBUG("Truncate file at %d Bytes",offset);
 					if( !truncate(full_path, (off_t)offset) )
 					{
 						response_code = MTP_RESPONSE_OK;

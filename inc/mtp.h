@@ -98,6 +98,7 @@ typedef struct mtp_ctx_
 
 	uint32_t SendObjInfoHandle;
 	uint32_t SendObjInfoSize;
+	uint32_t SendObjInfoOffset;
 
 	uint32_t SetObjectPropValue_Handle;
 	uint32_t SetObjectPropValue_PropCode;
