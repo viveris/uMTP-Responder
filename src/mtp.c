@@ -31,9 +31,8 @@
 #include <errno.h>
 
 #include <sys/stat.h>
-
 #include <sys/types.h>
-
+#include <unistd.h>
 #include <pthread.h>
 
 #include "logs_out.h"
@@ -1239,6 +1238,40 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 			else
 			{
 				params_size = 0; // No response parameter
+				response_code = MTP_RESPONSE_INVALID_OBJECT_HANDLE;
+			}
+
+			pthread_mutex_unlock( &ctx->inotify_mutex );
+		break;
+
+		case MTP_OPERATION_TRUNCATE_OBJECT :
+			pthread_mutex_lock( &ctx->inotify_mutex );
+
+			params_size = 0; // No response parameter
+			response_code = MTP_RESPONSE_GENERAL_ERROR;
+
+			handle = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER), 4);
+			// TODO : FIX 64 bits offset
+			offset = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER) + 4, 8);   // Get param 2 - Offset in bytes
+
+			entry = get_entry_by_handle(ctx->fs_db, handle);
+			if( entry )
+			{
+				full_path = build_full_path(ctx->fs_db, mtp_get_storage_root(ctx, entry->storage_id), entry);
+				if(full_path)
+				{
+					if( !truncate(full_path, (off_t)offset) )
+					{
+						response_code = MTP_RESPONSE_OK;
+					}
+					else
+					{
+						response_code = posix_to_mtp_errcode(errno);
+					}
+				}
+			}
+			else
+			{
 				response_code = MTP_RESPONSE_INVALID_OBJECT_HANDLE;
 			}
 
