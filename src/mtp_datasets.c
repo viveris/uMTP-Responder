@@ -50,9 +50,11 @@
 
 #include "mtp_support_def.h"
 
+#include "mtp_properties.h"
+
 int build_deviceinfo_dataset(mtp_ctx * ctx, void * buffer, int maxsize)
 {
-	int ofs;
+	int ofs,i,properties_cnt;
 
 	ofs = 0;
 
@@ -63,7 +65,20 @@ int build_deviceinfo_dataset(mtp_ctx * ctx, void * buffer, int maxsize)
 	poke(buffer, &ofs, 2, 0x0000);                                                       // Functional Mode
 	poke_array(buffer, &ofs, supported_op_size, 2, (void*)&supported_op,1);              // Operations Supported
 	poke_array(buffer, &ofs, supported_event_size, 2, (void*)&supported_event,1);        // Events Supported
-	poke_array(buffer, &ofs, supported_property_size, 2, (void*)&supported_property,1);  // Device Properties Supported
+
+	// Device Properties Supported
+	properties_cnt = 0;
+	while( dev_properties[properties_cnt].prop_code != 0xFFFF )
+	{
+		properties_cnt++;
+	}
+
+	poke(buffer, &ofs, 4, properties_cnt);
+	for( i = 0; i < properties_cnt ; i++ )
+	{
+		poke(buffer, &ofs, 2, dev_properties[i].prop_code);
+	}
+
 	poke(buffer, &ofs, 4, 0x00000000);                                                   // No Capture Formats...
 	poke_array(buffer, &ofs, supported_formats_size, 2, (void*)&supported_formats,1);    // Playback Formats
 

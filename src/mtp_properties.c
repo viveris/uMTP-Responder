@@ -52,155 +52,77 @@
 
 #include "mtp_support_def.h"
 
-uint16_t supported_properties[]=
-{
-	MTP_PROPERTY_STORAGE_ID                            , //  0xDC01
-	MTP_PROPERTY_OBJECT_FORMAT                         , //  0xDC02
-	MTP_PROPERTY_PROTECTION_STATUS                     , //  0xDC03
-	MTP_PROPERTY_OBJECT_SIZE                           , //  0xDC04
-	MTP_PROPERTY_ASSOCIATION_TYPE                      , //  0xDC05
-	MTP_PROPERTY_OBJECT_FILE_NAME                      , //  0xDC07
-	MTP_PROPERTY_DATE_CREATED                          , //  0xDC08
-	MTP_PROPERTY_DATE_MODIFIED                         , //  0xDC09
-	MTP_PROPERTY_PARENT_OBJECT                         , //  0xDC0B
-	0xFFFF
+profile_property properties[]=
+{   // prop_code                       data_type         getset    default value          group code
+	{MTP_PROPERTY_STORAGE_ID,          MTP_TYPE_UINT32,    0x00,   0x00000000           , 0x000000001 , 0x00 },
+	{MTP_PROPERTY_OBJECT_FORMAT,       MTP_TYPE_UINT16,    0x00,   0x3000               , 0x000000001 , 0x00 },
+	{MTP_PROPERTY_ASSOCIATION_TYPE,    MTP_TYPE_UINT16,    0x00,   0x0001               , 0x000000001 , 0x00 },
+	{MTP_PROPERTY_ASSOCIATION_DESC,    MTP_TYPE_UINT32,    0x00,   0x00000000           , 0x000000001 , 0x00 },
+	{MTP_PROPERTY_PROTECTION_STATUS,   MTP_TYPE_UINT16,    0x00,   0x0000               , 0x000000001 , 0x00 },
+	{MTP_PROPERTY_HIDDEN,              MTP_TYPE_UINT16,    0x00,   0x0000               , 0x000000001 , 0x00 },
+	{MTP_PROPERTY_PROTECTION_STATUS,   MTP_TYPE_UINT16,    0x00,   0x0000               , 0x000000001 , 0x00 },
+	{MTP_PROPERTY_OBJECT_SIZE,         MTP_TYPE_UINT64,    0x00,   0x0000000000000000   , 0x000000001 , 0x00 },
+	{MTP_PROPERTY_OBJECT_FILE_NAME,    MTP_TYPE_STR,       0x01,   0x00                 , 0x000000001 , 0x00 },
+	{MTP_PROPERTY_DATE_CREATED,        MTP_TYPE_STR,       0x00,   0x00                 , 0x000000001 , 0x00 },
+	{MTP_PROPERTY_DATE_MODIFIED,       MTP_TYPE_STR,       0x00,   0x00                 , 0x000000001 , 0x00 },
+	{MTP_PROPERTY_PARENT_OBJECT,       MTP_TYPE_UINT32,    0x00,   0x00000000           , 0x000000001 , 0x00 },
+
+	{0xFFFF,                           MTP_TYPE_UINT32,    0x00,   0x00000000           , 0x000000000 , 0x00 }
+};
+
+profile_property dev_properties[]=
+{   // prop_code                                           data_type         getset    default value          group code
+	//{MTP_DEVICE_PROPERTY_SYNCHRONIZATION_PARTNER,          MTP_TYPE_UINT32,    0x00,   0x00000000           , 0x000000000 , 0x00 },
+	//{MTP_DEVICE_PROPERTY_IMAGE_SIZE,                       MTP_TYPE_UINT32,    0x00,   0x00000000           , 0x000000000 , 0x00 },
+	{MTP_DEVICE_PROPERTY_BATTERY_LEVEL,                    MTP_TYPE_UINT16,    0x00,   0x00000000           , 0x000000000 , 0x00 },
+	{MTP_DEVICE_PROPERTY_DEVICE_FRIENDLY_NAME,             MTP_TYPE_STR,       0x00,   0x00000000           , 0x000000000 , 0x00 },
+
+	{0xFFFF,                                               MTP_TYPE_UINT32,    0x00,   0x00000000           , 0x000000000 , 0x00 }
 };
 
 int build_properties_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uint32_t property_id,uint32_t format_id)
 {
-	int ofs;
+	int ofs,i;
 
 	ofs = 0;
 
 	PRINT_DEBUG("build_properties_dataset : 0x%.4X (%s) (Format : 0x%.4X - %s )", property_id, mtp_get_property_string(property_id), format_id, mtp_get_format_string(format_id));
 
-	switch(property_id)
+	i = 0;
+	while(properties[i].prop_code != 0xFFFF && properties[i].prop_code != property_id)
 	{
-		case MTP_PROPERTY_STORAGE_ID:
-			poke(buffer, &ofs, 2, MTP_PROPERTY_STORAGE_ID);            // PropertyCode
-			poke(buffer, &ofs, 2, MTP_TYPE_UINT32);                    // DataType
-			poke(buffer, &ofs, 1, 0x00);                               // Get
-			poke(buffer, &ofs, 4, 0x00000000);                         // DefaultValue
-			poke(buffer, &ofs, 4, 0x00000001);                         // GroupCode
-			poke(buffer, &ofs, 1, 0x00);                               // FormFlag : None
-		break;
+		i++;
+	}
 
-		case MTP_PROPERTY_OBJECT_FORMAT:
-			poke(buffer, &ofs, 2, MTP_PROPERTY_OBJECT_FORMAT);         // PropertyCode
-			poke(buffer, &ofs, 2, MTP_TYPE_UINT16);                    // DataType
-			poke(buffer, &ofs, 1, 0x00);                               // Get
-			poke(buffer, &ofs, 2, 0x3000);                             // DefaultValue
-			poke(buffer, &ofs, 4, 0x00000001);                         // GroupCode
-			poke(buffer, &ofs, 1, 0x00);                               // FormFlag : None
-		break;
+	if( properties[i].prop_code == property_id )
+	{
+		poke(buffer, &ofs, 2, properties[i].prop_code);            // PropertyCode
+		poke(buffer, &ofs, 2, properties[i].data_type);            // DataType
+		poke(buffer, &ofs, 1, properties[i].getset);               // Get / Set
 
-		case MTP_PROPERTY_ASSOCIATION_TYPE:
-			poke(buffer, &ofs, 2, MTP_PROPERTY_ASSOCIATION_TYPE);      // PropertyCode
-			poke(buffer, &ofs, 2, MTP_TYPE_UINT16);                    // DataType
-			poke(buffer, &ofs, 1, 0x00);                               // Get
-			poke(buffer, &ofs, 2, 0x0001);                             // DefaultValue
-			poke(buffer, &ofs, 4, 0x00000001);                         // GroupCode
-			poke(buffer, &ofs, 1, 0x00);                               // FormFlag : None
-		break;
+		switch(properties[i].data_type)
+		{
+			case MTP_TYPE_STR:
+			case MTP_TYPE_UINT8:
+				poke(buffer, &ofs, 1, properties[i].default_value);                         // DefaultValue
+			break;
+			case MTP_TYPE_UINT16:
+				poke(buffer, &ofs, 2, properties[i].default_value);                         // DefaultValue
+			break;
+			case MTP_TYPE_UINT32:
+				poke(buffer, &ofs, 4, properties[i].default_value);                         // DefaultValue
+			break;
+			case MTP_TYPE_UINT64:
+				poke(buffer, &ofs, 4, properties[i].default_value & 0xFFFFFFFF);            // DefaultValue
+				poke(buffer, &ofs, 4, properties[i].default_value >> 32);
+			break;
+			default:
+				PRINT_ERROR("build_properties_dataset : Unsupported data type : 0x%.4X", dev_properties[i].data_type );			
+			break;
+		}
 
-		case MTP_PROPERTY_ASSOCIATION_DESC:
-			poke(buffer, &ofs, 2, MTP_PROPERTY_ASSOCIATION_DESC);      // PropertyCode
-			poke(buffer, &ofs, 2, MTP_TYPE_UINT32);                    // DataType
-			poke(buffer, &ofs, 1, 0x00);                               // Get
-			poke(buffer, &ofs, 4, 0x00000000);                             // DefaultValue
-			poke(buffer, &ofs, 4, 0x00000001);                         // GroupCode
-			poke(buffer, &ofs, 1, 0x00);                               // FormFlag : None
-		break;
-
-		case MTP_PROPERTY_PROTECTION_STATUS:
-			poke(buffer, &ofs, 2, MTP_PROPERTY_PROTECTION_STATUS);     // PropertyCode
-			poke(buffer, &ofs, 2, MTP_TYPE_UINT16);                    // DataType
-			poke(buffer, &ofs, 1, 0x00);                               // Get
-			poke(buffer, &ofs, 2, 0x0000);                             // DefaultValue
-			poke(buffer, &ofs, 4, 0x00000001);                         // GroupCode
-			poke(buffer, &ofs, 1, 0x00);                               // FormFlag : (Enumeration)
-		break;
-
-		case MTP_PROPERTY_HIDDEN:
-			poke(buffer, &ofs, 2, MTP_PROPERTY_PROTECTION_STATUS);     // PropertyCode
-			poke(buffer, &ofs, 2, MTP_TYPE_UINT16);                    // DataType
-			poke(buffer, &ofs, 1, 0x00);                               // Get
-			poke(buffer, &ofs, 2, 0x0000);                             // DefaultValue
-			poke(buffer, &ofs, 4, 0x00000001);                         // GroupCode
-			poke(buffer, &ofs, 1, 0x00);                               // FormFlag : (Enumeration)
-		break;
-
-		case MTP_PROPERTY_SYSTEM_OBJECT:
-			poke(buffer, &ofs, 2, MTP_PROPERTY_PROTECTION_STATUS);     // PropertyCode
-			poke(buffer, &ofs, 2, MTP_TYPE_UINT16);                    // DataType
-			poke(buffer, &ofs, 1, 0x00);                               // Get
-			poke(buffer, &ofs, 2, 0x0000);                             // DefaultValue
-			poke(buffer, &ofs, 4, 0x00000001);                         // GroupCode
-			poke(buffer, &ofs, 1, 0x00);                               // FormFlag : (Enumeration)
-		break;
-
-		case MTP_PROPERTY_OBJECT_SIZE:
-			poke(buffer, &ofs, 2, MTP_PROPERTY_OBJECT_SIZE);           // PropertyCode
-			poke(buffer, &ofs, 2, MTP_TYPE_UINT64);                    // DataType
-			poke(buffer, &ofs, 1, 0x00);                               // Get/Set
-			poke(buffer, &ofs, 8, 0x0000000000000000);                 // DefaultValue
-			poke(buffer, &ofs, 4, 0x00000001);                         // GroupCode
-			poke(buffer, &ofs, 1, 0x00);                               // FormFlag : None
-		break;
-
-		case MTP_PROPERTY_OBJECT_FILE_NAME:
-			poke(buffer, &ofs, 2, MTP_PROPERTY_OBJECT_FILE_NAME);      // PropertyCode
-			poke(buffer, &ofs, 2, MTP_TYPE_STR);                       // DataType
-			poke(buffer, &ofs, 1, 0x01);                               // Get/Set
-			poke(buffer, &ofs, 1, 0x00);                               // DefaultValue : Null sized strcat
-			poke(buffer, &ofs, 4, 0x00000001);                         // GroupCode
-			poke(buffer, &ofs, 1, 0x00);                               // FormFlag : RegEx
-		break;
-
-		case MTP_PROPERTY_DATE_CREATED:
-			poke(buffer, &ofs, 2, MTP_PROPERTY_DATE_MODIFIED);         // PropertyCode
-			poke(buffer, &ofs, 2, MTP_TYPE_STR);                       // DataType
-			poke(buffer, &ofs, 1, 0x00);                               // Get/Set
-			poke(buffer, &ofs, 1, 0x00);                               // DefaultValue : Null sized strcat
-			poke(buffer, &ofs, 4, 0x00000001);                         // GroupCode
-			poke(buffer, &ofs, 1, 0x03);                               // FormFlag : None
-		break;
-
-		case MTP_PROPERTY_DATE_MODIFIED:
-			poke(buffer, &ofs, 2, MTP_PROPERTY_DATE_MODIFIED);         // PropertyCode
-			poke(buffer, &ofs, 2, MTP_TYPE_STR);                       // DataType
-			poke(buffer, &ofs, 1, 0x00);                               // Get
-			poke(buffer, &ofs, 1, 0x00);                               // DefaultValue : Null sized strcat
-			poke(buffer, &ofs, 4, 0x00000001);                         // GroupCode
-			poke(buffer, &ofs, 1, 0x03);                               // FormFlag : None
-		break;
-
-		case MTP_PROPERTY_PARENT_OBJECT:
-			poke(buffer, &ofs, 2, MTP_PROPERTY_PARENT_OBJECT);         // PropertyCode
-			poke(buffer, &ofs, 2, MTP_TYPE_UINT32);                    // DataType
-			poke(buffer, &ofs, 1, 0x00);                               // Get
-			poke(buffer, &ofs, 4, 0x00000000);                         // DefaultValue : Null sized strcat
-			poke(buffer, &ofs, 4, 0x00000001);                         // GroupCode
-			poke(buffer, &ofs, 1, 0x00);                               // FormFlag : None
-		break;
-
-		case MTP_PROPERTY_PERSISTENT_UID:
-			poke(buffer, &ofs, 2, MTP_PROPERTY_PERSISTENT_UID);         // PropertyCode
-			poke(buffer, &ofs, 2, MTP_TYPE_UINT128);                    // DataType
-			poke(buffer, &ofs, 1, 0x00);                                // Get
-			poke(buffer, &ofs, 16, 0x00000000);                         // DefaultValue : Null sized strcat
-			poke(buffer, &ofs, 4, 0x00000001);                         // GroupCode
-			poke(buffer, &ofs, 1, 0x00);                               // FormFlag : None
-		break;
-
-		case MTP_PROPERTY_NAME:
-			poke(buffer, &ofs, 2, MTP_PROPERTY_NAME);                  // PropertyCode
-			poke(buffer, &ofs, 2, MTP_TYPE_STR);                       // DataType
-			poke(buffer, &ofs, 1, 0x00);                               // Get/Set
-			poke(buffer, &ofs, 1, 0x00);                               // DefaultValue : Null sized strcat
-			poke(buffer, &ofs, 4, 0xFFFFFFFF);                         // GroupCode
-			poke(buffer, &ofs, 1, 0x00);                               // FormFlag : None
-		break;
+		poke(buffer, &ofs, 4, properties[i].group_code);           // Group code
+		poke(buffer, &ofs, 1, properties[i].form_flag);            // Form flag
 	}
 
 	return ofs;
@@ -208,59 +130,52 @@ int build_properties_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uint32_t p
 
 int build_device_properties_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uint32_t property_id)
 {
-	int ofs;
+	int ofs,i;
 
 	ofs = 0;
 
 	PRINT_DEBUG("build_device_properties_dataset : 0x%.4X (%s)", property_id, mtp_get_property_string(property_id));
 
-	switch(property_id)
+	i = 0;
+	while(dev_properties[i].prop_code != 0xFFFF && dev_properties[i].prop_code != property_id)
 	{
-		case MTP_DEVICE_PROPERTY_SYNCHRONIZATION_PARTNER:
-			poke(buffer, &ofs, 2, MTP_DEVICE_PROPERTY_SYNCHRONIZATION_PARTNER);  // PropertyCode
-			poke(buffer, &ofs, 2, MTP_TYPE_UINT32);                    // DataType
-			poke(buffer, &ofs, 1, 0x00);                               // Get
-			poke(buffer, &ofs, 4, 0x00000000);                         // DefaultValue
-			poke(buffer, &ofs, 4, 0x00000001);                         // GroupCode
-			poke(buffer, &ofs, 1, 0x00);                               // FormFlag : None
-		break;
+		i++;
+	}
 
-		case MTP_DEVICE_PROPERTY_IMAGE_SIZE:
-			poke(buffer, &ofs, 2, MTP_DEVICE_PROPERTY_IMAGE_SIZE);  // PropertyCode
-			poke(buffer, &ofs, 2, MTP_TYPE_UINT32);                    // DataType
-			poke(buffer, &ofs, 1, 0x00);                               // Get
-			poke(buffer, &ofs, 4, 0x00000000);                         // DefaultValue
-			poke(buffer, &ofs, 4, 0x00000001);                         // GroupCode
-			poke(buffer, &ofs, 1, 0x00);                               // FormFlag : None
-		break;
+	if( dev_properties[i].prop_code == property_id )
+	{
+		poke(buffer, &ofs, 2, dev_properties[i].prop_code);            // PropertyCode
+		poke(buffer, &ofs, 2, dev_properties[i].data_type);            // DataType
+		poke(buffer, &ofs, 1, dev_properties[i].getset);               // Get / Set
 
-		case MTP_DEVICE_PROPERTY_BATTERY_LEVEL:
-			poke(buffer, &ofs, 2, MTP_DEVICE_PROPERTY_BATTERY_LEVEL);         // PropertyCode
-			poke(buffer, &ofs, 2, MTP_TYPE_UINT16);                    // DataType
-			poke(buffer, &ofs, 1, 0x00);                               // Get
-			poke(buffer, &ofs, 2, 0x3000);                             // DefaultValue
-			poke(buffer, &ofs, 4, 0x00000001);                         // GroupCode
-			poke(buffer, &ofs, 1, 0x00);                               // FormFlag : None
-		break;
+		switch(dev_properties[i].data_type)
+		{
+			case MTP_TYPE_STR:
+			case MTP_TYPE_UINT8:
+				poke(buffer, &ofs, 1, dev_properties[i].default_value);
+				poke(buffer, &ofs, 1, dev_properties[i].default_value);
+			break;
+			case MTP_TYPE_UINT16:
+				poke(buffer, &ofs, 2, dev_properties[i].default_value);
+				poke(buffer, &ofs, 2, dev_properties[i].default_value);
+			break;
+			case MTP_TYPE_UINT32:
+				poke(buffer, &ofs, 4, dev_properties[i].default_value);
+				poke(buffer, &ofs, 4, dev_properties[i].default_value);
+			break;
+			case MTP_TYPE_UINT64:
+				poke(buffer, &ofs, 4, dev_properties[i].default_value & 0xFFFFFFFF);
+				poke(buffer, &ofs, 4, dev_properties[i].default_value >> 32);
+				poke(buffer, &ofs, 4, dev_properties[i].default_value & 0xFFFFFFFF);
+				poke(buffer, &ofs, 4, dev_properties[i].default_value >> 32);
+			break;
+			default:
+				PRINT_ERROR("build_device_properties_dataset : Unsupported data type : 0x%.4X", dev_properties[i].data_type );
+			break;
+		}
 
-		case MTP_DEVICE_PROPERTY_DEVICE_FRIENDLY_NAME:
-			poke(buffer, &ofs, 2, MTP_DEVICE_PROPERTY_DEVICE_FRIENDLY_NAME);      // PropertyCode
-			poke(buffer, &ofs, 2, MTP_TYPE_STR);                       // DataType
-			poke(buffer, &ofs, 1, 0x01);                               // Get/Set
-			poke(buffer, &ofs, 1, 0x00);                               // DefaultValue : Null sized strcat
-
-			poke(buffer, &ofs, 1, 0x05);                               // "uMTP". TODO : Add an option in the config file to change this.
-			poke(buffer, &ofs, 1, 0x75);
-			poke(buffer, &ofs, 1, 0x00);
-			poke(buffer, &ofs, 1, 0x4D);
-			poke(buffer, &ofs, 1, 0x00);
-			poke(buffer, &ofs, 1, 0x54);
-			poke(buffer, &ofs, 1, 0x00);
-			poke(buffer, &ofs, 1, 0x50);
-			poke(buffer, &ofs, 1, 0x00);
-			poke(buffer, &ofs, 1, 0x00);
-			poke(buffer, &ofs, 1, 0x00);
-		break;
+		poke(buffer, &ofs, 4, dev_properties[i].group_code);           // Group code
+		poke(buffer, &ofs, 1, dev_properties[i].form_flag);            // Form flag
 	}
 
 	return ofs;
@@ -276,7 +191,7 @@ int build_properties_supported_dataset(mtp_ctx * ctx,void * buffer, int maxsize,
 
 	nb_supported_prop = 0;
 
-	while( supported_properties[nb_supported_prop] != 0xFFFF )
+	while( properties[nb_supported_prop].prop_code != 0xFFFF )
 		nb_supported_prop++;
 
 	ofs = 0;
@@ -284,9 +199,9 @@ int build_properties_supported_dataset(mtp_ctx * ctx,void * buffer, int maxsize,
 	poke(buffer, &ofs, 4, nb_supported_prop);
 
 	i = 0;
-	while( supported_properties[i] != 0xFFFF )
+	while( properties[i].prop_code != 0xFFFF )
 	{
-		poke(buffer, &ofs, 2, supported_properties[i]);
+		poke(buffer, &ofs, 2, properties[i].prop_code);
 		i++;
 	}
 
@@ -393,7 +308,7 @@ int build_ObjectPropValue_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uint3
 
 			case MTP_PROPERTY_OBJECT_SIZE:
 				poke(buffer, &ofs, 4, entry->size);
-				poke(buffer, &ofs, 4, 0x00000000);
+				poke(buffer, &ofs, 4, 0x00000000);    // TODO : Proper 64bits support !
 			break;
 
 			case MTP_PROPERTY_OBJECT_FILE_NAME:
@@ -444,5 +359,121 @@ int build_ObjectPropValue_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uint3
 		}
 	}
 
+	return ofs;
+}
+
+int objectproplist_element(mtp_ctx * ctx, void * buffer, int * ofs, uint16_t prop_code, uint32_t handle, void * data)
+{
+	int i;
+
+	i = 0;
+	while(properties[i].prop_code != 0xFFFF && properties[i].prop_code != prop_code)
+	{
+		i++;
+	}
+
+	if( properties[i].prop_code == prop_code )
+	{
+		poke(buffer, ofs, 4, handle);
+		poke(buffer, ofs, 2, properties[i].prop_code);
+		poke(buffer, ofs, 2, properties[i].data_type);
+		switch(properties[i].data_type)
+		{
+			case MTP_TYPE_STR:
+				poke_string(buffer, ofs, (char*)data);
+			break;
+			case MTP_TYPE_UINT8:
+				poke(buffer, ofs, 1, *((uint8_t*)data));
+			break;
+			case MTP_TYPE_UINT16:
+				poke(buffer, ofs, 2, *((uint16_t*)data));
+			break;
+			case MTP_TYPE_UINT32:
+				poke(buffer, ofs, 4, *((uint32_t*)data));
+			break;
+			case MTP_TYPE_UINT64:
+				poke(buffer, ofs, 4, *((uint64_t*)data) & 0xFFFFFFFF);
+				poke(buffer, ofs, 4, *((uint64_t*)data) >> 32);
+			break;
+			default:
+				PRINT_ERROR("objectproplist_element : Unsupported data type : 0x%.4X", properties[i].data_type );
+			break;
+		}
+
+		return 1;
+	}
+
+	return 0;
+}
+
+int build_objectproplist_dataset(mtp_ctx * ctx, void * buffer, int maxsize,fs_entry * entry, uint32_t handle,uint32_t format_id, uint32_t prop_code, uint32_t prop_group_code, uint32_t depth)
+{
+	struct stat entrystat;
+	time_t t;
+	struct tm lt;
+	int ofs,tmp,ret,numberofelements;
+	char * path;
+	char timestr[32];
+	uint32_t tmp_dword;
+
+	ret = -1;
+	path = build_full_path(ctx->fs_db, mtp_get_storage_root(ctx, entry->storage_id), entry);
+
+	if(path)
+	{
+	    ret = stat(path, &entrystat);
+	}
+
+	if(ret)
+	{
+		if(path)
+			free(path);
+		return 0;
+	}
+
+	ofs = 0;
+
+	numberofelements = 0;
+
+	poke(buffer, &ofs, 4, numberofelements);   // Number of elements
+
+	numberofelements += objectproplist_element(ctx, buffer, &ofs, MTP_PROPERTY_STORAGE_ID, handle, &entry->storage_id);
+
+	if(entry->flags & ENTRY_IS_DIR)
+		tmp_dword = MTP_FORMAT_ASSOCIATION;
+	else
+		tmp_dword = MTP_FORMAT_UNDEFINED;
+
+	numberofelements += objectproplist_element(ctx, buffer, &ofs, MTP_PROPERTY_OBJECT_FORMAT, handle, &tmp_dword);
+
+	if(entry->flags & ENTRY_IS_DIR)
+		tmp_dword = MTP_ASSOCIATION_TYPE_GENERIC_FOLDER;
+	else
+		tmp_dword = 0x0000;
+
+	numberofelements += objectproplist_element(ctx, buffer, &ofs, MTP_PROPERTY_ASSOCIATION_TYPE, handle, &tmp_dword);
+	numberofelements += objectproplist_element(ctx, buffer, &ofs, MTP_PROPERTY_PARENT_OBJECT, handle, &entry->parent);
+	numberofelements += objectproplist_element(ctx, buffer, &ofs, MTP_PROPERTY_OBJECT_SIZE, handle, &entry->size);
+
+	tmp_dword = 0x0000;
+	numberofelements += objectproplist_element(ctx, buffer, &ofs, MTP_PROPERTY_PROTECTION_STATUS, handle, &tmp_dword);
+
+	numberofelements += objectproplist_element(ctx, buffer, &ofs, MTP_PROPERTY_OBJECT_FILE_NAME, handle, entry->name);
+
+	// Date Created (NR) "YYYYMMDDThhmmss.s"
+	t = entrystat.st_mtime;
+	localtime_r(&t, &lt);
+	snprintf(timestr,sizeof(timestr),"%.4d%.2d%.2dT%.2d%.2d%.2d",1900 + lt.tm_year, lt.tm_mon + 1, lt.tm_mday, lt.tm_hour, lt.tm_min, lt.tm_sec);
+	numberofelements += objectproplist_element(ctx, buffer, &ofs, MTP_PROPERTY_DATE_CREATED, handle, &timestr);
+
+	// Date Modified (NR) "YYYYMMDDThhmmss.s"
+	t = entrystat.st_mtime;
+	localtime_r(&t, &lt);
+	snprintf(timestr,sizeof(timestr),"%.4d%.2d%.2dT%.2d%.2d%.2d",1900 + lt.tm_year, lt.tm_mon + 1, lt.tm_mday, lt.tm_hour, lt.tm_min, lt.tm_sec);
+	numberofelements += objectproplist_element(ctx, buffer, &ofs, MTP_PROPERTY_DATE_MODIFIED, handle, &timestr);
+
+	tmp = 0;
+
+	poke(buffer, &tmp, 4, numberofelements);   // Number of elements
 	return ofs;
 }
