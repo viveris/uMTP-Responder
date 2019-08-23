@@ -826,13 +826,25 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 		break;
 
+		case MTP_OPERATION_GET_PARTIAL_OBJECT_64:
 		case MTP_OPERATION_GET_PARTIAL_OBJECT:
 
 			pthread_mutex_lock( &ctx->inotify_mutex );
 
 			handle = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER), 4);      // Get param 1 - Object handle
-			offset = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER) + 4, 4);  // Get param 2 - Offset in bytes
-			maxsize = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER) + 8, 4); // Get param 2 - Max size in bytes
+
+			if( mtp_packet_hdr->code == MTP_OPERATION_GET_PARTIAL_OBJECT_64 )
+			{
+				// TODO : FIX 64 bits offset
+				offset = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER) + 4, 8);   // Get param 2 - Offset in bytes
+				maxsize = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER) + 12, 4); // Get param 3 - Max size in bytes
+			}
+			else
+			{
+				offset = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER) + 4, 4);  // Get param 2 - Offset in bytes
+				maxsize = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER) + 8, 4); // Get param 3 - Max size in bytes
+			}
+
 			entry = get_entry_by_handle(ctx->fs_db, handle);
 
 			PRINT_DEBUG("MTP_OPERATION_GET_PARTIAL_OBJECT : handle 0x%.8X - Offset 0x%.8X - Maxsize 0x%.8X", handle,offset,maxsize);
@@ -1154,28 +1166,83 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 				{
 					params_size = 0; // No response parameter
 					response_code = MTP_RESPONSE_PARAMETER_NOT_SUPPORTED;
+
+					PRINT_DEBUG("MTP_OPERATION_GET_OBJECT_PROP_LIST : ObjectPropGroupCode not currently supported !");
+
+					pthread_mutex_unlock( &ctx->inotify_mutex );
+
+					break;
+
 				}
 				else
 				{
-					params_size = 0; // No response parameter
-					response_code = MTP_RESPONSE_SPECIFICATION_BY_GROUP_UNSUPPORTED;
 				}
 
-				PRINT_DEBUG("MTP_OPERATION_GET_OBJECT_PROP_LIST : ObjectPropGroupCode not currently supported !");
-
-				pthread_mutex_unlock( &ctx->inotify_mutex );
-
-				break;
 			}
 
 			entry = get_entry_by_handle(ctx->fs_db, handle);
 
+			size = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer,0,0);
+			size += build_objectproplist_dataset(ctx, ctx->wrbuffer + sizeof(MTP_PACKET_HEADER),2048,entry, handle, format_id, prop_code, prop_group_code, depth);
+
+			i = 0;
+			poke(ctx->wrbuffer, &i, 4, size);
+
+			PRINT_DEBUG("MTP_OPERATION_GET_OBJECT_PROP_LIST response (%d Bytes):",size);
+			PRINT_DEBUG_BUF(ctx->wrbuffer, size);
+
+			write_usb(ctx->usb_ctx,EP_DESCRIPTOR_IN,ctx->wrbuffer,size);
+
+			check_and_send_USB_ZLP(ctx , size );
 
 			params_size = 0; // No response parameter
 			response_code = MTP_RESPONSE_OK;
 
 			pthread_mutex_unlock( &ctx->inotify_mutex );
 
+		break;
+
+		case MTP_OPERATION_BEGIN_EDIT_OBJECT:
+			pthread_mutex_lock( &ctx->inotify_mutex );
+
+			handle = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER), 4);
+
+			entry = get_entry_by_handle(ctx->fs_db, handle);
+			if( entry )
+			{
+
+				params_size = 0; // No response parameter
+				response_code = MTP_RESPONSE_OK;
+			}
+			else
+			{
+				params_size = 0; // No response parameter
+				response_code = MTP_RESPONSE_INVALID_OBJECT_HANDLE;
+			}
+
+			pthread_mutex_unlock( &ctx->inotify_mutex );
+
+		break;
+
+		case MTP_OPERATION_END_EDIT_OBJECT:
+			pthread_mutex_lock( &ctx->inotify_mutex );
+
+			handle = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER), 4);
+
+			entry = get_entry_by_handle(ctx->fs_db, handle);
+			if( entry )
+			{
+
+				params_size = 0; // No response parameter
+				response_code = MTP_RESPONSE_OK;
+			}
+			else
+			{
+				params_size = 0; // No response parameter
+				response_code = MTP_RESPONSE_INVALID_OBJECT_HANDLE;
+			}
+
+			pthread_mutex_unlock( &ctx->inotify_mutex );
 		break;
 
 		default:
