@@ -76,7 +76,7 @@ void printbuf(void * buf,int size)
 	#define PRINTBUF_MAXLINE_SIZE ((3*PRINTBUF_HEXPERLINE)+1+PRINTBUF_HEXPERLINE+2)
 
 	int i,j;
-	char *ptr = buf;
+	unsigned char *ptr = buf;
 	char tmp[8];
 	char str[PRINTBUF_MAXLINE_SIZE];
 
