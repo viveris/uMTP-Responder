@@ -523,7 +523,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 	params[3] = 0x000000;
 	params[4] = 0x000000;
 
-	params_size = sizeof(params);
+	params_size = 0; // No response parameter by default
 
 	no_response = 0;
 
@@ -548,7 +548,6 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 			PRINT_DEBUG("Open session - ID 0x%.8x",ctx->session_id);
 
-			params_size = 0; // No response parameter
 			response_code = MTP_RESPONSE_OK;
 
 		break;
@@ -579,7 +578,6 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 			check_and_send_USB_ZLP(ctx , size );
 
-			params_size = 0; // No response parameter
 			response_code = MTP_RESPONSE_OK;
 
 		break;
@@ -609,7 +607,6 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 			check_and_send_USB_ZLP(ctx , size );
 
-			params_size = 0; // No response parameter
 			response_code = MTP_RESPONSE_OK;
 
 		break;
@@ -634,7 +631,6 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 				check_and_send_USB_ZLP(ctx , size );
 
-				params_size = 0; // No response parameter
 				response_code = MTP_RESPONSE_OK;
 			}
 			else
@@ -664,7 +660,6 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 				check_and_send_USB_ZLP(ctx , size );
 
-				params_size = 0; // No response parameter
 				response_code = MTP_RESPONSE_OK;
 			}
 			else
@@ -788,7 +783,6 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 			pthread_mutex_unlock( &ctx->inotify_mutex );
 
-			params_size = 0; // No response parameter
 			response_code = MTP_RESPONSE_OK;
 
 		break;
@@ -858,7 +852,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 				if( actualsize >= 0 )
 				{
 					params[0] = actualsize;
-				}
+					params_size = sizeof(uint32_t);				}
 
 				response_code = MTP_RESPONSE_OK;
 			}
@@ -919,6 +913,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 				params[0] = storageid;
 				params[1] = parent_handle;
 				params[2] = new_handle;
+				params_size = sizeof(uint32_t) * 3;
 			}
 
 			pthread_mutex_unlock( &ctx->inotify_mutex );
@@ -1060,7 +1055,6 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 			check_and_send_USB_ZLP(ctx , size );
 
-			params_size = 0; // No response parameter
 			response_code = MTP_RESPONSE_OK;
 
 		break;
@@ -1176,7 +1170,6 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 			if( format_id != 0x00000000 )
 			{   // Specification by format not currently supported
-				params_size = 0; // No response parameter
 				response_code = MTP_RESPONSE_SPECIFICATION_BY_FORMAT_UNSUPPORTED;
 			}
 
@@ -1185,7 +1178,6 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 				if( prop_group_code == 0x00000000 )
 				{
-					params_size = 0; // No response parameter
 					response_code = MTP_RESPONSE_PARAMETER_NOT_SUPPORTED;
 
 					PRINT_DEBUG("MTP_OPERATION_GET_OBJECT_PROP_LIST : ObjectPropGroupCode not currently supported !");
@@ -1216,8 +1208,40 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 			check_and_send_USB_ZLP(ctx , size );
 
-			params_size = 0; // No response parameter
 			response_code = MTP_RESPONSE_OK;
+
+			pthread_mutex_unlock( &ctx->inotify_mutex );
+
+		break;
+
+		case MTP_OPERATION_GET_OBJECT_REFERENCES:
+			pthread_mutex_lock( &ctx->inotify_mutex );
+
+			handle = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER), 4);
+
+			entry = get_entry_by_handle(ctx->fs_db, handle);
+			if( entry )
+			{
+				size = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer,0,0);
+				//i = size;
+				poke(ctx->wrbuffer, &size, 4, 0x0000000);
+
+				i = 0;
+				poke(ctx->wrbuffer, &i, 4, size);
+
+				PRINT_DEBUG("MTP_OPERATION_GET_OBJECT_REFERENCES response (%d Bytes):",size);
+				PRINT_DEBUG_BUF(ctx->wrbuffer, size);
+
+				write_usb(ctx->usb_ctx,EP_DESCRIPTOR_IN,ctx->wrbuffer,size);
+
+				check_and_send_USB_ZLP(ctx , size );
+
+				response_code = MTP_RESPONSE_OK;
+			}
+			else
+			{
+				response_code = MTP_RESPONSE_INVALID_OBJECT_HANDLE;
+			}
 
 			pthread_mutex_unlock( &ctx->inotify_mutex );
 
@@ -1232,12 +1256,10 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 			if( entry )
 			{
 
-				params_size = 0; // No response parameter
 				response_code = MTP_RESPONSE_OK;
 			}
 			else
 			{
-				params_size = 0; // No response parameter
 				response_code = MTP_RESPONSE_INVALID_OBJECT_HANDLE;
 			}
 
@@ -1254,12 +1276,10 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 			if( entry )
 			{
 
-				params_size = 0; // No response parameter
 				response_code = MTP_RESPONSE_OK;
 			}
 			else
 			{
-				params_size = 0; // No response parameter
 				response_code = MTP_RESPONSE_INVALID_OBJECT_HANDLE;
 			}
 
@@ -1269,7 +1289,6 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 		case MTP_OPERATION_TRUNCATE_OBJECT :
 			pthread_mutex_lock( &ctx->inotify_mutex );
 
-			params_size = 0; // No response parameter
 			response_code = MTP_RESPONSE_GENERAL_ERROR;
 
 			handle = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER), 4);
@@ -1397,7 +1416,7 @@ uint32_t mtp_add_storage(mtp_ctx * ctx, char * path, char * description)
 				strcpy(ctx->storages[i].root_path,path);
 				strcpy(ctx->storages[i].description,description);
 
-				ctx->storages[i].storage_id = i + 1;
+				ctx->storages[i].storage_id = 0xFFFF0000 + (i + 1);
 				PRINT_DEBUG("mtp_add_storage : Storage %.8X mapped to %s (%s)",
 					    ctx->storages[i].storage_id,
 					    ctx->storages[i].root_path,
