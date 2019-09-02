@@ -54,7 +54,7 @@
 
 int build_deviceinfo_dataset(mtp_ctx * ctx, void * buffer, int maxsize)
 {
-	int ofs,i,properties_cnt;
+	int ofs,i,elements_cnt;
 
 	ofs = 0;
 
@@ -66,21 +66,38 @@ int build_deviceinfo_dataset(mtp_ctx * ctx, void * buffer, int maxsize)
 	poke_array(buffer, &ofs, supported_op_size, 2, (void*)&supported_op,1);              // Operations Supported
 	poke_array(buffer, &ofs, supported_event_size, 2, (void*)&supported_event,1);        // Events Supported
 
-	// Device Properties Supported
-	properties_cnt = 0;
-	while( dev_properties[properties_cnt].prop_code != 0xFFFF )
+	// Supported device properties
+	elements_cnt = 0;
+	while( dev_properties[elements_cnt].prop_code != 0xFFFF )
 	{
-		properties_cnt++;
+		elements_cnt++;
 	}
 
-	poke(buffer, &ofs, 4, properties_cnt);
-	for( i = 0; i < properties_cnt ; i++ )
+	poke(buffer, &ofs, 4, elements_cnt);
+	for( i = 0; i < elements_cnt ; i++ )
 	{
 		poke(buffer, &ofs, 2, dev_properties[i].prop_code);
 	}
 
-	poke(buffer, &ofs, 4, 0x00000000);                                                   // No Capture Formats...
-	poke_array(buffer, &ofs, supported_formats_size, 2, (void*)&supported_formats,1);    // Playback Formats
+
+	// Supported formats
+
+	// Capture Formats... (No capture format)
+
+	poke(buffer, &ofs, 4, 0x00000000);
+
+	// Playback Formats
+	elements_cnt = 0;
+	while( fmt_properties[elements_cnt].format_code != 0xFFFF )
+	{
+		elements_cnt++;
+	}
+
+	poke(buffer, &ofs, 4, elements_cnt);
+	for( i = 0; i < elements_cnt ; i++ )
+	{
+		poke(buffer, &ofs, 2, fmt_properties[i].format_code);
+	}
 
 	poke_string(buffer, &ofs, ctx->usb_cfg.usb_string_manufacturer);                     // Manufacturer
 	poke_string(buffer, &ofs, ctx->usb_cfg.usb_string_product);                          // Model
@@ -129,7 +146,7 @@ int build_storageinfo_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uint32_t 
 		poke(buffer, &ofs, 4, freespace&0x00000000FFFFFFFF);                        // Free space in Bytes
 		poke(buffer, &ofs, 4, (freespace>>32));                                     //
 
-		poke(buffer, &ofs, 4, 0xFFFFFFFF);                                          // Free Space In Objects
+		poke(buffer, &ofs, 4, 0x40000000);                                          // Free Space In Objects
 
 		poke_string(buffer, &ofs, storage_description);                             // Storage Description
 
@@ -210,7 +227,7 @@ int build_objectinfo_dataset(mtp_ctx * ctx, void * buffer, int maxsize,fs_entry 
 	snprintf(timestr,sizeof(timestr),"%.4d%.2d%.2dT%.2d%.2d%.2d",1900 + lt.tm_year, lt.tm_mon + 1, lt.tm_mday, lt.tm_hour, lt.tm_min, lt.tm_sec);
 	poke_string(buffer, &ofs,timestr);
 
-	poke_string(buffer, &ofs,"");                                               // Keywords (NR)
+	poke(buffer, &ofs, 1, 0x00);      // Keywords (NR)
 
 	if(path)
 	{
