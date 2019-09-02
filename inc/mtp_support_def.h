@@ -29,12 +29,9 @@
 #define MTP_VERSION 100
 
 extern const unsigned short supported_op[];
-extern const unsigned short supported_event[];
-extern const unsigned short supported_property[];
-extern const unsigned short supported_formats[];
-
-extern const int supported_formats_size;
-extern const int supported_property_size;
-extern const int supported_event_size;
 extern const int supported_op_size;
+
+extern const unsigned short supported_event[];
+extern const int supported_event_size;
+
 #endif
