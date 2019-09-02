@@ -1194,22 +1194,27 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 			}
 
 			entry = get_entry_by_handle(ctx->fs_db, handle);
+			if( entry )
+			{
+				size = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer,0,0);
+				size += build_objectproplist_dataset(ctx, ctx->wrbuffer + sizeof(MTP_PACKET_HEADER),2048,entry, handle, format_id, prop_code, prop_group_code, depth);
 
-			size = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer,0,0);
-			size += build_objectproplist_dataset(ctx, ctx->wrbuffer + sizeof(MTP_PACKET_HEADER),2048,entry, handle, format_id, prop_code, prop_group_code, depth);
+				i = 0;
+				poke(ctx->wrbuffer, &i, 4, size);
 
-			i = 0;
-			poke(ctx->wrbuffer, &i, 4, size);
+				PRINT_DEBUG("MTP_OPERATION_GET_OBJECT_PROP_LIST response (%d Bytes):",size);
+				PRINT_DEBUG_BUF(ctx->wrbuffer, size);
 
-			PRINT_DEBUG("MTP_OPERATION_GET_OBJECT_PROP_LIST response (%d Bytes):",size);
-			PRINT_DEBUG_BUF(ctx->wrbuffer, size);
+				write_usb(ctx->usb_ctx,EP_DESCRIPTOR_IN,ctx->wrbuffer,size);
 
-			write_usb(ctx->usb_ctx,EP_DESCRIPTOR_IN,ctx->wrbuffer,size);
+				check_and_send_USB_ZLP(ctx , size );
 
-			check_and_send_USB_ZLP(ctx , size );
-
-			response_code = MTP_RESPONSE_OK;
-
+				response_code = MTP_RESPONSE_OK;
+			}
+			else
+			{
+				response_code = MTP_RESPONSE_INVALID_OBJECT_HANDLE;
+			}
 			pthread_mutex_unlock( &ctx->inotify_mutex );
 
 		break;
@@ -1275,7 +1280,6 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 			entry = get_entry_by_handle(ctx->fs_db, handle);
 			if( entry )
 			{
-
 				response_code = MTP_RESPONSE_OK;
 			}
 			else
