@@ -36,10 +36,18 @@ typedef struct profile_property_
 	uint64_t default_value;
 	uint32_t group_code;
 	uint8_t  form_flag;
+	uint16_t format_id;
 }profile_property;
+
+typedef struct format_property_
+{
+	uint16_t format_code;
+	uint16_t * properties;
+}formats_property;
 
 extern profile_property dev_properties[];
 extern profile_property properties[];
+extern formats_property fmt_properties[];
 
 int build_properties_supported_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uint32_t format_id);
 int build_properties_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uint32_t property_id,uint32_t format_id);
