@@ -280,7 +280,7 @@ uint16_t utf2unicode(const unsigned char* pInput, int * ofs)
 			b1 = *pInput++;
 			b2 = *pInput++;
 
-			if ( (b2 & 0xE0) != 0x80 )
+			if ( (b2 & 0xC0) != 0x80 )
 				return 0x0000;
 
 			unicode_out =  ( ( (b1 & 0x1F) << 6 ) | (b2 & 0x3F) ) & 0xFF;
