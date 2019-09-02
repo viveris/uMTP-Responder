@@ -41,6 +41,12 @@ enum
 	EP_NB_OF_DESCRIPTORS
 };
 
+#define EP_INT_MODE  0x00000000
+#define EP_BULK_MODE 0x00000001
+#define EP_IN_DIR    0x00000000
+#define EP_OUT_DIR   0x00000002
+#define EP_HS_MODE   0x00000004
+
 // Direct GadgetFS mode
 typedef struct _usb_cfg
 {

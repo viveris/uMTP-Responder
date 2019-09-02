@@ -175,19 +175,19 @@ void fill_if_descriptor(mtp_ctx * ctx, usb_gadget * usbctx, struct usb_interface
 	return;
 }
 
-
-void fill_ep_descriptor(mtp_ctx * ctx, usb_gadget * usbctx,struct usb_endpoint_descriptor_no_audio * desc,int index,int bulk,int dir, int hs)
+void fill_ep_descriptor(mtp_ctx * ctx, usb_gadget * usbctx,struct usb_endpoint_descriptor_no_audio * desc,int index,unsigned int flags)
 {
 	memset(desc,0,sizeof(struct usb_endpoint_descriptor_no_audio));
 
 	desc->bLength = USB_DT_ENDPOINT_SIZE;
 	desc->bDescriptorType = USB_DT_ENDPOINT;
-	if(!dir)
-		desc->bEndpointAddress = USB_DIR_IN  | (index);
-	else
-		desc->bEndpointAddress = USB_DIR_OUT | (index);
 
-	if(bulk)
+	if(flags & EP_OUT_DIR)
+		desc->bEndpointAddress = USB_DIR_OUT | (index);
+	else
+		desc->bEndpointAddress = USB_DIR_IN  | (index);
+
+	if(flags & EP_BULK_MODE)
 	{
 		desc->bmAttributes = USB_ENDPOINT_XFER_BULK;
 		desc->wMaxPacketSize = ctx->usb_cfg.usb_max_packet_size;
@@ -714,14 +714,14 @@ usb_gadget * init_usb_mtp_gadget(mtp_ctx * ctx)
 			usbctx->usb_ffs_config->length = htole32(sizeof(usb_ffs_cfg));
 
 			fill_if_descriptor(ctx, usbctx, &usbctx->usb_ffs_config->if_desc);
-			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_ffs_config->ep_desc[EP_DESCRIPTOR_IN],EP_DESCRIPTOR_IN+1,1,0,0);
-			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_ffs_config->ep_desc[EP_DESCRIPTOR_OUT],EP_DESCRIPTOR_OUT+1,1,1,0);
-			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_ffs_config->ep_desc[EP_DESCRIPTOR_INT_IN],EP_DESCRIPTOR_INT_IN+1,0,0,0);
+			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_ffs_config->ep_desc[EP_DESCRIPTOR_IN],1, EP_BULK_MODE | EP_IN_DIR);
+			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_ffs_config->ep_desc[EP_DESCRIPTOR_OUT],2, EP_BULK_MODE | EP_OUT_DIR);
+			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_ffs_config->ep_desc[EP_DESCRIPTOR_INT_IN],3, EP_INT_MODE | EP_IN_DIR);
 
 			fill_if_descriptor(ctx, usbctx, &usbctx->usb_ffs_config->if_desc_hs);
-			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_ffs_config->ep_desc_hs[EP_DESCRIPTOR_IN],EP_DESCRIPTOR_IN+1,1,0,1);
-			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_ffs_config->ep_desc_hs[EP_DESCRIPTOR_OUT],EP_DESCRIPTOR_OUT+1,1,1,1);
-			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_ffs_config->ep_desc_hs[EP_DESCRIPTOR_INT_IN],EP_DESCRIPTOR_INT_IN+1,0,0,1);
+			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_ffs_config->ep_desc_hs[EP_DESCRIPTOR_IN],1, EP_BULK_MODE | EP_IN_DIR | EP_HS_MODE);
+			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_ffs_config->ep_desc_hs[EP_DESCRIPTOR_OUT],2, EP_BULK_MODE | EP_OUT_DIR | EP_HS_MODE);
+			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_ffs_config->ep_desc_hs[EP_DESCRIPTOR_INT_IN],3, EP_INT_MODE | EP_IN_DIR | EP_HS_MODE);
 
 			PRINT_DEBUG("init_usb_mtp_gadget :");
 			PRINT_DEBUG_BUF(usbctx->usb_ffs_config, sizeof(usb_ffs_cfg));
@@ -764,15 +764,15 @@ usb_gadget * init_usb_mtp_gadget(mtp_ctx * ctx)
 			usbctx->usb_config->head = 0x00000000;
 			fill_config_descriptor(ctx, usbctx, &usbctx->usb_config->cfg, cfg_size, 0);
 			fill_if_descriptor(ctx, usbctx, &usbctx->usb_config->if_desc);
-			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_config->ep_desc[EP_DESCRIPTOR_IN],EP_DESCRIPTOR_IN+1,1,0,0);
-			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_config->ep_desc[EP_DESCRIPTOR_OUT],EP_DESCRIPTOR_OUT+1,1,1,0);
-			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_config->ep_desc[EP_DESCRIPTOR_INT_IN],EP_DESCRIPTOR_INT_IN+1,0,0,0);
+			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_config->ep_desc[EP_DESCRIPTOR_IN],1, EP_BULK_MODE | EP_IN_DIR);
+			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_config->ep_desc[EP_DESCRIPTOR_OUT],2, EP_BULK_MODE | EP_OUT_DIR);
+			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_config->ep_desc[EP_DESCRIPTOR_INT_IN],3, EP_INT_MODE | EP_IN_DIR);
 
 			fill_config_descriptor(ctx, usbctx, &usbctx->usb_config->cfg_hs, cfg_size, 1);
 			fill_if_descriptor(ctx, usbctx, &usbctx->usb_config->if_desc_hs);
-			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_config->ep_desc_hs[EP_DESCRIPTOR_IN],EP_DESCRIPTOR_IN+1,1,0,1);
-			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_config->ep_desc_hs[EP_DESCRIPTOR_OUT],EP_DESCRIPTOR_OUT+1,1,1,1);
-			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_config->ep_desc_hs[EP_DESCRIPTOR_INT_IN],EP_DESCRIPTOR_INT_IN+1,0,0,1);
+			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_config->ep_desc_hs[EP_DESCRIPTOR_IN],1, EP_BULK_MODE | EP_IN_DIR | EP_HS_MODE);
+			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_config->ep_desc_hs[EP_DESCRIPTOR_OUT],2, EP_BULK_MODE | EP_OUT_DIR | EP_HS_MODE);
+			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_config->ep_desc_hs[EP_DESCRIPTOR_INT_IN],3, EP_INT_MODE | EP_IN_DIR | EP_HS_MODE);
 
 			fill_dev_descriptor(ctx, usbctx,&usbctx->usb_config->dev_desc);
 
