@@ -481,7 +481,8 @@ int setObjectPropValue(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, uint32_
 				if( stringlen > sizeof(tmpstr))
 					stringlen = sizeof(tmpstr);
 
-				unicode2charstring(tmpstr, (uint16_t *) ((char*)(mtp_packet_hdr) + sizeof(MTP_PACKET_HEADER) + 1), stringlen);
+				unicode2charstring(tmpstr, (uint16_t *) ((char*)(mtp_packet_hdr) + sizeof(MTP_PACKET_HEADER) + 1), sizeof(tmpstr));
+				tmpstr[ sizeof(tmpstr) - 1 ] = 0;
 
 				if( entry->name )
 				{
