@@ -23,6 +23,11 @@
  * @author Jean-François DEL NERO <Jean-Francois.DELNERO@viveris.fr>
  */
 
+#define _LARGEFILE64_SOURCE
+#include <sys/types.h>
+#include <unistd.h>
+#include <fcntl.h>
+ 
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -594,43 +599,36 @@ char * build_full_path(fs_handles_db * db,char * root_path,fs_entry * entry)
 	return full_path;
 }
 
-FILE * entry_open(fs_handles_db * db, fs_entry * entry)
+int entry_open(fs_handles_db * db, fs_entry * entry)
 {
-	FILE * f;
+	int file;
 	char * full_path;
 
-	f = 0;
+	file = -1;
 
 	full_path = build_full_path(db,mtp_get_storage_root(db->mtp_ctx, entry->storage_id), entry);
 	if( full_path )
 	{
-		f = fopen(full_path,"rb");
+		file = open(full_path,O_RDONLY);
 
-		if(!f)
+		if( file == -1 )
 			PRINT_DEBUG("entry_open : Can't open %s !",full_path);
 
 		free(full_path);
 	}
 
-	return f;
+	return file;
 }
 
-int entry_read(fs_handles_db * db, FILE * f, unsigned char * buffer_out, int offset, int size)
+int entry_read(fs_handles_db * db, int file, unsigned char * buffer_out, mtp_offset offset, mtp_size size)
 {
 	int totalread;
 
-	if( f )
+	if( file != -1 )
 	{
-		fseek(f,offset,SEEK_SET);
+		lseek64(file, offset, SEEK_SET);
 
-		if( fread(buffer_out,size,1,f) > 0 )
-		{
-			totalread = ftell(f) - offset;
-		}
-		else
-		{
-			totalread = 0;
-		}
+		totalread = read( file, buffer_out, size );
 
 		return totalread;
 	}
@@ -638,10 +636,10 @@ int entry_read(fs_handles_db * db, FILE * f, unsigned char * buffer_out, int off
 	return 0;
 }
 
-void entry_close(FILE * f)
+void entry_close(int file)
 {
-	if( f )
-		fclose(f);
+	if( file != -1 )
+		close(file);
 }
 
 fs_entry * get_entry_by_wd( fs_handles_db * db, int watch_descriptor )

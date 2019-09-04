@@ -551,8 +551,8 @@ int build_ObjectPropValue_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uint3
 			break;
 
 			case MTP_PROPERTY_OBJECT_SIZE:
-				poke(buffer, &ofs, 4, entry->size);
-				poke(buffer, &ofs, 4, 0x00000000);    // TODO : Proper 64bits support !
+				poke(buffer, &ofs, 4, entry->size & 0xFFFFFFFF);
+				poke(buffer, &ofs, 4, entry->size >> 32);
 			break;
 
 			case MTP_PROPERTY_DISPLAY_NAME:

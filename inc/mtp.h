@@ -97,8 +97,8 @@ typedef struct mtp_ctx_
 	fs_handles_db * fs_db;
 
 	uint32_t SendObjInfoHandle;
-	uint32_t SendObjInfoSize;
-	uint32_t SendObjInfoOffset;
+	mtp_size SendObjInfoSize;
+	mtp_offset SendObjInfoOffset;
 
 	uint32_t SetObjectPropValue_Handle;
 	uint32_t SetObjectPropValue_PropCode;

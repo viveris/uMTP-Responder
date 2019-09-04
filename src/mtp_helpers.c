@@ -69,6 +69,27 @@ uint32_t peek(void * buffer, int index, int typesize)
 	return data;
 }
 
+uint64_t peek64(void * buffer, int index, int typesize)
+{
+	unsigned char *ptr;
+	uint64_t data;
+	int shift;
+
+	ptr = ((unsigned char *)buffer);
+
+	shift = 0;
+	data = 0x0000000000000000;
+	do
+	{
+		data |= (ptr[index] << shift);
+		index++;
+		typesize--;
+		shift += 8;
+	}while( typesize );
+
+	return data;
+}
+
 void poke_string(void * buffer, int * index, const char *str)
 {
 	unsigned char *ptr;

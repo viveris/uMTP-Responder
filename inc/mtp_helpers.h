@@ -27,6 +27,7 @@
 #define _INC_MTP_HELPERS_H_
 void poke(void * buffer, int * index, int typesize, unsigned long data);
 uint32_t peek(void * buffer, int index, int typesize);
+uint64_t peek64(void * buffer, int index, int typesize);
 void poke_string(void * buffer, int * index, const char *str);
 void poke_array(void * buffer, int * index, int size, int elementsize, const unsigned char *bufferin,int prefixed);
 uint16_t posix_to_mtp_errcode(int err);

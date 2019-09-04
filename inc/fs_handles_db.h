@@ -28,6 +28,9 @@
 
 typedef struct fs_entry fs_entry;
 
+typedef int64_t mtp_size;
+typedef int64_t mtp_offset;
+
 struct fs_entry
 {
 	uint32_t handle;
@@ -35,7 +38,7 @@ struct fs_entry
 	uint32_t storage_id;
 	char * name;
 	uint32_t flags;
-	uint32_t size;
+	mtp_size size;
 	uint32_t date;
 
 	int watch_descriptor;
@@ -65,7 +68,7 @@ typedef struct filefoundinfo_
 {
 	int isdirectory;
 	char filename[256];
-	int size;
+	mtp_size size;
 }filefoundinfo;
 
 
@@ -81,9 +84,9 @@ fs_entry * add_entry(fs_handles_db * db, filefoundinfo *fileinfo, uint32_t paren
 fs_entry * search_entry(fs_handles_db * db, filefoundinfo *fileinfo, uint32_t parent, uint32_t storage_id);
 fs_entry * alloc_root_entry(fs_handles_db * db, uint32_t storage_id);
 
-FILE * entry_open(fs_handles_db * db, fs_entry * entry);
-int entry_read(fs_handles_db * db, FILE * f, unsigned char * buffer_out, int offset, int size);
-void entry_close(FILE * f);
+int entry_open(fs_handles_db * db, fs_entry * entry);
+int entry_read(fs_handles_db * db, int file, unsigned char * buffer_out, mtp_offset offset, mtp_size size);
+void entry_close(int file);
 
 char * build_full_path(fs_handles_db * db,char * root_path,fs_entry * entry);
 
