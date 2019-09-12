@@ -46,7 +46,7 @@ int fs_remove_tree( char *folder )
 {
 	struct dirent *d;
 	DIR * dir;
-	struct stat fileStat;
+	struct stat64 fileStat;
 	char * tmpstr;
 	int del_fail;
 
@@ -67,8 +67,8 @@ int fs_remove_tree( char *folder )
 					strcat(tmpstr,"/");
 					strcat(tmpstr,d->d_name);
 
-					memset(&fileStat,0,sizeof(struct stat));
-					if( !lstat (tmpstr, &fileStat) )
+					memset(&fileStat,0,sizeof(struct stat64));
+					if( !lstat64 (tmpstr, &fileStat) )
 					{
 						if ( S_ISDIR ( fileStat.st_mode ) )
 						{
@@ -109,11 +109,11 @@ int fs_remove_tree( char *folder )
 
 int fs_entry_stat(char *path, filefoundinfo* fileinfo)
 {
-	struct stat fileStat;
+	struct stat64 fileStat;
 	int i;
 
-	memset(&fileStat,0,sizeof(struct stat));
-	if( !stat (path, &fileStat) )
+	memset(&fileStat,0,sizeof(struct stat64));
+	if( !stat64 (path, &fileStat) )
 	{
 		if ( S_ISDIR ( fileStat.st_mode ) )
 			fileinfo->isdirectory = 1;
@@ -398,7 +398,7 @@ int scan_and_add_folder(fs_handles_db * db, char * base, uint32_t parent, uint32
 	DIR* dir;
 	int ret;
 	filefoundinfo fileinfo;
-	struct stat entrystat;
+	struct stat64 entrystat;
 
 	PRINT_DEBUG("scan_and_add_folder : %s, Parent : 0x%.8X, Storage ID : 0x%.8X",base,parent,storage_id);
 
@@ -434,7 +434,7 @@ int scan_and_add_folder(fs_handles_db * db, char * base, uint32_t parent, uint32
 
 			if(path)
 			{
-				ret = stat(path, &entrystat);
+				ret = stat64(path, &entrystat);
 				if(ret)
 				{
 					PRINT_DEBUG("scan_and_add_folder : discard entry %s - stat error", path);
@@ -609,7 +609,7 @@ int entry_open(fs_handles_db * db, fs_entry * entry)
 	full_path = build_full_path(db,mtp_get_storage_root(db->mtp_ctx, entry->storage_id), entry);
 	if( full_path )
 	{
-		file = open(full_path,O_RDONLY);
+		file = open(full_path,O_RDONLY | O_LARGEFILE);
 
 		if( file == -1 )
 			PRINT_DEBUG("entry_open : Can't open %s !",full_path);

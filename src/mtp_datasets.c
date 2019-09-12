@@ -23,6 +23,7 @@
  * @author Jean-François DEL NERO <Jean-Francois.DELNERO@viveris.fr>
  */
 
+#define _LARGEFILE64_SOURCE
 #include <stdint.h>
 #include <stdio.h>
 
@@ -163,7 +164,7 @@ int build_storageinfo_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uint32_t 
 
 int build_objectinfo_dataset(mtp_ctx * ctx, void * buffer, int maxsize,fs_entry * entry)
 {
-	struct stat entrystat;
+	struct stat64 entrystat;
 	time_t t;
 	struct tm lt;
 	int ofs,ret;
@@ -177,7 +178,7 @@ int build_objectinfo_dataset(mtp_ctx * ctx, void * buffer, int maxsize,fs_entry 
 
 	if(path)
 	{
-	    ret = stat(path, &entrystat);
+		ret = stat64(path, &entrystat);
 	}
 
 	if(ret)

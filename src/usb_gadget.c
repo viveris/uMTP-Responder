@@ -46,6 +46,7 @@
 
 #include "fs_handles_db.h"
 #include "mtp.h"
+#include "mtp_constant.h"
 
 #include "usbstring.h"
 #include "usb_gadget.h"
@@ -282,94 +283,113 @@ static void handle_setup_request(usb_gadget * ctx, struct usb_ctrlrequest* setup
 
 	switch (setup->bRequest)
 	{
-	case USB_REQ_GET_DESCRIPTOR:
-		if (setup->bRequestType != USB_DIR_IN)
-			goto stall;
+		case USB_REQ_GET_DESCRIPTOR:
+			if (setup->bRequestType != USB_DIR_IN)
+				goto stall;
 
-		switch (setup->wValue >> 8)
-		{
-			case USB_DT_STRING:
-				PRINT_DEBUG("Get string id #%d (max length %d)", setup->wValue & 0xff,
-					setup->wLength);
-				status = usb_gadget_get_string (&strings, setup->wValue & 0xff, buffer);
-				// Error
-				if (status < 0)
-				{
-					PRINT_ERROR("handle_setup_request : String id #%d (max length %d) not found !",setup->wValue & 0xff, setup->wLength);
-					break;
-				}
-				else
-				{
-					PRINT_DEBUG("Found %d bytes", status);
-					PRINT_DEBUG_BUF(buffer, status);
-				}
+			switch (setup->wValue >> 8)
+			{
+				case USB_DT_STRING:
+					PRINT_DEBUG("Get string id #%d (max length %d)", setup->wValue & 0xff,
+						setup->wLength);
+					status = usb_gadget_get_string (&strings, setup->wValue & 0xff, buffer);
+					// Error
+					if (status < 0)
+					{
+						PRINT_ERROR("handle_setup_request : String id #%d (max length %d) not found !",setup->wValue & 0xff, setup->wLength);
+						break;
+					}
+					else
+					{
+						PRINT_DEBUG("Found %d bytes", status);
+						PRINT_DEBUG_BUF(buffer, status);
+					}
 
-				if ( write (ctx->usb_device, buffer, status) < 0 )
-				{
-					PRINT_ERROR("handle_setup_request - USB_REQ_GET_DESCRIPTOR : usb device write error !");
-					break;
-				}
+					if ( write (ctx->usb_device, buffer, status) < 0 )
+					{
+						PRINT_ERROR("handle_setup_request - USB_REQ_GET_DESCRIPTOR : usb device write error !");
+						break;
+					}
 
-				return;
-		default:
-			PRINT_DEBUG("Cannot return descriptor %d", (setup->wValue >> 8));
-		}
+					return;
+				break;
+				default:
+					PRINT_DEBUG("Cannot return descriptor %d", (setup->wValue >> 8));
+				break;
+			}
 		break;
-	case USB_REQ_SET_CONFIGURATION:
-		if (setup->bRequestType != USB_DIR_OUT)
-		{
-			PRINT_DEBUG("Bad dir");
-			goto stall;
-		}
-		switch (setup->wValue) {
-		case CONFIG_VALUE:
-			PRINT_DEBUG("Set config value");
 
-			if (ctx->ep_handles[EP_DESCRIPTOR_IN] <= 0)
+		case USB_REQ_SET_CONFIGURATION:
+			if (setup->bRequestType != USB_DIR_OUT)
 			{
-				status = init_eps(ctx,0);
+				PRINT_DEBUG("Bad dir");
+				goto stall;
 			}
-			else
-				status = 0;
 
-			if (!status)
+			switch (setup->wValue)
 			{
-				ctx->stop = 0;
-				if( ctx->thread_not_started )
-					ctx->thread_not_started = pthread_create(&ctx->thread, NULL, io_thread, ctx);
+				case CONFIG_VALUE:
+					PRINT_DEBUG("Set config value");
+
+					if (ctx->ep_handles[EP_DESCRIPTOR_IN] <= 0)
+					{
+						status = init_eps(ctx,0);
+					}
+					else
+						status = 0;
+
+					if (!status)
+					{
+						ctx->stop = 0;
+						if( ctx->thread_not_started )
+							ctx->thread_not_started = pthread_create(&ctx->thread, NULL, io_thread, ctx);
+					}
+					break;
+				case 0:
+					PRINT_DEBUG("Disable threads");
+					ctx->stop = 1;
+					break;
+
+				default:
+					PRINT_DEBUG("Unhandled configuration value %d", setup->wValue);
+					break;
 			}
-			break;
-		case 0:
-			PRINT_DEBUG("Disable threads");
-			ctx->stop = 1;
-			break;
 
-		default:
-			PRINT_DEBUG("Unhandled configuration value %d", setup->wValue);
-			break;
-		}
-		// Just ACK
-		status = read (ctx->usb_device, &status, 0);
-		return;
-	case USB_REQ_GET_INTERFACE:
-		PRINT_DEBUG("GET_INTERFACE");
-		buffer[0] = 0;
+			// Just ACK
+			status = read (ctx->usb_device, &status, 0);
+			return;
+		break;
 
-		if ( write (ctx->usb_device, buffer, 1) < 0 )
-		{
-			PRINT_ERROR("handle_setup_request - USB_REQ_GET_INTERFACE : usb device write error !");
-			break;
-		}
+		case USB_REQ_GET_INTERFACE:
+			PRINT_DEBUG("GET_INTERFACE");
+			buffer[0] = 0;
 
-		return;
-	case USB_REQ_SET_INTERFACE:
-		PRINT_DEBUG("SET_INTERFACE");
-		ioctl (ctx->ep_handles[EP_DESCRIPTOR_IN], GADGETFS_CLEAR_HALT);
-		ioctl (ctx->ep_handles[EP_DESCRIPTOR_OUT], GADGETFS_CLEAR_HALT);
-		ioctl (ctx->ep_handles[EP_DESCRIPTOR_INT_IN], GADGETFS_CLEAR_HALT);
-		// ACK
-		status = read (ctx->usb_device, &status, 0);
-		return;
+			if ( write (ctx->usb_device, buffer, 1) < 0 )
+			{
+				PRINT_ERROR("handle_setup_request - USB_REQ_GET_INTERFACE : usb device write error !");
+				break;
+			}
+
+			return;
+		break;
+
+		case USB_REQ_SET_INTERFACE:
+			PRINT_DEBUG("SET_INTERFACE");
+			ioctl (ctx->ep_handles[EP_DESCRIPTOR_IN], GADGETFS_CLEAR_HALT);
+			ioctl (ctx->ep_handles[EP_DESCRIPTOR_OUT], GADGETFS_CLEAR_HALT);
+			ioctl (ctx->ep_handles[EP_DESCRIPTOR_INT_IN], GADGETFS_CLEAR_HALT);
+			// ACK
+			status = read (ctx->usb_device, &status, 0);
+			return;
+		break;
+
+		case MTP_REQ_CANCEL:
+
+			mtp_context->cancel_req = 1;
+
+			// Just ACK
+			status = read (ctx->usb_device, &status, 0);
+		break;
 	}
 
 stall:

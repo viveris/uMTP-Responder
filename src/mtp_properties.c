@@ -23,6 +23,7 @@
  * @author Jean-François DEL NERO <Jean-Francois.DELNERO@viveris.fr>
  */
 
+#define _LARGEFILE64_SOURCE
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -678,7 +679,7 @@ int objectproplist_element(mtp_ctx * ctx, void * buffer, int * ofs, uint16_t pro
 
 int build_objectproplist_dataset(mtp_ctx * ctx, void * buffer, int maxsize,fs_entry * entry, uint32_t handle,uint32_t format_id, uint32_t prop_code, uint32_t prop_group_code, uint32_t depth)
 {
-	struct stat entrystat;
+	struct stat64 entrystat;
 	time_t t;
 	struct tm lt;
 	int ofs,tmp,ret,numberofelements;
@@ -692,7 +693,7 @@ int build_objectproplist_dataset(mtp_ctx * ctx, void * buffer, int maxsize,fs_en
 
 	if(path)
 	{
-	    ret = stat(path, &entrystat);
+		ret = stat64(path, &entrystat);
 	}
 
 	if(ret)

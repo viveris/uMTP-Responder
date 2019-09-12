@@ -374,7 +374,7 @@ int parse_incomming_dataset(mtp_ctx * ctx,void * datain,int size,uint32_t * newh
 							strcpy(tmp_file_entry.filename,tmp_str);
 							tmp_file_entry.size = objectsize;
 
-							file = open(tmp_path,O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR|S_IWUSR);
+							file = open(tmp_path,O_WRONLY | O_CREAT | O_TRUNC | O_LARGEFILE, S_IRUSR|S_IWUSR);
 							if( file == -1)
 							{
 								PRINT_WARN("MTP_OPERATION_SEND_OBJECT_INFO : Can't create %s ...",tmp_path);
@@ -445,7 +445,8 @@ int check_and_send_USB_ZLP(mtp_ctx * ctx , int size)
 mtp_size send_file_data( mtp_ctx * ctx, fs_entry * entry,mtp_offset offset, mtp_size maxsize )
 {
 	mtp_size actualsize;
-	int j,k,ofs;
+	mtp_size j,k;
+	int ofs;
 	mtp_size blocksize;
 	int file;
 
@@ -491,11 +492,18 @@ mtp_size send_file_data( mtp_ctx * ctx, fs_entry * entry,mtp_offset offset, mtp_
 
 			ofs = 0;
 
-		}while( j < actualsize );
+		}while( j < actualsize && !ctx->cancel_req);
 
 		check_and_send_USB_ZLP(ctx , sizeof(MTP_PACKET_HEADER) + actualsize );
 
 		entry_close( file );
+
+		if( ctx->cancel_req )
+		{
+			actualsize = -2;
+			ctx->cancel_req = 0;
+		}
+
 	}
 	else
 		actualsize = -1;
@@ -884,8 +892,14 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 				size = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer,0,0);
 
 				actualsize = send_file_data( ctx, entry, 0, entry->size );
-
-				response_code = MTP_RESPONSE_OK;
+				if( actualsize >= 0)
+				{
+					response_code = MTP_RESPONSE_OK;
+				}
+				else
+				{
+					response_code = MTP_RESPONSE_INCOMPLETE_TRANSFER;					
+				}
 			}
 			else
 			{
@@ -947,13 +961,15 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 						entry = get_entry_by_handle(ctx->fs_db, ctx->SendObjInfoHandle);
 						if(entry)
 						{
+							response_code = MTP_RESPONSE_GENERAL_ERROR;
+
 							full_path = build_full_path(ctx->fs_db, mtp_get_storage_root(ctx, entry->storage_id), entry);
 							if(full_path)
 							{
 								if( mtp_packet_hdr->code == MTP_OPERATION_SEND_PARTIAL_OBJECT )
-									file = open(full_path,O_RDWR);
+									file = open(full_path,O_RDWR | O_LARGEFILE);
 								else
-									file = open(full_path,O_CREAT|O_WRONLY|O_TRUNC,S_IRUSR|S_IWUSR);
+									file = open(full_path,O_CREAT|O_WRONLY|O_TRUNC,S_IRUSR|S_IWUSR | O_LARGEFILE);
 
 								if( file != -1 )
 								{
