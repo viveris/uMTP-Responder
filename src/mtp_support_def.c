@@ -41,8 +41,8 @@ const unsigned short supported_op[]=
 	MTP_OPERATION_SEND_OBJECT_INFO                       ,//0x100C
 	MTP_OPERATION_SEND_OBJECT                            ,//0x100D
 	MTP_OPERATION_GET_DEVICE_PROP_DESC                   ,//0x1014
-	MTP_OPERATION_GET_DEVICE_PROP_VALUE                  ,//0x1015
-	MTP_OPERATION_SET_DEVICE_PROP_VALUE                  ,//0x1016
+	//MTP_OPERATION_GET_DEVICE_PROP_VALUE                  ,//0x1015
+	//MTP_OPERATION_SET_DEVICE_PROP_VALUE                  ,//0x1016
 	//MTP_OPERATION_RESET_DEVICE_PROP_VALUE                ,//0x1017
 	MTP_OPERATION_GET_PARTIAL_OBJECT                     ,//0x101B
 	MTP_OPERATION_GET_OBJECT_PROPS_SUPPORTED             ,//0x9801

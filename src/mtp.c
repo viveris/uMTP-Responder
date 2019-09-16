@@ -442,6 +442,8 @@ int check_and_send_USB_ZLP(mtp_ctx * ctx , int size)
 	return 0;
 }
 
+#define MTP_IO_BUFFER_SIZE 256*1024
+
 mtp_size send_file_data( mtp_ctx * ctx, fs_entry * entry,mtp_offset offset, mtp_size maxsize )
 {
 	mtp_size actualsize;
@@ -449,6 +451,19 @@ mtp_size send_file_data( mtp_ctx * ctx, fs_entry * entry,mtp_offset offset, mtp_
 	int ofs;
 	mtp_size blocksize;
 	int file;
+	unsigned char * io_buffer;
+	mtp_offset buf_index;
+	int io_buffer_index;
+	int first_part_size;
+	unsigned char * usb_buffer_ptr;
+
+	io_buffer = malloc(MTP_IO_BUFFER_SIZE);
+	if( !io_buffer )
+		return -1;
+
+	usb_buffer_ptr = NULL;
+
+	buf_index = -1;
 
 	if( offset >= entry->size )
 	{
@@ -482,17 +497,56 @@ mtp_size send_file_data( mtp_ctx * ctx, fs_entry * entry,mtp_offset offset, mtp_
 			else
 				blocksize = actualsize - j;
 
-			entry_read(ctx->fs_db, file, &ctx->wrbuffer[ofs], offset + j, blocksize);
+			// Is the target page loaded ?
+			if( buf_index != ((offset + j) & ~((mtp_offset)(MTP_IO_BUFFER_SIZE-1))) )
+			{
+				entry_read(ctx->fs_db, file, io_buffer, ((offset + j) & ~((mtp_offset)(MTP_IO_BUFFER_SIZE-1))) , MTP_IO_BUFFER_SIZE);
+				buf_index = ((offset + j) & ~((mtp_offset)(MTP_IO_BUFFER_SIZE-1)));
+			}
+
+			io_buffer_index = (offset + j) & (MTP_IO_BUFFER_SIZE-1);
+
+			// Is a new page needed ?
+			if( io_buffer_index + blocksize < MTP_IO_BUFFER_SIZE )
+			{
+				// No, just use the io buffer
+
+				if( !ofs )
+				{
+					// Use the I/O buffer directly
+					usb_buffer_ptr = (unsigned char *)&io_buffer[io_buffer_index];
+				}
+				else
+				{
+					memcpy(&ctx->wrbuffer[ofs], &io_buffer[io_buffer_index], blocksize );
+					usb_buffer_ptr = (unsigned char *)&ctx->wrbuffer[0];
+				}
+			}
+			else
+			{
+				// Yes, new page needed. Get the first part in the io buffer and the load a new page to get the remaining data.
+				first_part_size = blocksize - ( ( io_buffer_index + blocksize ) - MTP_IO_BUFFER_SIZE);
+
+				memcpy(&ctx->wrbuffer[ofs], &io_buffer[io_buffer_index], first_part_size  );
+
+				buf_index += MTP_IO_BUFFER_SIZE;
+				entry_read(ctx->fs_db, file, io_buffer, buf_index , MTP_IO_BUFFER_SIZE);
+
+				memcpy(&ctx->wrbuffer[ofs + first_part_size], &io_buffer[0], blocksize - first_part_size  );
+
+				usb_buffer_ptr = (unsigned char *)&ctx->wrbuffer[0];
+			}
+
 			j   += blocksize;
 			ofs += blocksize;
 
 			PRINT_DEBUG("---> %d (%d)",j,ofs);
 
-			write_usb(ctx->usb_ctx,EP_DESCRIPTOR_IN,ctx->wrbuffer,ofs);
+			write_usb(ctx->usb_ctx, EP_DESCRIPTOR_IN, usb_buffer_ptr, ofs);
 
 			ofs = 0;
 
-		}while( j < actualsize && !ctx->cancel_req);
+		}while( j < actualsize && !ctx->cancel_req );
 
 		check_and_send_USB_ZLP(ctx , sizeof(MTP_PACKET_HEADER) + actualsize );
 
@@ -507,6 +561,8 @@ mtp_size send_file_data( mtp_ctx * ctx, fs_entry * entry,mtp_offset offset, mtp_
 	}
 	else
 		actualsize = -1;
+
+	free(io_buffer);
 
 	return actualsize;
 }
@@ -898,7 +954,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 				}
 				else
 				{
-					response_code = MTP_RESPONSE_INCOMPLETE_TRANSFER;					
+					response_code = MTP_RESPONSE_INCOMPLETE_TRANSFER;
 				}
 			}
 			else
