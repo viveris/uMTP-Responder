@@ -61,24 +61,16 @@ void* io_thread(void* arg)
 	return NULL;
 }
 
-int main(int argc, char *argv[])
+void * main_thread(void* arg)
 {
 	usb_gadget * usb_ctx;
-	int retcode = 0;
+	long retcode = 0;
 	int loop_continue = 0;
-
-	mtp_context = 0;
-
-	PRINT_MSG("uMTP Responder");
-	PRINT_MSG("Version: %s compiled the %s@%s", APP_VERSION,
-		  __DATE__, __TIME__);
-
-	PRINT_MSG("(c) 2018 - 2019 Viveris Technologies");
 
 	mtp_context = mtp_init_responder();
 	if(!mtp_context)
 	{
-		exit(-1);
+		return (void*)-1;
 	}
 
 	mtp_load_config_file(mtp_context);
@@ -120,6 +112,29 @@ int main(int argc, char *argv[])
 	}while(loop_continue);
 
 	mtp_deinit_responder(mtp_context);
+
+	return (void*)(retcode);
+}
+
+int main(int argc, char *argv[])
+{
+	pthread_t mtp_thread;
+	int retcode;
+
+	PRINT_MSG("uMTP Responder");
+	PRINT_MSG("Version: %s compiled the %s@%s", APP_VERSION,
+		  __DATE__, __TIME__);
+
+	PRINT_MSG("(c) 2018 - 2019 Viveris Technologies");
+
+	retcode = pthread_create(&mtp_thread, NULL, main_thread, NULL);
+	if( retcode )
+	{
+		PRINT_ERROR("Error : Couldn't create the main thread...");
+		exit(-1);
+	}
+
+	pthread_join(mtp_thread, NULL);
 
 	exit(retcode);
 }
