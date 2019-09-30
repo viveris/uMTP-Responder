@@ -41,8 +41,12 @@
 #include <stdint.h>
 #include <string.h>
 #include <pthread.h>
+#include <signal.h>
 
 #include <errno.h>
+#ifdef NON_BLOCKING_WRITE
+#include <poll.h>
+#endif
 
 #include "fs_handles_db.h"
 #include "mtp.h"
@@ -65,6 +69,11 @@ static struct usb_gadget_strings strings = {
 extern void* io_thread(void* arg);
 extern mtp_ctx * mtp_context;
 
+typedef struct mtp_device_status_ {
+	uint16_t wLength;
+	uint16_t wCode;
+}mtp_device_status;
+
 int read_usb(usb_gadget * ctx, unsigned char * buffer, int maxsize)
 {
 	int ret;
@@ -81,13 +90,35 @@ int read_usb(usb_gadget * ctx, unsigned char * buffer, int maxsize)
 int write_usb(usb_gadget * ctx, int channel, unsigned char * buffer, int size)
 {
 	int ret;
+#ifdef NON_BLOCKING_WRITE
+	struct pollfd pfd;
+#endif
 
 	ret = -1;
 	if ( channel < EP_NB_OF_DESCRIPTORS )
 	{
-		if(ctx->ep_handles[channel] >= 0 && buffer)
+		if(ctx->ep_handles[channel] >= 0 && buffer && !mtp_context->cancel_req)
 		{
+
+#ifdef NON_BLOCKING_WRITE
+			fcntl(ctx->ep_handles[channel], F_SETFL, fcntl(ctx->ep_handles[channel], F_GETFL) | O_NONBLOCK);
+			do
+			{
+				pfd.fd = ctx->ep_handles[channel];
+				pfd.events = POLLOUT;
+
+				ret = poll(&pfd, 1, 2000);
+				if(ret>0 && !mtp_context->cancel_req)
+				{
+					ret = write (ctx->ep_handles[channel], buffer, size);
+				}
+			}while( ret < 0 && ( (errno == EAGAIN) || (errno == EAGAIN) ) && !mtp_context->cancel_req );
+			fcntl(ctx->ep_handles[channel], F_SETFL, fcntl(ctx->ep_handles[channel], F_GETFL) & ~O_NONBLOCK);
+#else
+
 			ret = write (ctx->ep_handles[channel], buffer, size);
+
+#endif
 		}
 	}
 	return ret;
@@ -276,8 +307,9 @@ init_eps_error:
 
 static void handle_setup_request(usb_gadget * ctx, struct usb_ctrlrequest* setup)
 {
-	int status;
+	int status,cnt;
 	uint8_t buffer[512];
+	mtp_device_status dstatus;
 
 	PRINT_DEBUG("Setup request 0x%.2X", setup->bRequest);
 
@@ -384,11 +416,56 @@ static void handle_setup_request(usb_gadget * ctx, struct usb_ctrlrequest* setup
 		break;
 
 		case MTP_REQ_CANCEL:
+			PRINT_DEBUG("MTP_REQ_CANCEL !");
+
+			status = read (ctx->usb_device, &status, 0);
 
 			mtp_context->cancel_req = 1;
 
+			cnt = 0;
+			while( mtp_context->cancel_req )
+			{
+				// Wait the end of the current transfer 
+				if( cnt > 250 )
+				{
+					// Timeout... Unblock pending usb read/write.
+					PRINT_DEBUG("MTP_REQ_CANCEL : Forcing read/write exit...");
+					pthread_kill(ctx->thread, SIGUSR1);
+					break;
+				}
+				else
+					usleep(1000);
+
+				cnt++;
+			}
+
+			PRINT_DEBUG("MTP_REQ_CANCEL done !");
+
+			return;
+		break;
+
+		case MTP_REQ_RESET:
+			PRINT_DEBUG("MTP_REQ_RESET !");
+
 			// Just ACK
 			status = read (ctx->usb_device, &status, 0);
+
+			return;
+		break;
+
+		case MTP_REQ_GET_DEVICE_STATUS:
+			PRINT_DEBUG("MTP_REQ_GET_DEVICE_STATUS !");
+
+			dstatus.wLength = sizeof(mtp_device_status);
+			dstatus.wCode = MTP_RESPONSE_OK;
+
+			if ( write (ctx->usb_device, (void*)&dstatus, sizeof(mtp_device_status) ) < 0 )
+			{
+				PRINT_ERROR("MTP_REQ_GET_DEVICE_STATUS : usb device write error !");
+				break;
+			}
+
+			return;
 		break;
 	}
 
@@ -450,7 +527,7 @@ int handle_ep0(usb_gadget * ctx)
 
 		if (ret < 0)
 		{
-			PRINT_ERROR("handle_ep0 : Read error %d (%m)", ret);
+			PRINT_ERROR("handle_ep0 : Read error %d (%m)", errno);
 			goto end;
 		}
 
@@ -892,3 +969,4 @@ void deinit_usb_mtp_gadget(usb_gadget * usbctx)
 	PRINT_DEBUG("leaving deinit_usb_mtp_gadget");
 
 }
+
