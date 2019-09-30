@@ -37,6 +37,8 @@
 
 #include <dirent.h>
 
+#include <inttypes.h>
+
 #include "logs_out.h"
 #include "fs_handles_db.h"
 #include "mtp.h"
@@ -409,7 +411,7 @@ int scan_and_add_folder(fs_handles_db * db, char * base, uint32_t parent, uint32
 		{
 			PRINT_DEBUG("---------------------");
 			PRINT_DEBUG("File : %s",fileinfo.filename);
-			PRINT_DEBUG("Size : %d",fileinfo.size);
+			PRINT_DEBUG("Size : 0x%"SIZEHEX,fileinfo.size);
 			PRINT_DEBUG("IsDir: %d",fileinfo.isdirectory);
 			PRINT_DEBUG("---------------------");
 

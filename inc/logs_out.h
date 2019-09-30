@@ -28,6 +28,8 @@
 
 void timestamp(char * timestr, int maxsize);
 
+#define SIZEHEX PRIx64
+
 #ifdef USE_SYSLOG
 
 #include <syslog.h>
