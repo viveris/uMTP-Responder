@@ -52,7 +52,7 @@ uint32_t peek(void * buffer, int index, int typesize)
 {
 	unsigned char *ptr;
 	uint32_t data;
-	int shift;
+	unsigned int shift;
 
 	ptr = ((unsigned char *)buffer);
 
@@ -60,7 +60,7 @@ uint32_t peek(void * buffer, int index, int typesize)
 	data = 0x00000000;
 	do
 	{
-		data |= (ptr[index] << shift);
+		data |= (((uint32_t)ptr[index]) << shift);
 		index++;
 		typesize--;
 		shift += 8;
@@ -73,7 +73,7 @@ uint64_t peek64(void * buffer, int index, int typesize)
 {
 	unsigned char *ptr;
 	uint64_t data;
-	int shift;
+	unsigned int shift;
 
 	ptr = ((unsigned char *)buffer);
 
@@ -81,7 +81,7 @@ uint64_t peek64(void * buffer, int index, int typesize)
 	data = 0x0000000000000000;
 	do
 	{
-		data |= (ptr[index] << shift);
+		data |= (((uint64_t)ptr[index]) << shift);
 		index++;
 		typesize--;
 		shift += 8;
