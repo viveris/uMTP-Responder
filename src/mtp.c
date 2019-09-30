@@ -39,6 +39,8 @@
 #include <unistd.h>
 #include <pthread.h>
 
+#include <inttypes.h>
+
 #include "logs_out.h"
 
 #include "mtp_helpers.h"
@@ -484,7 +486,7 @@ mtp_size send_file_data( mtp_ctx * ctx, fs_entry * entry,mtp_offset offset, mtp_
 
 	k = ctx->max_packet_size;
 
-	PRINT_DEBUG("send_file_data : Offset 0x%.8X - Maxsize 0x%.8X - Size 0x%.8X - ActualSize 0x%.8X", offset,maxsize,entry->size,actualsize);
+	PRINT_DEBUG("send_file_data : Offset 0x%"SIZEHEX" - Maxsize 0x%"SIZEHEX" - Size 0x%"SIZEHEX" - ActualSize 0x%"SIZEHEX, offset,maxsize,entry->size,actualsize);
 
 	file = entry_open(ctx->fs_db, entry);
 	if( file != -1 )
@@ -540,7 +542,7 @@ mtp_size send_file_data( mtp_ctx * ctx, fs_entry * entry,mtp_offset offset, mtp_
 			j   += blocksize;
 			ofs += blocksize;
 
-			PRINT_DEBUG("---> %d (%d)",j,ofs);
+			PRINT_DEBUG("---> 0x%"SIZEHEX" (0x%X)",j,ofs);
 
 			write_usb(ctx->usb_ctx, EP_DESCRIPTOR_IN, usb_buffer_ptr, ofs);
 
@@ -548,14 +550,20 @@ mtp_size send_file_data( mtp_ctx * ctx, fs_entry * entry,mtp_offset offset, mtp_
 
 		}while( j < actualsize && !ctx->cancel_req );
 
-		check_and_send_USB_ZLP(ctx , sizeof(MTP_PACKET_HEADER) + actualsize );
-
 		entry_close( file );
 
 		if( ctx->cancel_req )
 		{
+			PRINT_DEBUG("send_file_data : Cancelled ! Aborded...");
+
 			actualsize = -2;
 			ctx->cancel_req = 0;
+		}
+		else
+		{
+			PRINT_DEBUG("send_file_data : Full transfert done !");
+
+			check_and_send_USB_ZLP(ctx , sizeof(MTP_PACKET_HEADER) + actualsize );
 		}
 
 	}
@@ -902,16 +910,16 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 			{
 				offset = peek64(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER) + 4, 8); // Get param 2 - Offset in bytes
 				maxsize = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER) + 12, 4); // Get param 3 - Max size in bytes
+				entry = get_entry_by_handle(ctx->fs_db, handle);
+				PRINT_DEBUG("MTP_OPERATION_GET_PARTIAL_OBJECT_64 : handle 0x%.8X - Offset 0x%"SIZEHEX" - Maxsize 0x%.8X", handle,offset,maxsize);
 			}
 			else
 			{
 				offset = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER) + 4, 4);   // Get param 2 - Offset in bytes
 				maxsize = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER) + 8, 4);  // Get param 3 - Max size in bytes
+				entry = get_entry_by_handle(ctx->fs_db, handle);
+				PRINT_DEBUG("MTP_OPERATION_GET_PARTIAL_OBJECT : handle 0x%.8X - Offset 0x%"SIZEHEX" - Maxsize 0x%.8X", handle,offset,maxsize);
 			}
-
-			entry = get_entry_by_handle(ctx->fs_db, handle);
-
-			PRINT_DEBUG("MTP_OPERATION_GET_PARTIAL_OBJECT : handle 0x%.8X - Offset 0x%.8X - Maxsize 0x%.8X", handle,offset,maxsize);
 
 			if(entry)
 			{
@@ -922,6 +930,11 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 				{
 					params[0] = actualsize & 0xFFFFFFFF;
 					params_size = sizeof(uint32_t);
+				}
+				else
+				{
+					if(actualsize == -2)
+						no_response = 1;
 				}
 
 				response_code = MTP_RESPONSE_OK;
@@ -954,6 +967,9 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 				}
 				else
 				{
+					if(actualsize == -2)
+						no_response = 1;
+
 					response_code = MTP_RESPONSE_INCOMPLETE_TRANSFER;
 				}
 			}
@@ -1005,7 +1021,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 			if( mtp_packet_hdr->code == MTP_OPERATION_SEND_PARTIAL_OBJECT && mtp_packet_hdr->operation == MTP_CONTAINER_TYPE_COMMAND )
 			{
 				ctx->SendObjInfoHandle = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER), 4);      // Get param 1 - Object handle
-				ctx->SendObjInfoOffset = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER) + 4, 8);   // Get param 2 - Offset in bytes
+				ctx->SendObjInfoOffset = peek64(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER) + 4, 8);   // Get param 2 - Offset in bytes
 				ctx->SendObjInfoSize = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER) + 12, 4); // Get param 3 - Max size in bytes
 			}
 
@@ -1056,7 +1072,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 										size = MAX_RX_BUFFER_SIZE;
 									}
 
-									while( size == MAX_RX_BUFFER_SIZE )
+									while( size == MAX_RX_BUFFER_SIZE && !ctx->cancel_req)
 									{
 										size = read_usb(ctx->usb_ctx, ctx->rdbuffer2, MAX_RX_BUFFER_SIZE);
 
@@ -1070,6 +1086,12 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 									close(file);
 
+									if(ctx->cancel_req)
+									{
+										ctx->cancel_req = 0;
+										no_response = 1;
+									}
+
 									response_code = MTP_RESPONSE_OK;
 								}
 
@@ -1082,7 +1104,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 						}
 					break;
 					case MTP_CONTAINER_TYPE_COMMAND:
-						PRINT_DEBUG("SEND_OBJECT : Handle 0x%.8x, Offset 0x%.8x, Size 0x%.8x",ctx->SendObjInfoHandle,ctx->SendObjInfoOffset,ctx->SendObjInfoSize);
+						PRINT_DEBUG("SEND_OBJECT : Handle 0x%.8x, Offset 0x%"SIZEHEX", Size 0x%"SIZEHEX,ctx->SendObjInfoHandle,ctx->SendObjInfoOffset,ctx->SendObjInfoSize);
 
 						// no response to send, wait for the data...
 						response_code = MTP_RESPONSE_OK;
@@ -1388,7 +1410,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 				full_path = build_full_path(ctx->fs_db, mtp_get_storage_root(ctx, entry->storage_id), entry);
 				if(full_path)
 				{
-					PRINT_DEBUG("Truncate file at %d Bytes",offset);
+					PRINT_DEBUG("Truncate file at 0x%"SIZEHEX" Bytes",offset);
 					if( !truncate64(full_path, offset) )
 					{
 						response_code = MTP_RESPONSE_OK;
@@ -1425,6 +1447,10 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 		PRINT_DEBUG_BUF(ctx->wrbuffer, size);
 
 		write_usb(ctx->usb_ctx,EP_DESCRIPTOR_IN,ctx->wrbuffer,size);
+	}
+	else
+	{
+		PRINT_DEBUG("No Status response sent");
 	}
 
 	return 0; // TODO Return usb error code.

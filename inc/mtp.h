@@ -113,8 +113,7 @@ typedef struct mtp_ctx_
 
 	int no_inotify;
 
-	int cancel_req;
-
+	volatile int cancel_req;
 }mtp_ctx;
 
 mtp_ctx * mtp_init_responder();
