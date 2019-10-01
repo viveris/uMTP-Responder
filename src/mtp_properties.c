@@ -353,7 +353,7 @@ int build_properties_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uint32_t p
 				}
 			break;
 			default:
-				PRINT_ERROR("build_properties_dataset : Unsupported data type : 0x%.4X", dev_properties[i].data_type );
+				PRINT_ERROR("build_properties_dataset : Unsupported data type : 0x%.4X", properties[i].data_type );
 			break;
 		}
 
