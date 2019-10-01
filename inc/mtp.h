@@ -92,6 +92,8 @@ typedef struct mtp_ctx_
 
 	unsigned char * rdbuffer2;
 
+	unsigned char * read_file_buffer;
+
 	uint32_t *temp_array;
 
 	fs_handles_db * fs_db;

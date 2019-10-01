@@ -61,9 +61,6 @@
 
 #include "inotify.h"
 
-#define MAX_RX_BUFFER_SIZE (2*1024)
-#define MAX_TX_BUFFER_SIZE (2*1024)
-
 mtp_ctx * mtp_init_responder()
 {
 	mtp_ctx * ctx;
@@ -75,15 +72,15 @@ mtp_ctx * mtp_init_responder()
 	{
 		memset(ctx,0,sizeof(mtp_ctx));
 
-		ctx->wrbuffer = malloc(MAX_TX_BUFFER_SIZE);
+		ctx->wrbuffer = malloc( CONFIG_MAX_TX_USB_BUFFER_SIZE );
 		if(!ctx->wrbuffer)
 			goto init_error;
 
-		ctx->rdbuffer = malloc( MAX_RX_BUFFER_SIZE );
+		ctx->rdbuffer = malloc( CONFIG_MAX_RX_USB_BUFFER_SIZE );
 		if(!ctx->rdbuffer)
 			goto init_error;
 
-		ctx->rdbuffer2 = malloc( MAX_RX_BUFFER_SIZE );
+		ctx->rdbuffer2 = malloc( CONFIG_MAX_RX_USB_BUFFER_SIZE );
 		if(!ctx->rdbuffer2)
 			goto init_error;
 
@@ -142,6 +139,9 @@ void mtp_deinit_responder(mtp_ctx * ctx)
 
 		if(ctx->temp_array)
 			free(ctx->temp_array);
+
+		if(ctx->read_file_buffer)
+			free(ctx->read_file_buffer);
 
 		free(ctx);
 	}
@@ -445,24 +445,24 @@ int check_and_send_USB_ZLP(mtp_ctx * ctx , int size)
 	return 0;
 }
 
-#define MTP_IO_BUFFER_SIZE 256*1024
-
 mtp_size send_file_data( mtp_ctx * ctx, fs_entry * entry,mtp_offset offset, mtp_size maxsize )
 {
 	mtp_size actualsize;
-	mtp_size j,k;
+	mtp_size j;
 	int ofs;
 	mtp_size blocksize;
-	int file;
-	unsigned char * io_buffer;
+	int file,bytes_read;
 	mtp_offset buf_index;
 	int io_buffer_index;
 	int first_part_size;
 	unsigned char * usb_buffer_ptr;
 
-	io_buffer = malloc(MTP_IO_BUFFER_SIZE);
-	if( !io_buffer )
-		return -1;
+	if( !ctx->read_file_buffer )
+	{
+		ctx->read_file_buffer = malloc( CONFIG_READ_FILE_BUFFER_SIZE );
+		if(!ctx->read_file_buffer)
+			return 0;
+	}
 
 	usb_buffer_ptr = NULL;
 
@@ -485,8 +485,6 @@ mtp_size send_file_data( mtp_ctx * ctx, fs_entry * entry,mtp_offset offset, mtp_
 
 	ofs = sizeof(MTP_PACKET_HEADER);
 
-	k = ctx->max_packet_size;
-
 	PRINT_DEBUG("send_file_data : Offset 0x%"SIZEHEX" - Maxsize 0x%"SIZEHEX" - Size 0x%"SIZEHEX" - ActualSize 0x%"SIZEHEX, offset,maxsize,entry->size,actualsize);
 
 	file = entry_open(ctx->fs_db, entry);
@@ -495,47 +493,58 @@ mtp_size send_file_data( mtp_ctx * ctx, fs_entry * entry,mtp_offset offset, mtp_
 		j = 0;
 		do
 		{
-			if((j + (k - ofs)) < actualsize)
-				blocksize = (k - ofs);
+			if((j + (CONFIG_MAX_TX_USB_BUFFER_SIZE - ofs)) < actualsize)
+				blocksize = (CONFIG_MAX_TX_USB_BUFFER_SIZE - ofs);
 			else
 				blocksize = actualsize - j;
 
 			// Is the target page loaded ?
-			if( buf_index != ((offset + j) & ~((mtp_offset)(MTP_IO_BUFFER_SIZE-1))) )
+			if( buf_index != ((offset + j) & ~((mtp_offset)(CONFIG_READ_FILE_BUFFER_SIZE-1))) )
 			{
-				entry_read(ctx->fs_db, file, io_buffer, ((offset + j) & ~((mtp_offset)(MTP_IO_BUFFER_SIZE-1))) , MTP_IO_BUFFER_SIZE);
-				buf_index = ((offset + j) & ~((mtp_offset)(MTP_IO_BUFFER_SIZE-1)));
+				bytes_read = entry_read(ctx->fs_db, file, ctx->read_file_buffer, ((offset + j) & ~((mtp_offset)(CONFIG_READ_FILE_BUFFER_SIZE-1))) , CONFIG_READ_FILE_BUFFER_SIZE);
+				if( bytes_read < 0 )
+				{
+					entry_close( file );
+					return -1;
+				}
+
+				buf_index = ((offset + j) & ~((mtp_offset)(CONFIG_READ_FILE_BUFFER_SIZE-1)));
 			}
 
-			io_buffer_index = (offset + j) & (MTP_IO_BUFFER_SIZE-1);
+			io_buffer_index = (offset + j) & (CONFIG_READ_FILE_BUFFER_SIZE-1);
 
 			// Is a new page needed ?
-			if( io_buffer_index + blocksize < MTP_IO_BUFFER_SIZE )
+			if( io_buffer_index + blocksize < CONFIG_READ_FILE_BUFFER_SIZE )
 			{
 				// No, just use the io buffer
 
 				if( !ofs )
 				{
 					// Use the I/O buffer directly
-					usb_buffer_ptr = (unsigned char *)&io_buffer[io_buffer_index];
+					usb_buffer_ptr = (unsigned char *)&ctx->read_file_buffer[io_buffer_index];
 				}
 				else
 				{
-					memcpy(&ctx->wrbuffer[ofs], &io_buffer[io_buffer_index], blocksize );
+					memcpy(&ctx->wrbuffer[ofs], &ctx->read_file_buffer[io_buffer_index], blocksize );
 					usb_buffer_ptr = (unsigned char *)&ctx->wrbuffer[0];
 				}
 			}
 			else
 			{
 				// Yes, new page needed. Get the first part in the io buffer and the load a new page to get the remaining data.
-				first_part_size = blocksize - ( ( io_buffer_index + blocksize ) - MTP_IO_BUFFER_SIZE);
+				first_part_size = blocksize - ( ( io_buffer_index + blocksize ) - CONFIG_READ_FILE_BUFFER_SIZE);
 
-				memcpy(&ctx->wrbuffer[ofs], &io_buffer[io_buffer_index], first_part_size  );
+				memcpy(&ctx->wrbuffer[ofs], &ctx->read_file_buffer[io_buffer_index], first_part_size  );
 
-				buf_index += MTP_IO_BUFFER_SIZE;
-				entry_read(ctx->fs_db, file, io_buffer, buf_index , MTP_IO_BUFFER_SIZE);
+				buf_index += CONFIG_READ_FILE_BUFFER_SIZE;
+				bytes_read = entry_read(ctx->fs_db, file, ctx->read_file_buffer, buf_index , CONFIG_READ_FILE_BUFFER_SIZE);
+				if( bytes_read < 0 )
+				{
+					entry_close( file );
+					return -1;
+				}
 
-				memcpy(&ctx->wrbuffer[ofs + first_part_size], &io_buffer[0], blocksize - first_part_size  );
+				memcpy(&ctx->wrbuffer[ofs + first_part_size], &ctx->read_file_buffer[0], blocksize - first_part_size );
 
 				usb_buffer_ptr = (unsigned char *)&ctx->wrbuffer[0];
 			}
@@ -570,8 +579,6 @@ mtp_size send_file_data( mtp_ctx * ctx, fs_entry * entry,mtp_offset offset, mtp_
 	}
 	else
 		actualsize = -1;
-
-	free(io_buffer);
 
 	return actualsize;
 }
@@ -994,7 +1001,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 			PRINT_DEBUG("MTP_OPERATION_SEND_OBJECT_INFO : Rx dataset...");
 
-			size = read_usb(ctx->usb_ctx, ctx->rdbuffer2, MAX_RX_BUFFER_SIZE);
+			size = read_usb(ctx->usb_ctx, ctx->rdbuffer2, CONFIG_MAX_RX_USB_BUFFER_SIZE);
 			PRINT_DEBUG_BUF(ctx->rdbuffer2, size);
 
 			new_handle = 0xFFFFFFFF;
@@ -1063,19 +1070,19 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 									}
 
 									tmp_ptr = ctx->rdbuffer2;
-									if( size == ( MAX_RX_BUFFER_SIZE - sizeof(MTP_PACKET_HEADER) ) )
+									if( size == ( CONFIG_MAX_RX_USB_BUFFER_SIZE - sizeof(MTP_PACKET_HEADER) ) )
 									{
-										size = MAX_RX_BUFFER_SIZE;
+										size = CONFIG_MAX_RX_USB_BUFFER_SIZE;
 									}
 
 									if( mtp_packet_hdr->code == MTP_OPERATION_SEND_PARTIAL_OBJECT && ctx->SendObjInfoSize )
 									{
-										size = MAX_RX_BUFFER_SIZE;
+										size = CONFIG_MAX_RX_USB_BUFFER_SIZE;
 									}
 
-									while( size == MAX_RX_BUFFER_SIZE && !ctx->cancel_req)
+									while( size == CONFIG_MAX_RX_USB_BUFFER_SIZE && !ctx->cancel_req)
 									{
-										size = read_usb(ctx->usb_ctx, ctx->rdbuffer2, MAX_RX_BUFFER_SIZE);
+										size = read_usb(ctx->usb_ctx, ctx->rdbuffer2, CONFIG_MAX_RX_USB_BUFFER_SIZE);
 
 										if( write(file, tmp_ptr, size) != size)
 										{
@@ -1465,7 +1472,7 @@ int mtp_incoming_packet(mtp_ctx * ctx)
 	if(!ctx)
 		return 0;
 
-	size = read_usb(ctx->usb_ctx, ctx->rdbuffer, MAX_RX_BUFFER_SIZE);
+	size = read_usb(ctx->usb_ctx, ctx->rdbuffer, CONFIG_MAX_RX_USB_BUFFER_SIZE);
 
 	if(size>=0)
 	{
