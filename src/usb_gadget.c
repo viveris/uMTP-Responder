@@ -46,7 +46,7 @@
 #include <signal.h>
 
 #include <errno.h>
-#ifdef NON_BLOCKING_WRITE
+#ifdef CONFIG_USB_NON_BLOCKING_WRITE
 #include <poll.h>
 #endif
 
@@ -92,7 +92,7 @@ int read_usb(usb_gadget * ctx, unsigned char * buffer, int maxsize)
 int write_usb(usb_gadget * ctx, int channel, unsigned char * buffer, int size)
 {
 	int ret;
-#ifdef NON_BLOCKING_WRITE
+#ifdef CONFIG_USB_NON_BLOCKING_WRITE
 	struct pollfd pfd;
 #endif
 
@@ -102,7 +102,7 @@ int write_usb(usb_gadget * ctx, int channel, unsigned char * buffer, int size)
 		if(ctx->ep_handles[channel] >= 0 && buffer && !mtp_context->cancel_req)
 		{
 
-#ifdef NON_BLOCKING_WRITE
+#ifdef CONFIG_USB_NON_BLOCKING_WRITE
 			fcntl(ctx->ep_handles[channel], F_SETFL, fcntl(ctx->ep_handles[channel], F_GETFL) | O_NONBLOCK);
 			do
 			{
