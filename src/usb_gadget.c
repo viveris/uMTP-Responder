@@ -25,6 +25,8 @@
 
 // GadgetFS support : Main inspiration from Grégory Soutadé (http://blog.soutade.fr/post/2016/07/create-your-own-usb-gadget-with-gadgetfs.html)
 
+#include "buildconf.h"
+
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -425,7 +427,7 @@ static void handle_setup_request(usb_gadget * ctx, struct usb_ctrlrequest* setup
 			cnt = 0;
 			while( mtp_context->cancel_req )
 			{
-				// Wait the end of the current transfer 
+				// Wait the end of the current transfer
 				if( cnt > 250 )
 				{
 					// Timeout... Unblock pending usb read/write.

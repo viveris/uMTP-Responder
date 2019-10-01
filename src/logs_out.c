@@ -23,12 +23,13 @@
  * @author Jean-François DEL NERO <Jean-Francois.DELNERO@viveris.fr>
  */
 
+#include "buildconf.h"
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <time.h>
 #include "logs_out.h"
-
 
 void timestamp(char * timestr, int maxsize)
 {

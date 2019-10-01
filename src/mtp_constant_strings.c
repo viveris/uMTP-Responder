@@ -23,6 +23,8 @@
  * @author Jean-François DEL NERO <Jean-Francois.DELNERO@viveris.fr>
  */
 
+#include "buildconf.h"
+
 #include <fcntl.h>
 #include <stdio.h>
 #include <unistd.h>

@@ -39,6 +39,8 @@
  * (at your option) any later version.
  */
 
+#include "buildconf.h"
+
 #include <stdint.h>
 
 #include <linux/types.h>

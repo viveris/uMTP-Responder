@@ -23,13 +23,12 @@
  * @author Jean-François DEL NERO <Jean-Francois.DELNERO@viveris.fr>
  */
 
-#define _LARGEFILE64_SOURCE
-#define _FILE_OFFSET_BITS 64
+#include "buildconf.h"
 
 #include <sys/types.h>
 #include <unistd.h>
 #include <fcntl.h>
- 
+
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>

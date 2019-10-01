@@ -23,6 +23,8 @@
  * @author Jean-François DEL NERO <Jean-Francois.DELNERO@viveris.fr>
  */
 
+#include "buildconf.h"
+
 #include "mtp_constant.h"
 
 const unsigned short supported_op[]=
