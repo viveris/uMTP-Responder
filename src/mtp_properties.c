@@ -391,22 +391,27 @@ int build_device_properties_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uin
 				poke(buffer, &ofs, 1, dev_properties[i].default_value);
 				poke(buffer, &ofs, 1, dev_properties[i].default_value);
 			break;
+
 			case MTP_TYPE_UINT16:
 				poke(buffer, &ofs, 2, dev_properties[i].default_value);
 				poke(buffer, &ofs, 2, dev_properties[i].default_value);
 			break;
+
 			case MTP_TYPE_UINT32:
 				poke(buffer, &ofs, 4, dev_properties[i].default_value);
 				poke(buffer, &ofs, 4, dev_properties[i].default_value);
 			break;
+
 			case MTP_TYPE_UINT64:
 				poke(buffer, &ofs, 4, dev_properties[i].default_value & 0xFFFFFFFF);
 				poke(buffer, &ofs, 4, dev_properties[i].default_value >> 32);
 				poke(buffer, &ofs, 4, dev_properties[i].default_value & 0xFFFFFFFF);
 				poke(buffer, &ofs, 4, dev_properties[i].default_value >> 32);
 			break;
+
 			default:
 				PRINT_ERROR("build_device_properties_dataset : Unsupported data type : 0x%.4X", dev_properties[i].data_type );
+				return 0;
 			break;
 		}
 
@@ -613,6 +618,7 @@ int build_ObjectPropValue_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uint3
 
 			default:
 				PRINT_ERROR("build_ObjectPropValue_dataset : Unsupported property : 0x%.4X (%s)", prop_code, mtp_get_property_string(prop_code));
+				return 0;
 			break;
 		}
 	}
@@ -640,6 +646,7 @@ int build_DevicePropValue_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uint3
 
 		default:
 			PRINT_ERROR("build_DevicePropValue_dataset : Unsupported property : 0x%.4X (%s)", prop_code, mtp_get_property_string(prop_code));
+			return 0;
 		break;
 	}
 
