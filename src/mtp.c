@@ -758,6 +758,31 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 			pthread_mutex_unlock( &ctx->inotify_mutex );
 		break;
 
+		case MTP_OPERATION_GET_DEVICE_PROP_VALUE:
+			pthread_mutex_lock( &ctx->inotify_mutex );
+
+			prop_code = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER), 4);     // Get param 1 - PropCode
+
+			PRINT_DEBUG("MTP_OPERATION_GET_DEVICE_PROP_VALUE : (Prop code : 0x%.4X )", prop_code);
+
+			size = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer,0,0);
+			size += build_DevicePropValue_dataset(ctx,ctx->wrbuffer + sizeof(MTP_PACKET_HEADER), 2048, prop_code);
+
+			i = 0;
+			poke(ctx->wrbuffer, &i, 4, size);
+
+			PRINT_DEBUG("MTP_OPERATION_GET_DEVICE_PROP_VALUE response (%d Bytes):",size);
+			PRINT_DEBUG_BUF(ctx->wrbuffer, size);
+
+			write_usb(ctx->usb_ctx,EP_DESCRIPTOR_IN,ctx->wrbuffer,size);
+
+			check_and_send_USB_ZLP(ctx , size );
+
+			response_code = MTP_RESPONSE_OK;
+
+			pthread_mutex_unlock( &ctx->inotify_mutex );
+		break;
+
 		case MTP_OPERATION_GET_OBJECT_HANDLES:
 
 			pthread_mutex_lock( &ctx->inotify_mutex );

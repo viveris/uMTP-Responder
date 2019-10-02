@@ -620,6 +620,32 @@ int build_ObjectPropValue_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uint3
 	return ofs;
 }
 
+int build_DevicePropValue_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uint32_t prop_code)
+{
+	int ofs;
+
+	ofs = 0;
+
+	PRINT_DEBUG("build_DevicePropValue_dataset : Property 0x%.4X (%s)", prop_code, mtp_get_property_string(prop_code));
+
+	switch(prop_code)
+	{
+		case MTP_DEVICE_PROPERTY_BATTERY_LEVEL:
+			poke(buffer, &ofs, 2, 0x8000);
+		break;
+
+		case MTP_DEVICE_PROPERTY_DEVICE_FRIENDLY_NAME:
+			poke_string(buffer, &ofs,ctx->usb_cfg.usb_string_product);
+		break;
+
+		default:
+			PRINT_ERROR("build_DevicePropValue_dataset : Unsupported property : 0x%.4X (%s)", prop_code, mtp_get_property_string(prop_code));
+		break;
+	}
+
+	return ofs;
+}
+
 int objectproplist_element(mtp_ctx * ctx, void * buffer, int * ofs, uint16_t prop_code, uint32_t handle, void * data,uint32_t prop_code_param)
 {
 	int i;

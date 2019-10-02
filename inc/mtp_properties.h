@@ -55,6 +55,7 @@ int build_ObjectPropValue_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uint3
 int setObjectPropValue(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, uint32_t handle,uint32_t prop_code);
 
 int build_device_properties_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uint32_t property_id);
+int build_DevicePropValue_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uint32_t prop_code);
 
 int build_objectproplist_dataset(mtp_ctx * ctx, void * buffer, int maxsize,fs_entry * entry, uint32_t handle,uint32_t format_id, uint32_t prop_code, uint32_t prop_group_code, uint32_t depth);
 
