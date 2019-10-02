@@ -651,7 +651,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 		case MTP_OPERATION_GET_DEVICE_INFO:
 
 			size = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer,0,0);
-			size += build_deviceinfo_dataset(ctx, ctx->wrbuffer + sizeof(MTP_PACKET_HEADER), 2048);
+			size += build_deviceinfo_dataset(ctx, ctx->wrbuffer + sizeof(MTP_PACKET_HEADER), CONFIG_MAX_TX_USB_BUFFER_SIZE - sizeof(MTP_PACKET_HEADER));
 
 			// Update packet size
 			ofs = 0;
@@ -704,7 +704,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 			{
 				size = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer,0,0);
 
-				size += build_storageinfo_dataset(ctx, ctx->wrbuffer + sizeof(MTP_PACKET_HEADER), 2048,storageid);
+				size += build_storageinfo_dataset(ctx, ctx->wrbuffer + sizeof(MTP_PACKET_HEADER), CONFIG_MAX_TX_USB_BUFFER_SIZE - sizeof(MTP_PACKET_HEADER),storageid);
 
 				// Update packet size
 				ofs = 0;
@@ -731,7 +731,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 			property_id = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER), 4);  // Get param 1 - property id
 
 			size = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer,0,0);
-			size += build_device_properties_dataset(ctx,ctx->wrbuffer + sizeof(MTP_PACKET_HEADER), 2048, property_id);
+			size += build_device_properties_dataset(ctx,ctx->wrbuffer + sizeof(MTP_PACKET_HEADER), CONFIG_MAX_TX_USB_BUFFER_SIZE - sizeof(MTP_PACKET_HEADER), property_id);
 
 			if ( size > sizeof(MTP_PACKET_HEADER) )
 			{
@@ -766,19 +766,26 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 			PRINT_DEBUG("MTP_OPERATION_GET_DEVICE_PROP_VALUE : (Prop code : 0x%.4X )", prop_code);
 
 			size = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer,0,0);
-			size += build_DevicePropValue_dataset(ctx,ctx->wrbuffer + sizeof(MTP_PACKET_HEADER), 2048, prop_code);
+			size += build_DevicePropValue_dataset(ctx,ctx->wrbuffer + sizeof(MTP_PACKET_HEADER), CONFIG_MAX_TX_USB_BUFFER_SIZE - sizeof(MTP_PACKET_HEADER), prop_code);
 
-			i = 0;
-			poke(ctx->wrbuffer, &i, 4, size);
+			if ( size > sizeof(MTP_PACKET_HEADER) )
+			{
+				i = 0;
+				poke(ctx->wrbuffer, &i, 4, size);
 
-			PRINT_DEBUG("MTP_OPERATION_GET_DEVICE_PROP_VALUE response (%d Bytes):",size);
-			PRINT_DEBUG_BUF(ctx->wrbuffer, size);
+				PRINT_DEBUG("MTP_OPERATION_GET_DEVICE_PROP_VALUE response (%d Bytes):",size);
+				PRINT_DEBUG_BUF(ctx->wrbuffer, size);
 
-			write_usb(ctx->usb_ctx,EP_DESCRIPTOR_IN,ctx->wrbuffer,size);
+				write_usb(ctx->usb_ctx,EP_DESCRIPTOR_IN,ctx->wrbuffer,size);
 
-			check_and_send_USB_ZLP(ctx , size );
+				check_and_send_USB_ZLP(ctx , size );
 
-			response_code = MTP_RESPONSE_OK;
+				response_code = MTP_RESPONSE_OK;
+			}
+			else
+			{
+				response_code = MTP_RESPONSE_DEVICE_PROP_NOT_SUPPORTED;
+			}
 
 			pthread_mutex_unlock( &ctx->inotify_mutex );
 		break;
@@ -907,7 +914,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 			if( entry )
 			{
 				size = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer,0,0);
-				size += build_objectinfo_dataset(ctx, ctx->wrbuffer + sizeof(MTP_PACKET_HEADER),2048,entry);
+				size += build_objectinfo_dataset(ctx, ctx->wrbuffer + sizeof(MTP_PACKET_HEADER), CONFIG_MAX_TX_USB_BUFFER_SIZE - sizeof(MTP_PACKET_HEADER),entry);
 
 				i = 0;
 				poke(ctx->wrbuffer, &i, 4, size);
@@ -1182,7 +1189,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 			format_id = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER), 4); // Get param 1 - format
 
 			size = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer,0,0);
-			size += build_properties_supported_dataset(ctx,ctx->wrbuffer + sizeof(MTP_PACKET_HEADER), 2048, format_id);
+			size += build_properties_supported_dataset(ctx,ctx->wrbuffer + sizeof(MTP_PACKET_HEADER), CONFIG_MAX_TX_USB_BUFFER_SIZE - sizeof(MTP_PACKET_HEADER), format_id);
 
 			// Update packet size
 			ofs = 0;
@@ -1206,7 +1213,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 			format_id = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER) + 4, 4); // Get param 2 - format
 
 			size = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer,0,0);
-			size += build_properties_dataset(ctx,ctx->wrbuffer + sizeof(MTP_PACKET_HEADER), 2048, property_id,format_id);
+			size += build_properties_dataset(ctx,ctx->wrbuffer + sizeof(MTP_PACKET_HEADER), CONFIG_MAX_TX_USB_BUFFER_SIZE - sizeof(MTP_PACKET_HEADER), property_id,format_id);
 
 			if ( size > sizeof(MTP_PACKET_HEADER) )
 			{
@@ -1245,7 +1252,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 			if( entry )
 			{
 				size = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer,0,0);
-				size += build_ObjectPropValue_dataset(ctx,ctx->wrbuffer + sizeof(MTP_PACKET_HEADER), 2048, handle, prop_code);
+				size += build_ObjectPropValue_dataset(ctx,ctx->wrbuffer + sizeof(MTP_PACKET_HEADER), CONFIG_MAX_TX_USB_BUFFER_SIZE - sizeof(MTP_PACKET_HEADER), handle, prop_code);
 
 				i = 0;
 				poke(ctx->wrbuffer, &i, 4, size);
@@ -1337,7 +1344,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 			if( entry )
 			{
 				size = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer,0,0);
-				size += build_objectproplist_dataset(ctx, ctx->wrbuffer + sizeof(MTP_PACKET_HEADER),2048,entry, handle, format_id, prop_code, prop_group_code, depth);
+				size += build_objectproplist_dataset(ctx, ctx->wrbuffer + sizeof(MTP_PACKET_HEADER),CONFIG_MAX_TX_USB_BUFFER_SIZE - sizeof(MTP_PACKET_HEADER),entry, handle, format_id, prop_code, prop_group_code, depth);
 
 				i = 0;
 				poke(ctx->wrbuffer, &i, 4, size);
