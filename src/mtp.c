@@ -1060,9 +1060,9 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 			if( mtp_packet_hdr->code == MTP_OPERATION_SEND_PARTIAL_OBJECT && mtp_packet_hdr->operation == MTP_CONTAINER_TYPE_COMMAND )
 			{
-				ctx->SendObjInfoHandle = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER), 4);      // Get param 1 - Object handle
+				ctx->SendObjInfoHandle = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER), 4);         // Get param 1 - Object handle
 				ctx->SendObjInfoOffset = peek64(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER) + 4, 8);   // Get param 2 - Offset in bytes
-				ctx->SendObjInfoSize = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER) + 12, 4); // Get param 3 - Max size in bytes
+				ctx->SendObjInfoSize = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER) + 12, 4);      // Get param 3 - Max size in bytes
 			}
 
 			if( ctx->SendObjInfoHandle != 0xFFFFFFFF )
@@ -1123,6 +1123,8 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 										ctx->SendObjInfoSize -= size;
 									};
+
+									entry->size = lseek64(file, 0, SEEK_END);
 
 									close(file);
 
