@@ -221,18 +221,35 @@ int extract_cmd(char * line, char * command)
 
 int get_storage_params(mtp_ctx * context, char * line,int cmd)
 {
-	int i, j;
+	int i, j, k;
 	char storagename[MAX_CFG_STRING_SIZE];
 	char storagepath[MAX_CFG_STRING_SIZE];
+	char options[MAX_CFG_STRING_SIZE];
+	uint32_t flags;
 
 	i = get_param(line, 2,storagename);
 	j = get_param(line, 1,storagepath);
+	flags = UMTP_STORAGE_READWRITE;
 
 	if( i >= 0 && j >= 0 )
 	{
-		PRINT_MSG("Add storage %s - Root Path: %s", storagename, storagepath);
+		k = get_param(line, 3,options);
+		if( k >= 0 )
+		{
+			if(!strcmp(options,"ro"))
+			{
+				flags |= UMTP_STORAGE_READONLY;
+			}
 
-		mtp_add_storage(context, storagepath, storagename);
+			if(!strcmp(options,"rw"))
+			{
+				flags |= UMTP_STORAGE_READWRITE;
+			}
+		}
+
+		PRINT_MSG("Add storage %s - Root Path: %s - Flags: 0x%.8X", storagename, storagepath,flags);
+
+		mtp_add_storage(context, storagepath, storagename, flags);
 	}
 
 	return 0;

@@ -230,11 +230,11 @@ int parse_incomming_dataset(mtp_ctx * ctx,void * datain,int size,uint32_t * newh
 	uint16_t unicode_str[256+1];
 	char * parent_folder;
 	char * tmp_path;
+	uint32_t storage_flags;
 	int i,ret_code;
 	fs_entry * entry;
 	int file;
 	filefoundinfo tmp_file_entry;
-
 
 	ret_code = MTP_RESPONSE_GENERAL_ERROR;
 
@@ -244,6 +244,19 @@ int parse_incomming_dataset(mtp_ctx * ctx,void * datain,int size,uint32_t * newh
 		parent_handle = 0x00000000;
 
 	PRINT_DEBUG("Incoming dataset : %d bytes (raw) %d bytes, operation 0x%x, code 0x%x, tx_id: %x",size,tmp_hdr->length,tmp_hdr->operation,tmp_hdr->code ,tmp_hdr->tx_id );
+
+	storage_flags = mtp_get_storage_flags(ctx, storage_id);
+	if( storage_flags == 0xFFFFFFFF )
+	{
+		PRINT_DEBUG("parse_incomming_dataset : Storage 0x%.8x is Invalid !",storage_id);
+		return MTP_RESPONSE_INVALID_STORAGE_ID;
+	}
+
+	if( (storage_flags & UMTP_STORAGE_READONLY) )
+	{
+		PRINT_DEBUG("parse_incomming_dataset : Storage 0x%.8x is Read only !", storage_id);
+		return MTP_RESPONSE_STORE_READ_ONLY;
+	}
 
 	dataset_ptr = (datain + sizeof(MTP_PACKET_HEADER));
 
@@ -581,6 +594,51 @@ mtp_size send_file_data( mtp_ctx * ctx, fs_entry * entry,mtp_offset offset, mtp_
 		actualsize = -1;
 
 	return actualsize;
+}
+
+int check_handle_access( mtp_ctx * ctx, fs_entry * entry, uint32_t handle, int wraccess, uint32_t * response)
+{
+	uint32_t storage_flags;
+
+	if( !entry )
+	{
+		entry = get_entry_by_handle(ctx->fs_db, handle);
+	}
+
+	if(entry)
+	{
+		storage_flags = mtp_get_storage_flags(ctx, entry->storage_id);
+		if( storage_flags == 0xFFFFFFFF )
+		{
+			PRINT_DEBUG("check_handle_access : Storage 0x%.8x is Invalid !",entry->storage_id);
+
+			if( response )
+				*response = MTP_RESPONSE_INVALID_STORAGE_ID;
+
+			return 1;
+		}
+
+		if( (storage_flags & UMTP_STORAGE_READONLY) && wraccess )
+		{
+			PRINT_DEBUG("check_handle_access : Storage 0x%.8x is Read only !",entry->storage_id);
+
+			if( response )
+				*response = MTP_RESPONSE_STORE_READ_ONLY;
+
+			return 1;
+		}
+	}
+	else
+	{
+		PRINT_DEBUG("check_handle_access : Handle 0x%.8x is invalid !",handle);
+
+		if( response )
+			*response = MTP_RESPONSE_INVALID_OBJECT_HANDLE;
+
+		return 1;
+	}
+
+	return 0;
 }
 
 int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int rawsize)
@@ -961,6 +1019,12 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 				PRINT_DEBUG("MTP_OPERATION_GET_PARTIAL_OBJECT : handle 0x%.8X - Offset 0x%"SIZEHEX" - Maxsize 0x%.8X", handle,offset,maxsize);
 			}
 
+			if( check_handle_access( ctx, entry, handle, 0, &response_code) )
+			{
+				pthread_mutex_unlock( &ctx->inotify_mutex );
+				break;
+			}
+
 			if(entry)
 			{
 				size = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer,0,0);
@@ -998,6 +1062,12 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 			entry = get_entry_by_handle(ctx->fs_db, handle);
 			if(entry)
 			{
+				if( check_handle_access( ctx, entry, handle, 0, &response_code) )
+				{
+					pthread_mutex_unlock( &ctx->inotify_mutex );
+					break;
+				}
+
 				size = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer,0,0);
 
 				actualsize = send_file_data( ctx, entry, 0, entry->size );
@@ -1075,6 +1145,11 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 						{
 							response_code = MTP_RESPONSE_GENERAL_ERROR;
 
+							if( check_handle_access( ctx, entry, 0x00000000, 1, &response_code) )
+							{
+								break;
+							}
+
 							full_path = build_full_path(ctx->fs_db, mtp_get_storage_root(ctx, entry->storage_id), entry);
 							if(full_path)
 							{
@@ -1148,6 +1223,11 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 					case MTP_CONTAINER_TYPE_COMMAND:
 						PRINT_DEBUG("SEND_OBJECT : Handle 0x%.8x, Offset 0x%"SIZEHEX", Size 0x%"SIZEHEX,ctx->SendObjInfoHandle,ctx->SendObjInfoOffset,ctx->SendObjInfoSize);
 
+						if( check_handle_access( ctx, NULL, ctx->SendObjInfoHandle, 1, &response_code) )
+						{
+							break;
+						}
+
 						// no response to send, wait for the data...
 						response_code = MTP_RESPONSE_OK;
 						no_response = 1;
@@ -1172,6 +1252,12 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 			pthread_mutex_lock( &ctx->inotify_mutex );
 
 			handle = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER), 4); // Get param 1 - object handle
+
+			if( check_handle_access( ctx, NULL, handle, 1, &response_code) )
+			{
+				pthread_mutex_unlock( &ctx->inotify_mutex );
+				break;
+			}
 
 			if(delete_tree(ctx, handle))
 			{
@@ -1404,17 +1490,11 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 		case MTP_OPERATION_BEGIN_EDIT_OBJECT:
 			pthread_mutex_lock( &ctx->inotify_mutex );
 
+			response_code = MTP_RESPONSE_OK;
+
 			handle = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER), 4);
 
-			entry = get_entry_by_handle(ctx->fs_db, handle);
-			if( entry )
-			{
-				response_code = MTP_RESPONSE_OK;
-			}
-			else
-			{
-				response_code = MTP_RESPONSE_INVALID_OBJECT_HANDLE;
-			}
+			check_handle_access( ctx, NULL, handle, 0, &response_code);
 
 			pthread_mutex_unlock( &ctx->inotify_mutex );
 
@@ -1423,17 +1503,11 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 		case MTP_OPERATION_END_EDIT_OBJECT:
 			pthread_mutex_lock( &ctx->inotify_mutex );
 
+			response_code = MTP_RESPONSE_OK;
+
 			handle = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER), 4);
 
-			entry = get_entry_by_handle(ctx->fs_db, handle);
-			if( entry )
-			{
-				response_code = MTP_RESPONSE_OK;
-			}
-			else
-			{
-				response_code = MTP_RESPONSE_INVALID_OBJECT_HANDLE;
-			}
+			check_handle_access( ctx, NULL, handle, 0, &response_code);
 
 			pthread_mutex_unlock( &ctx->inotify_mutex );
 		break;
@@ -1552,7 +1626,7 @@ void mtp_set_usb_handle(mtp_ctx * ctx, void * handle, uint32_t max_packet_size)
 	ctx->max_packet_size = max_packet_size;
 }
 
-uint32_t mtp_add_storage(mtp_ctx * ctx, char * path, char * description)
+uint32_t mtp_add_storage(mtp_ctx * ctx, char * path, char * description, uint32_t flags)
 {
 	int i;
 
@@ -1570,12 +1644,15 @@ uint32_t mtp_add_storage(mtp_ctx * ctx, char * path, char * description)
 			{
 				strcpy(ctx->storages[i].root_path,path);
 				strcpy(ctx->storages[i].description,description);
+				ctx->storages[i].flags = flags;
 
 				ctx->storages[i].storage_id = 0xFFFF0000 + (i + 1);
-				PRINT_DEBUG("mtp_add_storage : Storage %.8X mapped to %s (%s)",
+				PRINT_DEBUG("mtp_add_storage : Storage %.8X mapped to %s (%s) (Flags: 0x%.8X)",
 					    ctx->storages[i].storage_id,
 					    ctx->storages[i].root_path,
-					    ctx->storages[i].description );
+					    ctx->storages[i].description,
+					    ctx->storages[i].flags);
+
 				return ctx->storages[i].storage_id;
 			}
 			else
@@ -1588,6 +1665,7 @@ uint32_t mtp_add_storage(mtp_ctx * ctx, char * path, char * description)
 
 				ctx->storages[i].root_path =  NULL;
 				ctx->storages[i].description =  NULL;
+				ctx->storages[i].flags =  0x00000000;
 				ctx->storages[i].storage_id = 0x00000000;
 
 				return ctx->storages[i].storage_id;
@@ -1647,6 +1725,31 @@ char * mtp_get_storage_description(mtp_ctx * ctx, uint32_t storage_id)
 	}
 
 	return NULL;
+}
+
+uint32_t mtp_get_storage_flags(mtp_ctx * ctx, uint32_t storage_id)
+{
+	int i;
+
+	PRINT_DEBUG("mtp_get_storage_flags : %.8X", storage_id );
+
+	i = 0;
+	while(i < MAX_STORAGE_NB)
+	{
+		if( ctx->storages[i].root_path )
+		{
+			if( ctx->storages[i].storage_id == storage_id )
+			{
+				PRINT_DEBUG("mtp_get_storage_flags : %.8X -> 0x%.8X",
+					    storage_id,
+					    ctx->storages[i].flags );
+				return ctx->storages[i].flags;
+			}
+		}
+		i++;
+	}
+
+	return 0xFFFFFFFF;
 }
 
 int mtp_push_event(mtp_ctx * ctx, uint32_t event, int nbparams, uint32_t * parameters )

@@ -465,8 +465,11 @@ int setObjectPropValue(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, uint32_
 	char * path2;
 	char tmpstr[256+1];
 	unsigned int stringlen;
+	uint32_t response_code;
 
 	PRINT_DEBUG("setObjectPropValue : (Handle : 0x%.8X - Prop code : 0x%.4X )", handle, prop_code);
+
+	response_code = 0x00000000;
 
 	if( handle != 0xFFFFFFFF )
 	{
@@ -474,8 +477,9 @@ int setObjectPropValue(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, uint32_
 		{
 			case MTP_PROPERTY_OBJECT_FILE_NAME:
 				entry = get_entry_by_handle(ctx->fs_db, handle);
-				if(!entry)
-					return MTP_RESPONSE_INVALID_OBJECT_HANDLE;
+
+				if( check_handle_access( ctx, entry, 0x00000000, 1, &response_code) )
+					return response_code;
 
 				path = build_full_path(ctx->fs_db, mtp_get_storage_root(ctx, entry->storage_id), entry);
 				if(!path)

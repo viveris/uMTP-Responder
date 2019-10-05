@@ -77,7 +77,11 @@ typedef struct mtp_storage_
 	char * root_path;
 	char * description;
 	uint32_t storage_id;
+	uint32_t flags;
 }mtp_storage;
+
+#define UMTP_STORAGE_READONLY  0x00000001
+#define UMTP_STORAGE_READWRITE 0x00000000
 
 typedef struct mtp_ctx_
 {
@@ -125,14 +129,17 @@ void mtp_set_usb_handle(mtp_ctx * ctx, void * handle, uint32_t max_packet_size);
 
 int mtp_load_config_file(mtp_ctx * context);
 
-uint32_t mtp_add_storage(mtp_ctx * ctx, char * path, char * description);
+uint32_t mtp_add_storage(mtp_ctx * ctx, char * path, char * description, uint32_t flags);
 char * mtp_get_storage_description(mtp_ctx * ctx, uint32_t storage_id);
 char * mtp_get_storage_root(mtp_ctx * ctx, uint32_t storage_id);
+uint32_t mtp_get_storage_flags(mtp_ctx * ctx, uint32_t storage_id);
+
+int check_handle_access( mtp_ctx * ctx, fs_entry * entry, uint32_t handle, int wraccess, uint32_t * response);
 
 int mtp_push_event(mtp_ctx * ctx, uint32_t event, int nbparams, uint32_t * parameters );
 
 void mtp_deinit_responder(mtp_ctx * ctx);
 
-#define APP_VERSION "v0.14.1"
+#define APP_VERSION "v1.0.0"
 
 #endif

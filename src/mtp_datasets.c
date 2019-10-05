@@ -118,17 +118,25 @@ int build_storageinfo_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uint32_t 
 	struct statvfs fsbuf;
 	uint64_t freespace = 0x4000000000000000U;
 	uint64_t totalspace = 0x8000000000000000U;
+	uint32_t storage_flags;
 
 	ofs = 0;
 
 	storage_description = mtp_get_storage_description(ctx,storageid);
 	storage_path = mtp_get_storage_root(ctx, storageid);
+	storage_flags = mtp_get_storage_flags(ctx, storageid);
+
 	if(storage_description && storage_path)
 	{
 		PRINT_DEBUG("Add storageinfo for %s", storage_path);
 		poke(buffer, &ofs, 2, MTP_STORAGE_FIXED_RAM);                               // Storage Type
 		poke(buffer, &ofs, 2, MTP_STORAGE_FILESYSTEM_HIERARCHICAL);                 // Filesystem Type
-		poke(buffer, &ofs, 2, MTP_STORAGE_READ_WRITE);                              // Access Capability
+
+		// Access Capability
+		if( storage_flags & UMTP_STORAGE_READONLY )
+			poke(buffer, &ofs, 2, MTP_STORAGE_READ_ONLY_WITHOUT_DELETE);
+		else
+			poke(buffer, &ofs, 2, MTP_STORAGE_READ_WRITE);
 
 		if(statvfs(storage_path, &fsbuf) == 0)
 		{
