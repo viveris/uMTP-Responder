@@ -1497,7 +1497,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 			handle = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER), 4);
 
-			check_handle_access( ctx, NULL, handle, 0, &response_code);
+			check_handle_access( ctx, NULL, handle, 1, &response_code);
 
 			pthread_mutex_unlock( &ctx->inotify_mutex );
 
@@ -1510,7 +1510,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 			handle = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER), 4);
 
-			check_handle_access( ctx, NULL, handle, 0, &response_code);
+			check_handle_access( ctx, NULL, handle, 1, &response_code);
 
 			pthread_mutex_unlock( &ctx->inotify_mutex );
 		break;
@@ -1526,6 +1526,13 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 			entry = get_entry_by_handle(ctx->fs_db, handle);
 			if( entry )
 			{
+
+				if( check_handle_access( ctx, entry, handle, 1, &response_code) )
+				{
+					pthread_mutex_unlock( &ctx->inotify_mutex );
+					break;
+				}
+
 				full_path = build_full_path(ctx->fs_db, mtp_get_storage_root(ctx, entry->storage_id), entry);
 				if(full_path)
 				{
