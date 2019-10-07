@@ -579,6 +579,9 @@ mtp_size send_file_data( mtp_ctx * ctx, fs_entry * entry,mtp_offset offset, mtp_
 		{
 			PRINT_DEBUG("send_file_data : Cancelled ! Aborded...");
 
+			// Force a ZLP
+			check_and_send_USB_ZLP(ctx , ctx->max_packet_size );
+
 			actualsize = -2;
 			ctx->cancel_req = 0;
 		}
