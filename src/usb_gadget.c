@@ -433,6 +433,25 @@ static void handle_setup_request(usb_gadget * ctx, struct usb_ctrlrequest* setup
 					// Timeout... Unblock pending usb read/write.
 					PRINT_DEBUG("MTP_REQ_CANCEL : Forcing read/write exit...");
 					pthread_kill(ctx->thread, SIGUSR1);
+					usleep(500);
+					break;
+				}
+				else
+					usleep(1000);
+
+				cnt++;
+			}
+
+			while( mtp_context->cancel_req )
+			{
+				// Still Waiting the end of the current transfer...
+				if( cnt > 500 )
+				{
+					// Still blocked... Killing the link
+					PRINT_DEBUG("MTP_REQ_CANCEL : Stalled ... Killing the link...");
+					usleep(500);
+
+					ctx->stop = 1;
 					break;
 				}
 				else
