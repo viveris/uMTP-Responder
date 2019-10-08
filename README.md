@@ -3,7 +3,7 @@
 
 # uMTP-Responder
 
-## Lightweight Media Transfer Protocol (MTP) responder daemon for GNU/Linux
+## Lightweight USB Media Transfer Protocol (MTP) responder daemon for GNU/Linux
 
 The uMTP-Responder allows files to be transferred to and from devices through the devices USB port.
 
