@@ -89,7 +89,7 @@ typedef struct kw_list_
 	int cmd;
 }kw_list;
 
-int is_end_line(char c)
+static int is_end_line(char c)
 {
 	if( c == 0 || c == '#' || c == '\r' || c == '\n' )
 	{
@@ -101,7 +101,7 @@ int is_end_line(char c)
 	}
 }
 
-int is_space(char c)
+static int is_space(char c)
 {
 	if( c == ' ' || c == '\t' )
 	{
@@ -112,7 +112,8 @@ int is_space(char c)
 		return 0;
 	}
 }
-int get_next_word(char * line, int offset)
+
+static int get_next_word(char * line, int offset)
 {
 	while( !is_end_line(line[offset]) && ( line[offset] == ' ' ) )
 	{
@@ -122,7 +123,7 @@ int get_next_word(char * line, int offset)
 	return offset;
 }
 
-int copy_param(char * dest, char * line, int offs)
+static int copy_param(char * dest, char * line, int offs)
 {
 	int i,insidequote;
 
@@ -154,7 +155,7 @@ int copy_param(char * dest, char * line, int offs)
 	return offs;
 }
 
-int get_param_offset(char * line, int param)
+static int get_param_offset(char * line, int param)
 {
 	int param_cnt, offs;
 
@@ -177,7 +178,7 @@ int get_param_offset(char * line, int param)
 	return offs;
 }
 
-int get_param(char * line, int param_offset,char * param)
+static int get_param(char * line, int param_offset,char * param)
 {
 	int offs;
 
@@ -193,7 +194,7 @@ int get_param(char * line, int param_offset,char * param)
 	return -1;
 }
 
-int extract_cmd(char * line, char * command)
+static int extract_cmd(char * line, char * command)
 {
 	int offs,i;
 
@@ -219,7 +220,7 @@ int extract_cmd(char * line, char * command)
 	return 0;
 }
 
-int get_storage_params(mtp_ctx * context, char * line,int cmd)
+static int get_storage_params(mtp_ctx * context, char * line,int cmd)
 {
 	int i, j, k;
 	char storagename[MAX_CFG_STRING_SIZE];
@@ -255,7 +256,7 @@ int get_storage_params(mtp_ctx * context, char * line,int cmd)
 	return 0;
 }
 
-int get_hex_param(mtp_ctx * context, char * line,int cmd)
+static int get_hex_param(mtp_ctx * context, char * line,int cmd)
 {
 	int i;
 	char tmp_txt[MAX_CFG_STRING_SIZE];
@@ -322,7 +323,7 @@ int get_hex_param(mtp_ctx * context, char * line,int cmd)
 	return 0;
 }
 
-int get_str_param(mtp_ctx * context, char * line,int cmd)
+static int get_str_param(mtp_ctx * context, char * line,int cmd)
 {
 	int i;
 	char tmp_txt[MAX_CFG_STRING_SIZE];
@@ -401,7 +402,7 @@ kw_list kwlist[] =
 	{ 0, 0, 0 }
 };
 
-int exec_cmd(mtp_ctx * context, char * command,char * line)
+static int exec_cmd(mtp_ctx * context, char * command,char * line)
 {
 	int i;
 
