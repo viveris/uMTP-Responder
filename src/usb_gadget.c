@@ -761,9 +761,39 @@ usb_gadget * init_usb_mtp_gadget(mtp_ctx * ctx)
 	int ret,i;
 	ffs_strings ffs_str;
 
+	usbctx = NULL;
+
+	if(ctx->wrbuffer)
+		free(ctx->wrbuffer);
+
+	ctx->wrbuffer = malloc( ctx->usb_wr_buffer_max_size );
+	if(!ctx->wrbuffer)
+		goto init_error;
+
+	memset(ctx->wrbuffer,0,ctx->usb_wr_buffer_max_size);
+
+	if(ctx->rdbuffer)
+		free(ctx->rdbuffer);
+
+	ctx->rdbuffer = malloc( ctx->usb_rd_buffer_max_size );
+	if(!ctx->rdbuffer)
+		goto init_error;
+
+	memset(ctx->rdbuffer,0,ctx->usb_rd_buffer_max_size);
+
+	if(ctx->rdbuffer2)
+		free(ctx->rdbuffer2);
+
+	ctx->rdbuffer2 = malloc( ctx->usb_rd_buffer_max_size );
+	if(!ctx->rdbuffer2)
+		goto init_error;
+
+	memset(ctx->rdbuffer2,0,ctx->usb_rd_buffer_max_size);
+
 	usbctx = malloc(sizeof(usb_gadget));
 	if(usbctx)
 	{
+
 		memset(usbctx,0,sizeof(usb_gadget));
 
 		usbctx->usb_device = -1;
@@ -987,7 +1017,24 @@ void deinit_usb_mtp_gadget(usb_gadget * usbctx)
 		free( usbctx );
 	}
 
-	PRINT_DEBUG("leaving deinit_usb_mtp_gadget");
+	if(mtp_context->wrbuffer)
+	{
+		free(mtp_context->wrbuffer);
+		mtp_context->wrbuffer = NULL;
+	}
 
+	if(mtp_context->rdbuffer)
+	{
+		free(mtp_context->rdbuffer);
+		mtp_context->rdbuffer = NULL;
+	}
+
+	if(mtp_context->rdbuffer2)
+	{
+		free(mtp_context->rdbuffer2);
+		mtp_context->rdbuffer2 = NULL;
+	}
+
+	PRINT_DEBUG("leaving deinit_usb_mtp_gadget");
 }
 

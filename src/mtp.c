@@ -72,17 +72,15 @@ mtp_ctx * mtp_init_responder()
 	{
 		memset(ctx,0,sizeof(mtp_ctx));
 
-		ctx->wrbuffer = malloc( CONFIG_MAX_TX_USB_BUFFER_SIZE );
-		if(!ctx->wrbuffer)
-			goto init_error;
+		ctx->usb_wr_buffer_max_size = CONFIG_MAX_TX_USB_BUFFER_SIZE;
+		ctx->wrbuffer = NULL;
 
-		ctx->rdbuffer = malloc( CONFIG_MAX_RX_USB_BUFFER_SIZE );
-		if(!ctx->rdbuffer)
-			goto init_error;
+		ctx->usb_rd_buffer_max_size = CONFIG_MAX_RX_USB_BUFFER_SIZE;
+		ctx->rdbuffer = NULL;
+		ctx->rdbuffer2 = NULL;
 
-		ctx->rdbuffer2 = malloc( CONFIG_MAX_RX_USB_BUFFER_SIZE );
-		if(!ctx->rdbuffer2)
-			goto init_error;
+		ctx->read_file_buffer_size = CONFIG_READ_FILE_BUFFER_SIZE;
+		ctx->read_file_buffer = NULL;
 
 		ctx->temp_array = malloc( MAX_STORAGE_NB * sizeof(uint32_t) );
 		if(!ctx->temp_array)
@@ -472,9 +470,11 @@ mtp_size send_file_data( mtp_ctx * ctx, fs_entry * entry,mtp_offset offset, mtp_
 
 	if( !ctx->read_file_buffer )
 	{
-		ctx->read_file_buffer = malloc( CONFIG_READ_FILE_BUFFER_SIZE );
+		ctx->read_file_buffer = malloc( ctx->read_file_buffer_size );
 		if(!ctx->read_file_buffer)
 			return 0;
+
+		memset(ctx->read_file_buffer, 0, ctx->read_file_buffer_size);
 	}
 
 	usb_buffer_ptr = NULL;
@@ -506,28 +506,28 @@ mtp_size send_file_data( mtp_ctx * ctx, fs_entry * entry,mtp_offset offset, mtp_
 		j = 0;
 		do
 		{
-			if((j + (CONFIG_MAX_TX_USB_BUFFER_SIZE - ofs)) < actualsize)
-				blocksize = (CONFIG_MAX_TX_USB_BUFFER_SIZE - ofs);
+			if((j + (ctx->usb_wr_buffer_max_size - ofs)) < actualsize)
+				blocksize = (ctx->usb_wr_buffer_max_size - ofs);
 			else
 				blocksize = actualsize - j;
 
 			// Is the target page loaded ?
-			if( buf_index != ((offset + j) & ~((mtp_offset)(CONFIG_READ_FILE_BUFFER_SIZE-1))) )
+			if( buf_index != ((offset + j) & ~((mtp_offset)(ctx->read_file_buffer_size-1))) )
 			{
-				bytes_read = entry_read(ctx->fs_db, file, ctx->read_file_buffer, ((offset + j) & ~((mtp_offset)(CONFIG_READ_FILE_BUFFER_SIZE-1))) , CONFIG_READ_FILE_BUFFER_SIZE);
+				bytes_read = entry_read(ctx->fs_db, file, ctx->read_file_buffer, ((offset + j) & ~((mtp_offset)(ctx->read_file_buffer_size-1))) , ctx->read_file_buffer_size);
 				if( bytes_read < 0 )
 				{
 					entry_close( file );
 					return -1;
 				}
 
-				buf_index = ((offset + j) & ~((mtp_offset)(CONFIG_READ_FILE_BUFFER_SIZE-1)));
+				buf_index = ((offset + j) & ~((mtp_offset)(ctx->read_file_buffer_size-1)));
 			}
 
-			io_buffer_index = (offset + j) & (CONFIG_READ_FILE_BUFFER_SIZE-1);
+			io_buffer_index = (offset + j) & (ctx->read_file_buffer_size-1);
 
 			// Is a new page needed ?
-			if( io_buffer_index + blocksize < CONFIG_READ_FILE_BUFFER_SIZE )
+			if( io_buffer_index + blocksize < ctx->read_file_buffer_size )
 			{
 				// No, just use the io buffer
 
@@ -545,12 +545,12 @@ mtp_size send_file_data( mtp_ctx * ctx, fs_entry * entry,mtp_offset offset, mtp_
 			else
 			{
 				// Yes, new page needed. Get the first part in the io buffer and the load a new page to get the remaining data.
-				first_part_size = blocksize - ( ( io_buffer_index + blocksize ) - CONFIG_READ_FILE_BUFFER_SIZE);
+				first_part_size = blocksize - ( ( io_buffer_index + blocksize ) - ctx->read_file_buffer_size);
 
 				memcpy(&ctx->wrbuffer[ofs], &ctx->read_file_buffer[io_buffer_index], first_part_size  );
 
-				buf_index += CONFIG_READ_FILE_BUFFER_SIZE;
-				bytes_read = entry_read(ctx->fs_db, file, ctx->read_file_buffer, buf_index , CONFIG_READ_FILE_BUFFER_SIZE);
+				buf_index += ctx->read_file_buffer_size;
+				bytes_read = entry_read(ctx->fs_db, file, ctx->read_file_buffer, buf_index , ctx->read_file_buffer_size);
 				if( bytes_read < 0 )
 				{
 					entry_close( file );
@@ -712,7 +712,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 		case MTP_OPERATION_GET_DEVICE_INFO:
 
 			size = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer,0,0);
-			size += build_deviceinfo_dataset(ctx, ctx->wrbuffer + sizeof(MTP_PACKET_HEADER), CONFIG_MAX_TX_USB_BUFFER_SIZE - sizeof(MTP_PACKET_HEADER));
+			size += build_deviceinfo_dataset(ctx, ctx->wrbuffer + sizeof(MTP_PACKET_HEADER), ctx->usb_wr_buffer_max_size - sizeof(MTP_PACKET_HEADER));
 
 			// Update packet size
 			ofs = 0;
@@ -765,7 +765,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 			{
 				size = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer,0,0);
 
-				size += build_storageinfo_dataset(ctx, ctx->wrbuffer + sizeof(MTP_PACKET_HEADER), CONFIG_MAX_TX_USB_BUFFER_SIZE - sizeof(MTP_PACKET_HEADER),storageid);
+				size += build_storageinfo_dataset(ctx, ctx->wrbuffer + sizeof(MTP_PACKET_HEADER), ctx->usb_wr_buffer_max_size - sizeof(MTP_PACKET_HEADER),storageid);
 
 				// Update packet size
 				ofs = 0;
@@ -792,7 +792,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 			property_id = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER), 4);  // Get param 1 - property id
 
 			size = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer,0,0);
-			size += build_device_properties_dataset(ctx,ctx->wrbuffer + sizeof(MTP_PACKET_HEADER), CONFIG_MAX_TX_USB_BUFFER_SIZE - sizeof(MTP_PACKET_HEADER), property_id);
+			size += build_device_properties_dataset(ctx,ctx->wrbuffer + sizeof(MTP_PACKET_HEADER), ctx->usb_wr_buffer_max_size - sizeof(MTP_PACKET_HEADER), property_id);
 
 			if ( size > sizeof(MTP_PACKET_HEADER) )
 			{
@@ -827,7 +827,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 			PRINT_DEBUG("MTP_OPERATION_GET_DEVICE_PROP_VALUE : (Prop code : 0x%.4X )", prop_code);
 
 			size = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer,0,0);
-			size += build_DevicePropValue_dataset(ctx,ctx->wrbuffer + sizeof(MTP_PACKET_HEADER), CONFIG_MAX_TX_USB_BUFFER_SIZE - sizeof(MTP_PACKET_HEADER), prop_code);
+			size += build_DevicePropValue_dataset(ctx,ctx->wrbuffer + sizeof(MTP_PACKET_HEADER), ctx->usb_wr_buffer_max_size - sizeof(MTP_PACKET_HEADER), prop_code);
 
 			if ( size > sizeof(MTP_PACKET_HEADER) )
 			{
@@ -975,7 +975,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 			if( entry )
 			{
 				size = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer,0,0);
-				size += build_objectinfo_dataset(ctx, ctx->wrbuffer + sizeof(MTP_PACKET_HEADER), CONFIG_MAX_TX_USB_BUFFER_SIZE - sizeof(MTP_PACKET_HEADER),entry);
+				size += build_objectinfo_dataset(ctx, ctx->wrbuffer + sizeof(MTP_PACKET_HEADER), ctx->usb_wr_buffer_max_size - sizeof(MTP_PACKET_HEADER),entry);
 
 				i = 0;
 				poke(ctx->wrbuffer, &i, 4, size);
@@ -1106,7 +1106,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 			PRINT_DEBUG("MTP_OPERATION_SEND_OBJECT_INFO : Rx dataset...");
 
-			size = read_usb(ctx->usb_ctx, ctx->rdbuffer2, CONFIG_MAX_RX_USB_BUFFER_SIZE);
+			size = read_usb(ctx->usb_ctx, ctx->rdbuffer2, ctx->usb_rd_buffer_max_size);
 			PRINT_DEBUG_BUF(ctx->rdbuffer2, size);
 
 			new_handle = 0xFFFFFFFF;
@@ -1180,19 +1180,19 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 									}
 
 									tmp_ptr = ctx->rdbuffer2;
-									if( size == ( CONFIG_MAX_RX_USB_BUFFER_SIZE - sizeof(MTP_PACKET_HEADER) ) )
+									if( size == ( ctx->usb_rd_buffer_max_size - sizeof(MTP_PACKET_HEADER) ) )
 									{
-										size = CONFIG_MAX_RX_USB_BUFFER_SIZE;
+										size = ctx->usb_rd_buffer_max_size;
 									}
 
 									if( mtp_packet_hdr->code == MTP_OPERATION_SEND_PARTIAL_OBJECT && ctx->SendObjInfoSize )
 									{
-										size = CONFIG_MAX_RX_USB_BUFFER_SIZE;
+										size = ctx->usb_rd_buffer_max_size;
 									}
 
-									while( size == CONFIG_MAX_RX_USB_BUFFER_SIZE && !ctx->cancel_req)
+									while( size == ctx->usb_rd_buffer_max_size && !ctx->cancel_req)
 									{
-										size = read_usb(ctx->usb_ctx, ctx->rdbuffer2, CONFIG_MAX_RX_USB_BUFFER_SIZE);
+										size = read_usb(ctx->usb_ctx, ctx->rdbuffer2, ctx->usb_rd_buffer_max_size);
 
 										if( write(file, tmp_ptr, size) != size)
 										{
@@ -1280,7 +1280,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 			format_id = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER), 4); // Get param 1 - format
 
 			size = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer,0,0);
-			size += build_properties_supported_dataset(ctx,ctx->wrbuffer + sizeof(MTP_PACKET_HEADER), CONFIG_MAX_TX_USB_BUFFER_SIZE - sizeof(MTP_PACKET_HEADER), format_id);
+			size += build_properties_supported_dataset(ctx,ctx->wrbuffer + sizeof(MTP_PACKET_HEADER), ctx->usb_wr_buffer_max_size - sizeof(MTP_PACKET_HEADER), format_id);
 
 			// Update packet size
 			ofs = 0;
@@ -1304,7 +1304,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 			format_id = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER) + 4, 4); // Get param 2 - format
 
 			size = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer,0,0);
-			size += build_properties_dataset(ctx,ctx->wrbuffer + sizeof(MTP_PACKET_HEADER), CONFIG_MAX_TX_USB_BUFFER_SIZE - sizeof(MTP_PACKET_HEADER), property_id,format_id);
+			size += build_properties_dataset(ctx,ctx->wrbuffer + sizeof(MTP_PACKET_HEADER), ctx->usb_wr_buffer_max_size - sizeof(MTP_PACKET_HEADER), property_id,format_id);
 
 			if ( size > sizeof(MTP_PACKET_HEADER) )
 			{
@@ -1343,7 +1343,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 			if( entry )
 			{
 				size = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer,0,0);
-				size += build_ObjectPropValue_dataset(ctx,ctx->wrbuffer + sizeof(MTP_PACKET_HEADER), CONFIG_MAX_TX_USB_BUFFER_SIZE - sizeof(MTP_PACKET_HEADER), handle, prop_code);
+				size += build_ObjectPropValue_dataset(ctx,ctx->wrbuffer + sizeof(MTP_PACKET_HEADER), ctx->usb_wr_buffer_max_size - sizeof(MTP_PACKET_HEADER), handle, prop_code);
 
 				i = 0;
 				poke(ctx->wrbuffer, &i, 4, size);
@@ -1435,7 +1435,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 			if( entry )
 			{
 				size = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer,0,0);
-				size += build_objectproplist_dataset(ctx, ctx->wrbuffer + sizeof(MTP_PACKET_HEADER),CONFIG_MAX_TX_USB_BUFFER_SIZE - sizeof(MTP_PACKET_HEADER),entry, handle, format_id, prop_code, prop_group_code, depth);
+				size += build_objectproplist_dataset(ctx, ctx->wrbuffer + sizeof(MTP_PACKET_HEADER),ctx->usb_wr_buffer_max_size - sizeof(MTP_PACKET_HEADER),entry, handle, format_id, prop_code, prop_group_code, depth);
 
 				i = 0;
 				poke(ctx->wrbuffer, &i, 4, size);
@@ -1590,7 +1590,7 @@ int mtp_incoming_packet(mtp_ctx * ctx)
 	if(!ctx)
 		return 0;
 
-	size = read_usb(ctx->usb_ctx, ctx->rdbuffer, CONFIG_MAX_RX_USB_BUFFER_SIZE);
+	size = read_usb(ctx->usb_ctx, ctx->rdbuffer, ctx->usb_rd_buffer_max_size);
 
 	if(size>=0)
 	{

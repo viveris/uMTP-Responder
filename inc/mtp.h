@@ -92,11 +92,14 @@ typedef struct mtp_ctx_
 	void * usb_ctx;
 
 	unsigned char * wrbuffer;
-	unsigned char * rdbuffer;
+	int usb_wr_buffer_max_size;
 
+	unsigned char * rdbuffer;
 	unsigned char * rdbuffer2;
+	int usb_rd_buffer_max_size;
 
 	unsigned char * read_file_buffer;
+	int read_file_buffer_size;
 
 	uint32_t *temp_array;
 
@@ -140,6 +143,6 @@ int mtp_push_event(mtp_ctx * ctx, uint32_t event, int nbparams, uint32_t * param
 
 void mtp_deinit_responder(mtp_ctx * ctx);
 
-#define APP_VERSION "v1.0.0"
+#define APP_VERSION "v1.1.0"
 
 #endif

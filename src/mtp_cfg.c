@@ -62,6 +62,9 @@ enum
 	USBDEVVERSION_CMD,
 	USBMAXPACKETSIZE_CMD,
 	USBFUNCTIONFSMODE_CMD,
+	USBMAXRDBUFFERSIZE_CMD,
+	USBMAXWRBUFFERSIZE_CMD,
+	READBUFFERSIZE_CMD,
 
 	USB_DEV_PATH_CMD,
 	USB_EPIN_PATH_CMD,
@@ -297,6 +300,18 @@ static int get_hex_param(mtp_ctx * context, char * line,int cmd)
 				context->usb_cfg.usb_max_packet_size = param_value;
 			break;
 
+			case USBMAXRDBUFFERSIZE_CMD:
+				context->usb_rd_buffer_max_size = param_value;
+			break;
+
+			case USBMAXWRBUFFERSIZE_CMD:
+				context->usb_wr_buffer_max_size = param_value;
+			break;
+
+			case READBUFFERSIZE_CMD:
+				context->read_file_buffer_size = param_value;
+			break;
+
 			case USBFUNCTIONFSMODE_CMD:
 				context->usb_cfg.usb_functionfs_mode = param_value;
 			break;
@@ -373,31 +388,35 @@ static int get_str_param(mtp_ctx * context, char * line,int cmd)
 
 kw_list kwlist[] =
 {
-	{"storage",             get_storage_params, STORAGE_CMD},
-	{"usb_vendor_id",       get_hex_param,      USBVENDORID_CMD},
-	{"usb_product_id",      get_hex_param,      USBPRODUCTID_CMD},
-	{"usb_class",           get_hex_param,      USBCLASS_CMD},
-	{"usb_subclass",        get_hex_param,      USBSUBCLASS_CMD},
-	{"usb_protocol",        get_hex_param,      USBPROTOCOL_CMD},
-	{"usb_dev_version",     get_hex_param,      USBDEVVERSION_CMD},
-	{"usb_max_packet_size", get_hex_param,      USBMAXPACKETSIZE_CMD},
-	{"usb_functionfs_mode", get_hex_param,      USBFUNCTIONFSMODE_CMD},
+	{"storage",                get_storage_params, STORAGE_CMD},
+	{"usb_vendor_id",          get_hex_param,   USBVENDORID_CMD},
+	{"usb_product_id",         get_hex_param,   USBPRODUCTID_CMD},
+	{"usb_class",              get_hex_param,   USBCLASS_CMD},
+	{"usb_subclass",           get_hex_param,   USBSUBCLASS_CMD},
+	{"usb_protocol",           get_hex_param,   USBPROTOCOL_CMD},
+	{"usb_dev_version",        get_hex_param,   USBDEVVERSION_CMD},
+	{"usb_max_packet_size",    get_hex_param,   USBMAXPACKETSIZE_CMD},
+	{"usb_max_rd_buffer_size", get_hex_param,   USBMAXRDBUFFERSIZE_CMD},
+	{"usb_max_wr_buffer_size", get_hex_param,   USBMAXWRBUFFERSIZE_CMD},
+	{"read_buffer_cache_size", get_hex_param,   READBUFFERSIZE_CMD},
 
-	{"usb_dev_path",        get_str_param,      USB_DEV_PATH_CMD},
-	{"usb_epin_path",       get_str_param,      USB_EPIN_PATH_CMD},
-	{"usb_epout_path",      get_str_param,      USB_EPOUT_PATH_CMD},
-	{"usb_epint_path",      get_str_param,      USB_EPINT_PATH_CMD},
-	{"manufacturer",        get_str_param,      MANUFACTURER_STRING_CMD},
-	{"product",             get_str_param,      PRODUCT_STRING_CMD},
-	{"serial",              get_str_param,      SERIAL_STRING_CMD},
-	{"interface",           get_str_param,      INTERFACE_STRING_CMD},
+	{"usb_functionfs_mode",    get_hex_param,   USBFUNCTIONFSMODE_CMD},
 
-	{"wait",                get_hex_param,      WAIT_CONNECTION},
-	{"loop_on_disconnect",  get_hex_param,      LOOP_ON_DISCONNECT},
+	{"usb_dev_path",           get_str_param,   USB_DEV_PATH_CMD},
+	{"usb_epin_path",          get_str_param,   USB_EPIN_PATH_CMD},
+	{"usb_epout_path",         get_str_param,   USB_EPOUT_PATH_CMD},
+	{"usb_epint_path",         get_str_param,   USB_EPINT_PATH_CMD},
+	{"manufacturer",           get_str_param,   MANUFACTURER_STRING_CMD},
+	{"product",                get_str_param,   PRODUCT_STRING_CMD},
+	{"serial",                 get_str_param,   SERIAL_STRING_CMD},
+	{"interface",              get_str_param,   INTERFACE_STRING_CMD},
 
-	{"show_hidden_files",   get_hex_param,      SHOW_HIDDEN_FILES},
+	{"wait",                   get_hex_param,   WAIT_CONNECTION},
+	{"loop_on_disconnect",     get_hex_param,   LOOP_ON_DISCONNECT},
 
-	{"no_inotify",          get_hex_param,      NO_INOTIFY},
+	{"show_hidden_files",      get_hex_param,   SHOW_HIDDEN_FILES},
+
+	{"no_inotify",             get_hex_param,   NO_INOTIFY},
 
 	{ 0, 0, 0 }
 };
@@ -504,6 +523,9 @@ int mtp_load_config_file(mtp_ctx * context)
 	PRINT_MSG("USB Out End point path : %s",context->usb_cfg.usb_endpoint_out);
 	PRINT_MSG("USB Event End point path : %s",context->usb_cfg.usb_endpoint_intin);
 	PRINT_MSG("USB Max packet size : 0x%X bytes",context->usb_cfg.usb_max_packet_size);
+	PRINT_MSG("USB Max write buffer size : 0x%X bytes",context->usb_wr_buffer_max_size);
+	PRINT_MSG("USB Max read buffer size : 0x%X bytes",context->usb_rd_buffer_max_size);
+	PRINT_MSG("Read file buffer size : 0x%X bytes",context->read_file_buffer_size);
 
 	PRINT_MSG("Manufacturer string : %s",context->usb_cfg.usb_string_manufacturer);
 	PRINT_MSG("Product string : %s",context->usb_cfg.usb_string_product);
