@@ -437,7 +437,6 @@ static int exec_cmd(mtp_ctx * context, char * command,char * line)
 		i++;
 	}
 
-
 	return 0;
 }
 

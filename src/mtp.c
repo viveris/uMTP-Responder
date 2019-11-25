@@ -291,7 +291,7 @@ int parse_incomming_dataset(mtp_ctx * ctx,void * datain,int size,uint32_t * newh
 				{
 					if(entry->flags & ENTRY_IS_DIR)
 					{
-						tmp_path = 0;
+						tmp_path = NULL;
 
 						parent_folder = build_full_path(ctx->fs_db, mtp_get_storage_root(ctx, entry->storage_id), entry);
 
@@ -370,8 +370,8 @@ int parse_incomming_dataset(mtp_ctx * ctx,void * datain,int size,uint32_t * newh
 					{
 						parent_folder = build_full_path(ctx->fs_db, mtp_get_storage_root(ctx, entry->storage_id), entry);
 
-						tmp_path = 0;
-						entry = 0;
+						tmp_path = NULL;
+						entry = NULL;
 
 						if(parent_folder)
 						{
@@ -871,9 +871,10 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 				break;
 			}
 
-			tmp_str = 0;
-			full_path = 0;
-			entry = 0;
+			tmp_str = NULL;
+			full_path = NULL;
+			entry = NULL;
+
 			if(parent_handle && parent_handle!=0xFFFFFFFF)
 			{
 				entry = get_entry_by_handle(ctx->fs_db, parent_handle);

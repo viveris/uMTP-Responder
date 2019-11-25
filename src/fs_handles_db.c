@@ -174,16 +174,16 @@ DIR * fs_find_first_file(char *folder, filefoundinfo* fileinfo)
 			}
 
 			closedir(dir);
-			dir = 0;
+			dir = NULL;
 
 		}
 
 		closedir(dir);
-		dir = 0;
+		dir = NULL;
 	}
 	else
 	{
-		dir = 0;
+		dir = NULL;
 	}
 
 	return dir;
@@ -299,7 +299,7 @@ fs_entry * search_entry(fs_handles_db * db, filefoundinfo *fileinfo, uint32_t pa
 		entry_list = entry_list->next;
 	}
 
-	return 0;
+	return NULL;
 }
 
 fs_entry * alloc_entry(fs_handles_db * db, filefoundinfo *fileinfo, uint32_t parent, uint32_t storage_id)
@@ -490,7 +490,7 @@ fs_entry * get_next_child_handle(fs_handles_db * db)
 
 	db->search_entry = 0x00000000;
 
-	return 0;
+	return NULL;
 }
 
 fs_entry * get_entry_by_handle(fs_handles_db * db, uint32_t handle)
@@ -527,7 +527,7 @@ fs_entry * get_entry_by_handle_and_storageid(fs_handles_db * db, uint32_t handle
 		entry_list = entry_list->next;
 	}
 
-	return 0;
+	return NULL;
 }
 
 char * build_full_path(fs_handles_db * db,char * root_path,fs_entry * entry)
@@ -537,7 +537,7 @@ char * build_full_path(fs_handles_db * db,char * root_path,fs_entry * entry)
 	char * full_path;
 	int full_path_offset;
 
-	full_path = 0;
+	full_path = NULL;
 
 	curentry = entry;
 	totallen = 0;
@@ -552,7 +552,7 @@ char * build_full_path(fs_handles_db * db,char * root_path,fs_entry * entry)
 		}
 		else
 		{
-			curentry = 0;
+			curentry = NULL;
 		}
 
 	}while( curentry );
@@ -587,7 +587,7 @@ char * build_full_path(fs_handles_db * db,char * root_path,fs_entry * entry)
 			}
 			else
 			{
-				curentry = 0;
+				curentry = NULL;
 			}
 		}while(curentry);
 
@@ -661,5 +661,5 @@ fs_entry * get_entry_by_wd( fs_handles_db * db, int watch_descriptor )
 		entry_list = entry_list->next;
 	}
 
-	return 0;
+	return NULL;
 }
