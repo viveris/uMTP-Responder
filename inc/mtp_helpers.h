@@ -25,7 +25,10 @@
 
 #ifndef _INC_MTP_HELPERS_H_
 #define _INC_MTP_HELPERS_H_
-void poke(void * buffer, int * index, int typesize, unsigned long data);
+void poke32(void * buffer, int * index, uint32_t data);
+void poke16(void * buffer, int * index, uint16_t data);
+void poke08(void * buffer, int * index, uint8_t  data);
+
 uint32_t peek(void * buffer, int index, int typesize);
 uint64_t peek64(void * buffer, int index, int typesize);
 void poke_string(void * buffer, int * index, const char *str);

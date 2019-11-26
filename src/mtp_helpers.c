@@ -33,21 +33,40 @@
 
 #include "mtp_constant.h"
 
-void poke(void * buffer, int * index, int typesize, unsigned long data)
+void poke32(void * buffer, int * index,uint32_t data)
 {
 	unsigned char *ptr;
 
 	ptr = ((unsigned char *)buffer);
 
-	do
-	{
-		ptr[*index] = data & 0xFF;
-		*index += 1;
-		data >>= 8;
-		typesize--;
-	}while( typesize );
+	ptr += *index;
 
-	return;
+	*ptr++ = data & 0xFF;
+	*ptr++ = (data>>8) & 0xFF;
+	*ptr++ = (data>>16) & 0xFF;
+	*ptr   = (data>>24) & 0xFF;
+
+	*index += 4;
+}
+
+void poke16(void * buffer, int * index, uint16_t data)
+{
+	unsigned char *ptr;
+
+	ptr = ((unsigned char *)buffer);
+
+	ptr += *index;
+
+	*ptr++ = data & 0xFF;
+	*ptr   = (data>>8) & 0xFF;
+
+	*index += 2;
+}
+
+void poke08(void * buffer, int * index, uint8_t data)
+{
+	*(((unsigned char *)buffer) + *index) = ((uint8_t)data);
+	*index += 1;
 }
 
 uint32_t peek(void * buffer, int index, int typesize)
