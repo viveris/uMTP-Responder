@@ -33,40 +33,40 @@
 
 #include "mtp_constant.h"
 
-void poke32(void * buffer, int * index,uint32_t data)
+int poke32(void * buffer, int index,uint32_t data)
 {
 	unsigned char *ptr;
 
 	ptr = ((unsigned char *)buffer);
 
-	ptr += *index;
+	ptr += index;
 
 	*ptr++ = data & 0xFF;
 	*ptr++ = (data>>8) & 0xFF;
 	*ptr++ = (data>>16) & 0xFF;
 	*ptr   = (data>>24) & 0xFF;
 
-	*index += 4;
+	return index + 4;
 }
 
-void poke16(void * buffer, int * index, uint16_t data)
+int poke16(void * buffer, int index, uint16_t data)
 {
 	unsigned char *ptr;
 
 	ptr = ((unsigned char *)buffer);
 
-	ptr += *index;
+	ptr += index;
 
 	*ptr++ = data & 0xFF;
 	*ptr   = (data>>8) & 0xFF;
 
-	*index += 2;
+	return index + 2;
 }
 
-void poke08(void * buffer, int * index, uint8_t data)
+int poke08(void * buffer, int index, uint8_t data)
 {
-	*(((unsigned char *)buffer) + *index) = ((uint8_t)data);
-	*index += 1;
+	*(((unsigned char *)buffer) + index) = ((uint8_t)data);
+	return index + 1;
 }
 
 uint32_t peek(void * buffer, int index, int typesize)
@@ -111,7 +111,7 @@ uint64_t peek64(void * buffer, int index, int typesize)
 	return data;
 }
 
-void poke_string(void * buffer, int * index, const char *str)
+int poke_string(void * buffer, int index, const char *str)
 {
 	unsigned char *ptr;
 	int sizeposition;
@@ -120,21 +120,23 @@ void poke_string(void * buffer, int * index, const char *str)
 	ptr = ((unsigned char *)buffer);
 
 	// Reserve string size .
-	sizeposition = *index;
-	ptr[*index] = 0x00;
+	sizeposition = index;
+	ptr[index] = 0x00;
 
-	*index += 1;
+	index++;
 
 	// Char to unicode...
-	len = char2unicodestring((char*)&ptr[*index], (char*)str, 256);
+	len = char2unicodestring((char*)&ptr[index], (char*)str, 256);
 
-	*index += (len*2);
+	index += (len*2);
 
 	// Update size position
 	ptr[sizeposition] = len;
+	
+	return index;
 }
 
-void poke_array(void * buffer, int * index, int size, int elementsize, const unsigned char *bufferin,int prefixed)
+int poke_array(void * buffer, int index, int size, int elementsize, const unsigned char *bufferin,int prefixed)
 {
 	unsigned char *ptr;
 	int i,nbelement;
@@ -145,24 +147,20 @@ void poke_array(void * buffer, int * index, int size, int elementsize, const uns
 
 	if(prefixed)
 	{
-		ptr[*index] = nbelement&0xFF;
-		*index += 1;
-		ptr[*index] = (nbelement>>8)&0xFF;
-		*index += 1;
-		ptr[*index] = (nbelement>>16)&0xFF;
-		*index += 1;
-		ptr[*index] = (nbelement>>24)&0xFF;
-		*index += 1;
+		ptr[index++] = nbelement&0xFF;
+		ptr[index++] = (nbelement>>8)&0xFF;
+		ptr[index++] = (nbelement>>16)&0xFF;
+		ptr[index++] = (nbelement>>24)&0xFF;
 	}
 
 	i = 0;
 	while( i < size )
 	{
-		ptr[*index] = bufferin[i];
-		*index += 1;
-
+		ptr[index++] = bufferin[i];
 		i++;
 	}
+
+	return index;
 }
 
 uint16_t posix_to_mtp_errcode(int err)

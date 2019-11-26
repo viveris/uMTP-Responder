@@ -208,9 +208,10 @@ int build_response(mtp_ctx * ctx, uint32_t tx_id, uint16_t type, uint16_t status
 	tmp_hdr.code = status;
 	tmp_hdr.tx_id = tx_id;
 
-	poke_array(buffer, &ofs, sizeof(MTP_PACKET_HEADER), 1, (unsigned char*)&tmp_hdr,0);
+	ofs = poke_array(buffer, ofs, sizeof(MTP_PACKET_HEADER), 1, (unsigned char*)&tmp_hdr,0);
+
 	if(size)
-		poke_array(buffer, &ofs, size, 1, (unsigned char*)datain,0);
+		ofs = poke_array(buffer, ofs, size, 1, (unsigned char*)datain,0);
 
 	return ofs;
 }
@@ -493,8 +494,7 @@ mtp_size send_file_data( mtp_ctx * ctx, fs_entry * entry,mtp_offset offset, mtp_
 			actualsize = maxsize;
 	}
 
-	ofs = 0;
-	poke32(ctx->wrbuffer, &ofs, sizeof(MTP_PACKET_HEADER) + actualsize);
+	poke32(ctx->wrbuffer, 0, sizeof(MTP_PACKET_HEADER) + actualsize);
 
 	ofs = sizeof(MTP_PACKET_HEADER);
 
@@ -506,15 +506,15 @@ mtp_size send_file_data( mtp_ctx * ctx, fs_entry * entry,mtp_offset offset, mtp_
 		j = 0;
 		do
 		{
-			if((j + (ctx->usb_wr_buffer_max_size - ofs)) < actualsize)
-				blocksize = (ctx->usb_wr_buffer_max_size - ofs);
+			if((j + ((mtp_size)(ctx->usb_wr_buffer_max_size) - ofs)) < actualsize)
+				blocksize = ((mtp_size)(ctx->usb_wr_buffer_max_size) - ofs);
 			else
 				blocksize = actualsize - j;
 
 			// Is the target page loaded ?
 			if( buf_index != ((offset + j) & ~((mtp_offset)(ctx->read_file_buffer_size-1))) )
 			{
-				bytes_read = entry_read(ctx->fs_db, file, ctx->read_file_buffer, ((offset + j) & ~((mtp_offset)(ctx->read_file_buffer_size-1))) , ctx->read_file_buffer_size);
+				bytes_read = entry_read(ctx->fs_db, file, ctx->read_file_buffer, ((offset + j) & ~((mtp_offset)(ctx->read_file_buffer_size-1))) , (mtp_size)ctx->read_file_buffer_size);
 				if( bytes_read < 0 )
 				{
 					entry_close( file );
@@ -524,7 +524,7 @@ mtp_size send_file_data( mtp_ctx * ctx, fs_entry * entry,mtp_offset offset, mtp_
 				buf_index = ((offset + j) & ~((mtp_offset)(ctx->read_file_buffer_size-1)));
 			}
 
-			io_buffer_index = (offset + j) & (ctx->read_file_buffer_size-1);
+			io_buffer_index = (offset + j) & (mtp_offset)(ctx->read_file_buffer_size-1);
 
 			// Is a new page needed ?
 			if( io_buffer_index + blocksize < ctx->read_file_buffer_size )
@@ -545,11 +545,11 @@ mtp_size send_file_data( mtp_ctx * ctx, fs_entry * entry,mtp_offset offset, mtp_
 			else
 			{
 				// Yes, new page needed. Get the first part in the io buffer and the load a new page to get the remaining data.
-				first_part_size = blocksize - ( ( io_buffer_index + blocksize ) - ctx->read_file_buffer_size);
+				first_part_size = blocksize - ( ( io_buffer_index + blocksize ) - (mtp_size)ctx->read_file_buffer_size);
 
 				memcpy(&ctx->wrbuffer[ofs], &ctx->read_file_buffer[io_buffer_index], first_part_size  );
 
-				buf_index += ctx->read_file_buffer_size;
+				buf_index += (mtp_offset)ctx->read_file_buffer_size;
 				bytes_read = entry_read(ctx->fs_db, file, ctx->read_file_buffer, buf_index , ctx->read_file_buffer_size);
 				if( bytes_read < 0 )
 				{
@@ -715,8 +715,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 			size += build_deviceinfo_dataset(ctx, ctx->wrbuffer + sizeof(MTP_PACKET_HEADER), ctx->usb_wr_buffer_max_size - sizeof(MTP_PACKET_HEADER));
 
 			// Update packet size
-			ofs = 0;
-			poke32(ctx->wrbuffer, &ofs, size);
+			poke32(ctx->wrbuffer, 0, size);
 
 			PRINT_DEBUG("MTP_OPERATION_GET_DEVICE_INFO response (%d Bytes):",size);
 			PRINT_DEBUG_BUF(ctx->wrbuffer, size);
@@ -740,12 +739,11 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 				i++;
 			}
 
-			poke_array(ctx->wrbuffer, &ofs, 4 * i, 4, (void*)ctx->temp_array, 1);
+			ofs = poke_array(ctx->wrbuffer, ofs, 4 * i, 4, (void*)ctx->temp_array, 1);
 			size = ofs;
 
 			// Update packet size
-			ofs = 0;
-			poke32(ctx->wrbuffer, &ofs, size);
+			poke32(ctx->wrbuffer, 0, size);
 
 			PRINT_DEBUG("MTP_OPERATION_GET_STORAGE_IDS response (%d Bytes):",size);
 			PRINT_DEBUG_BUF(ctx->wrbuffer, size);
@@ -768,8 +766,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 				size += build_storageinfo_dataset(ctx, ctx->wrbuffer + sizeof(MTP_PACKET_HEADER), ctx->usb_wr_buffer_max_size - sizeof(MTP_PACKET_HEADER),storageid);
 
 				// Update packet size
-				ofs = 0;
-				poke32(ctx->wrbuffer, &ofs, size);
+				poke32(ctx->wrbuffer, 0, size);
 
 				PRINT_DEBUG("MTP_OPERATION_GET_STORAGE_INFO response (%d Bytes):",size);
 				PRINT_DEBUG_BUF(ctx->wrbuffer, size);
@@ -797,8 +794,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 			if ( size > sizeof(MTP_PACKET_HEADER) )
 			{
 				// Update packet size
-				ofs = 0;
-				poke32(ctx->wrbuffer, &ofs, size);
+				poke32(ctx->wrbuffer, 0, size);
 
 				PRINT_DEBUG("MTP_OPERATION_GET_DEVICE_PROP_DESC response (%d Bytes):",size);
 				PRINT_DEBUG_BUF(ctx->wrbuffer, size);
@@ -831,8 +827,8 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 
 			if ( size > sizeof(MTP_PACKET_HEADER) )
 			{
-				i = 0;
-				poke32(ctx->wrbuffer, &i, size);
+				// Update packet size
+				poke32(ctx->wrbuffer, 0, size);
 
 				PRINT_DEBUG("MTP_OPERATION_GET_DEVICE_PROP_VALUE response (%d Bytes):",size);
 				PRINT_DEBUG_BUF(ctx->wrbuffer, size);
@@ -924,13 +920,12 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 			}
 
 			// Update packet size
-			ofs = 0;
-			poke32(ctx->wrbuffer, &ofs, sizeof(MTP_PACKET_HEADER) + ((1+nb_of_handles)*4) );
+			poke32(ctx->wrbuffer, 0, sizeof(MTP_PACKET_HEADER) + ((1+nb_of_handles)*4) );
 
 			// Build and send the handles array
 			ofs = sizeof(MTP_PACKET_HEADER);
 
-			poke32(ctx->wrbuffer, &ofs, nb_of_handles);
+			ofs = poke32(ctx->wrbuffer, ofs, nb_of_handles);
 
 			PRINT_DEBUG("MTP_OPERATION_GET_OBJECT_HANDLES response :");
 
@@ -943,7 +938,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 					if(entry)
 					{
 						PRINT_DEBUG("File : %s Handle:%.8x",entry->name,entry->handle);
-						poke32(ctx->wrbuffer, &ofs, entry->handle);
+						ofs = poke32(ctx->wrbuffer, ofs, entry->handle);
 
 						handle_index++;
 					}
@@ -978,8 +973,8 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 				size = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer,0,0);
 				size += build_objectinfo_dataset(ctx, ctx->wrbuffer + sizeof(MTP_PACKET_HEADER), ctx->usb_wr_buffer_max_size - sizeof(MTP_PACKET_HEADER),entry);
 
-				i = 0;
-				poke32(ctx->wrbuffer, &i, size);
+				// Update packet size
+				poke32(ctx->wrbuffer, 0, size);
 
 				PRINT_DEBUG("MTP_OPERATION_GET_OBJECT_INFO response (%d Bytes):",size);
 				PRINT_DEBUG_BUF(ctx->wrbuffer, size);
@@ -1284,8 +1279,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 			size += build_properties_supported_dataset(ctx,ctx->wrbuffer + sizeof(MTP_PACKET_HEADER), ctx->usb_wr_buffer_max_size - sizeof(MTP_PACKET_HEADER), format_id);
 
 			// Update packet size
-			ofs = 0;
-			poke32(ctx->wrbuffer, &ofs, size);
+			poke32(ctx->wrbuffer, 0, size);
 
 			PRINT_DEBUG("MTP_OPERATION_GET_OBJECT_PROPS_SUPPORTED response (%d Bytes):",size);
 			PRINT_DEBUG_BUF(ctx->wrbuffer, size);
@@ -1310,8 +1304,7 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 			if ( size > sizeof(MTP_PACKET_HEADER) )
 			{
 				// Update packet size
-				ofs = 0;
-				poke32(ctx->wrbuffer, &ofs, size);
+				poke32(ctx->wrbuffer, 0, size);
 
 				PRINT_DEBUG("MTP_OPERATION_GET_OBJECT_PROP_DESC response (%d Bytes):",size);
 				PRINT_DEBUG_BUF(ctx->wrbuffer, size);
@@ -1346,8 +1339,8 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 				size = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer,0,0);
 				size += build_ObjectPropValue_dataset(ctx,ctx->wrbuffer + sizeof(MTP_PACKET_HEADER), ctx->usb_wr_buffer_max_size - sizeof(MTP_PACKET_HEADER), handle, prop_code);
 
-				i = 0;
-				poke32(ctx->wrbuffer, &i, size);
+				// Update packet size
+				poke32(ctx->wrbuffer, 0, size);
 
 				PRINT_DEBUG("MTP_OPERATION_GET_OBJECT_PROP_VALUE response (%d Bytes):",size);
 				PRINT_DEBUG_BUF(ctx->wrbuffer, size);
@@ -1438,8 +1431,8 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 				size = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer,0,0);
 				size += build_objectproplist_dataset(ctx, ctx->wrbuffer + sizeof(MTP_PACKET_HEADER),ctx->usb_wr_buffer_max_size - sizeof(MTP_PACKET_HEADER),entry, handle, format_id, prop_code, prop_group_code, depth);
 
-				i = 0;
-				poke32(ctx->wrbuffer, &i, size);
+				// Update packet size
+				poke32(ctx->wrbuffer, 0, size);
 
 				PRINT_DEBUG("MTP_OPERATION_GET_OBJECT_PROP_LIST response (%d Bytes):",size);
 				PRINT_DEBUG_BUF(ctx->wrbuffer, size);
@@ -1467,11 +1460,11 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 			if( entry )
 			{
 				size = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer,0,0);
-				//i = size;
-				poke32(ctx->wrbuffer, &size, 0x0000000);
 
-				i = 0;
-				poke32(ctx->wrbuffer, &i, size);
+				size = poke32(ctx->wrbuffer, size, 0x0000000);
+
+				// Update packet size
+				poke32(ctx->wrbuffer, 0, size);
 
 				PRINT_DEBUG("MTP_OPERATION_GET_OBJECT_REFERENCES response (%d Bytes):",size);
 				PRINT_DEBUG_BUF(ctx->wrbuffer, size);
