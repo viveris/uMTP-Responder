@@ -1,6 +1,6 @@
 =================================================
 * uMTP Responder
-* Copyright (c) 2018 - 2019 Viveris Technologies
+* Copyright (c) 2018 - 2020 Viveris Technologies
 * Release notes
 =================================================
 
