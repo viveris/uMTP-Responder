@@ -51,6 +51,11 @@
 
 uint32_t mtp_op_CloseSession(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int * size,uint32_t * ret_params, int * ret_params_size)
 {
+	if(!ctx->fs_db)
+	{
+		return MTP_RESPONSE_SESSION_NOT_OPEN;
+	}
+
 	deinit_fs_db(ctx->fs_db);
 
 	ctx->fs_db = 0;
