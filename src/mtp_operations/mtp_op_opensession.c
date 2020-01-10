@@ -52,8 +52,23 @@
 uint32_t mtp_op_OpenSession(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int * size,uint32_t * ret_params, int * ret_params_size)
 {
 	int i;
+	uint32_t id;
 
-	ctx->session_id = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER), 4); // Get param 1
+	id = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER), 4); // Get param 1
+
+	if(!id)
+	{
+		return MTP_RESPONSE_INVALID_PARAMETER;
+	}
+
+	if(ctx->fs_db)
+	{
+		ret_params[0] = ctx->session_id;
+		*ret_params_size = 1;
+		return MTP_RESPONSE_SESSION_ALREADY_OPEN;
+	}
+
+	ctx->session_id = id;
 
 	ctx->fs_db = init_fs_db(ctx);
 
