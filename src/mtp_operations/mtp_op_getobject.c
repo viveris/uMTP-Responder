@@ -66,7 +66,7 @@
 
 #include "mtp_ops_helpers.h"
 
-uint32_t mtp_op_getobject(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int * size,uint32_t * ret_params, int * ret_params_size)
+uint32_t mtp_op_GetObject(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int * size,uint32_t * ret_params, int * ret_params_size)
 {
 	int sz;
 	uint32_t response_code;

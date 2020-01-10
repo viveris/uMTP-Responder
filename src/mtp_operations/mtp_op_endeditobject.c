@@ -64,7 +64,7 @@
 
 #include "inotify.h"
 
-uint32_t mtp_op_endeditobject(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int * size,uint32_t * ret_params, int * ret_params_size)
+uint32_t mtp_op_EndEditObject(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int * size,uint32_t * ret_params, int * ret_params_size)
 {
 	uint32_t handle;
 	uint32_t response_code;

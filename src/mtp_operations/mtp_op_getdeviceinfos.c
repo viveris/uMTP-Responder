@@ -54,7 +54,7 @@
 
 #include "mtp_operations.h"
 
-uint32_t mtp_op_getdeviceinfos(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int * size,uint32_t * ret_params, int * ret_params_size)
+uint32_t mtp_op_GetDeviceInfos(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int * size,uint32_t * ret_params, int * ret_params_size)
 {
 	int sz;
 

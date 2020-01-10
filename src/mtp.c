@@ -473,97 +473,97 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 	switch( mtp_packet_hdr->code )
 	{
 		case MTP_OPERATION_OPEN_SESSION:
-			response_code = mtp_op_opensession(ctx,mtp_packet_hdr,&size,(uint32_t*)&params,&params_size);
+			response_code = mtp_op_OpenSession(ctx,mtp_packet_hdr,&size,(uint32_t*)&params,&params_size);
 		break;
 
 		case MTP_OPERATION_CLOSE_SESSION:
-			response_code = mtp_op_closesession(ctx,mtp_packet_hdr,&size,(uint32_t*)&params,&params_size);
+			response_code = mtp_op_CloseSession(ctx,mtp_packet_hdr,&size,(uint32_t*)&params,&params_size);
 		break;
 
 		case MTP_OPERATION_GET_DEVICE_INFO:
-			response_code = mtp_op_getdeviceinfos(ctx,mtp_packet_hdr,&size,(uint32_t*)&params,&params_size);
+			response_code = mtp_op_GetDeviceInfos(ctx,mtp_packet_hdr,&size,(uint32_t*)&params,&params_size);
 		break;
 
 		case MTP_OPERATION_GET_STORAGE_IDS:
-			response_code = mtp_op_getstorageids(ctx,mtp_packet_hdr,&size,(uint32_t*)&params,&params_size);
+			response_code = mtp_op_GetStorageIDs(ctx,mtp_packet_hdr,&size,(uint32_t*)&params,&params_size);
 		break;
 
 		case MTP_OPERATION_GET_STORAGE_INFO:
-			response_code = mtp_op_getstorageinfo(ctx,mtp_packet_hdr,&size,(uint32_t*)&params,&params_size);
+			response_code = mtp_op_GetStorageInfo(ctx,mtp_packet_hdr,&size,(uint32_t*)&params,&params_size);
 		break;
 
 		case MTP_OPERATION_GET_DEVICE_PROP_DESC:
-			response_code = mtp_op_getdevicepropdesc(ctx,mtp_packet_hdr,&size,(uint32_t*)&params,&params_size);
+			response_code = mtp_op_GetDevicePropDesc(ctx,mtp_packet_hdr,&size,(uint32_t*)&params,&params_size);
 		break;
 
 		case MTP_OPERATION_GET_DEVICE_PROP_VALUE:
-			response_code = mtp_op_getdevicepropvalue(ctx,mtp_packet_hdr,&size,(uint32_t*)&params,&params_size);
+			response_code = mtp_op_GetDevicePropValue(ctx,mtp_packet_hdr,&size,(uint32_t*)&params,&params_size);
 		break;
 
 		case MTP_OPERATION_GET_OBJECT_HANDLES:
-			response_code = mtp_op_getobjecthandles(ctx,mtp_packet_hdr,&size,(uint32_t*)&params,&params_size);
+			response_code = mtp_op_GetObjectHandles(ctx,mtp_packet_hdr,&size,(uint32_t*)&params,&params_size);
 		break;
 
 		case MTP_OPERATION_GET_OBJECT_INFO:
-			response_code = mtp_op_getobjectinfo(ctx,mtp_packet_hdr,&size,(uint32_t*)&params,&params_size);
+			response_code = mtp_op_GetObjectInfo(ctx,mtp_packet_hdr,&size,(uint32_t*)&params,&params_size);
 		break;
 
 		case MTP_OPERATION_GET_PARTIAL_OBJECT_64:
 		case MTP_OPERATION_GET_PARTIAL_OBJECT:
-			response_code = mtp_op_getpartialobject(ctx,mtp_packet_hdr,&size,(uint32_t*)&params,&params_size);
+			response_code = mtp_op_GetPartialObject(ctx,mtp_packet_hdr,&size,(uint32_t*)&params,&params_size);
 		break;
 
 		case MTP_OPERATION_GET_OBJECT:
-			response_code = mtp_op_getobject(ctx,mtp_packet_hdr,&size,(uint32_t*)&params,&params_size);
+			response_code = mtp_op_GetObject(ctx,mtp_packet_hdr,&size,(uint32_t*)&params,&params_size);
 		break;
 
 		case MTP_OPERATION_SEND_OBJECT_INFO:
-			response_code = mtp_op_sendobjectinfo(ctx,mtp_packet_hdr,&size,(uint32_t*)&params,&params_size);
+			response_code = mtp_op_SendObjectInfo(ctx,mtp_packet_hdr,&size,(uint32_t*)&params,&params_size);
 		break;
 
 		case MTP_OPERATION_SEND_PARTIAL_OBJECT:
 		case MTP_OPERATION_SEND_OBJECT:
-			response_code = mtp_op_sendobject(ctx,mtp_packet_hdr,&size,(uint32_t*)&params,&params_size);
+			response_code = mtp_op_SendObject(ctx,mtp_packet_hdr,&size,(uint32_t*)&params,&params_size);
 		break;
 
 		case MTP_OPERATION_DELETE_OBJECT:
-			response_code = mtp_op_deleteobject(ctx,mtp_packet_hdr,&size,(uint32_t*)&params,&params_size);
+			response_code = mtp_op_DeleteObject(ctx,mtp_packet_hdr,&size,(uint32_t*)&params,&params_size);
 		break;
 
 		case MTP_OPERATION_GET_OBJECT_PROPS_SUPPORTED:
-			response_code = mtp_op_getobjectpropssupported(ctx,mtp_packet_hdr,&size,(uint32_t*)&params,&params_size);
+			response_code = mtp_op_GetObjectPropsSupported(ctx,mtp_packet_hdr,&size,(uint32_t*)&params,&params_size);
 		break;
 
 		case MTP_OPERATION_GET_OBJECT_PROP_DESC:
-			response_code = mtp_op_getobjectpropdesc(ctx,mtp_packet_hdr,&size,(uint32_t*)&params,&params_size);
+			response_code = mtp_op_GetObjectPropDesc(ctx,mtp_packet_hdr,&size,(uint32_t*)&params,&params_size);
 		break;
 
 		case MTP_OPERATION_GET_OBJECT_PROP_VALUE:
-			response_code = mtp_op_getobjectpropvalue(ctx,mtp_packet_hdr,&size,(uint32_t*)&params,&params_size);
+			response_code = mtp_op_GetObjectPropValue(ctx,mtp_packet_hdr,&size,(uint32_t*)&params,&params_size);
 		break;
 
 		case MTP_OPERATION_SET_OBJECT_PROP_VALUE:
-			response_code = mtp_op_setobjectpropvalue(ctx,mtp_packet_hdr,&size,(uint32_t*)&params,&params_size);
+			response_code = mtp_op_SetObjectPropValue(ctx,mtp_packet_hdr,&size,(uint32_t*)&params,&params_size);
 		break;
 
 		case MTP_OPERATION_GET_OBJECT_PROP_LIST:
-			response_code = mtp_op_getobjectproplist(ctx,mtp_packet_hdr,&size,(uint32_t*)&params,&params_size);
+			response_code = mtp_op_GetObjectPropList(ctx,mtp_packet_hdr,&size,(uint32_t*)&params,&params_size);
 		break;
 
 		case MTP_OPERATION_GET_OBJECT_REFERENCES:
-			response_code = mtp_op_getobjectreferences(ctx,mtp_packet_hdr,&size,(uint32_t*)&params,&params_size);
+			response_code = mtp_op_GetObjectReferences(ctx,mtp_packet_hdr,&size,(uint32_t*)&params,&params_size);
 		break;
 
 		case MTP_OPERATION_BEGIN_EDIT_OBJECT:
-			response_code = mtp_op_begineditobject(ctx,mtp_packet_hdr,&size,(uint32_t*)&params,&params_size);
+			response_code = mtp_op_BeginEditObject(ctx,mtp_packet_hdr,&size,(uint32_t*)&params,&params_size);
 		break;
 
 		case MTP_OPERATION_END_EDIT_OBJECT:
-			response_code = mtp_op_endeditobject(ctx,mtp_packet_hdr,&size,(uint32_t*)&params,&params_size);
+			response_code = mtp_op_EndEditObject(ctx,mtp_packet_hdr,&size,(uint32_t*)&params,&params_size);
 		break;
 
 		case MTP_OPERATION_TRUNCATE_OBJECT :
-			response_code = mtp_op_truncateobject(ctx,mtp_packet_hdr,&size,(uint32_t*)&params,&params_size);
+			response_code = mtp_op_TruncateObject(ctx,mtp_packet_hdr,&size,(uint32_t*)&params,&params_size);
 		break;
 
 		default:

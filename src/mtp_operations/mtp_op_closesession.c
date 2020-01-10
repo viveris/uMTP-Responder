@@ -49,7 +49,7 @@
 
 #include "mtp_operations.h"
 
-uint32_t mtp_op_closesession(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int * size,uint32_t * ret_params, int * ret_params_size)
+uint32_t mtp_op_CloseSession(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int * size,uint32_t * ret_params, int * ret_params_size)
 {
 	deinit_fs_db(ctx->fs_db);
 

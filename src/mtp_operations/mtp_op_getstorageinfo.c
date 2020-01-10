@@ -53,7 +53,7 @@
 
 #include "mtp_operations.h"
 
-uint32_t mtp_op_getstorageinfo(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int * size,uint32_t * ret_params, int * ret_params_size)
+uint32_t mtp_op_GetStorageInfo(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int * size,uint32_t * ret_params, int * ret_params_size)
 {
 	int ofs;
 	uint32_t storageid;
