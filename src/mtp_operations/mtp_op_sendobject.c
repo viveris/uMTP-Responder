@@ -73,6 +73,9 @@ uint32_t mtp_op_SendObject(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int
 	int file;
 	int sz;
 
+	if(!ctx->fs_db)
+		return MTP_RESPONSE_SESSION_NOT_OPEN;
+
 	pthread_mutex_lock( &ctx->inotify_mutex );
 
 	response_code = MTP_RESPONSE_GENERAL_ERROR;

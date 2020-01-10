@@ -58,6 +58,9 @@ uint32_t mtp_op_GetDeviceInfos(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr,
 {
 	int sz;
 
+	if(!ctx->fs_db)
+		return MTP_RESPONSE_SESSION_NOT_OPEN;
+
 	sz = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer,0,0);
 	sz += build_deviceinfo_dataset(ctx, ctx->wrbuffer + sizeof(MTP_PACKET_HEADER), ctx->usb_wr_buffer_max_size - sizeof(MTP_PACKET_HEADER));
 

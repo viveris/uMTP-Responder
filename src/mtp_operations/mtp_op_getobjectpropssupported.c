@@ -62,6 +62,9 @@ uint32_t mtp_op_GetObjectPropsSupported(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_pa
 	uint32_t format_id;
 	int sz;
 
+	if(!ctx->fs_db)
+		return MTP_RESPONSE_SESSION_NOT_OPEN;
+
 	format_id = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER), 4); // Get param 1 - format
 
 	sz = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer,0,0);

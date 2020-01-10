@@ -69,6 +69,9 @@ uint32_t mtp_op_BeginEditObject(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr
 	uint32_t handle;
 	uint32_t response_code;
 
+	if(!ctx->fs_db)
+		return MTP_RESPONSE_SESSION_NOT_OPEN;
+
 	pthread_mutex_lock( &ctx->inotify_mutex );
 
 	response_code = MTP_RESPONSE_OK;

@@ -61,6 +61,9 @@ uint32_t mtp_op_SetObjectPropValue(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_
 {
 	uint32_t response_code;
 
+	if(!ctx->fs_db)
+		return MTP_RESPONSE_SESSION_NOT_OPEN;
+
 	switch(mtp_packet_hdr->operation)
 	{
 		case MTP_CONTAINER_TYPE_COMMAND:

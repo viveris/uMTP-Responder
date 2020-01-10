@@ -58,6 +58,9 @@ uint32_t mtp_op_GetStorageInfo(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr,
 	int ofs;
 	uint32_t storageid;
 
+	if(!ctx->fs_db)
+		return MTP_RESPONSE_SESSION_NOT_OPEN;
+
 	storageid = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER) + 0, 4); // Get param 1 - Storage ID
 	if( mtp_get_storage_root(ctx,storageid) )
 	{

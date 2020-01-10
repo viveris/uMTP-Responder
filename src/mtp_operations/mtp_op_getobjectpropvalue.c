@@ -65,6 +65,9 @@ uint32_t mtp_op_GetObjectPropValue(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_
 	fs_entry * entry;
 	int sz;
 
+	if(!ctx->fs_db)
+		return MTP_RESPONSE_SESSION_NOT_OPEN;
+
 	pthread_mutex_lock( &ctx->inotify_mutex );
 
 	handle = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER), 4);        // Get param 1 - object handle

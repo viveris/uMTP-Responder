@@ -57,6 +57,9 @@ uint32_t mtp_op_GetStorageIDs(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, 
 {
 	int ofs,i;
 
+	if(!ctx->fs_db)
+		return MTP_RESPONSE_SESSION_NOT_OPEN;
+
 	ofs = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer,0,0);
 
 	i = 0;
