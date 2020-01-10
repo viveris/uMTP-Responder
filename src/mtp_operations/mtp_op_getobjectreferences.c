@@ -82,7 +82,7 @@ uint32_t mtp_op_GetObjectReferences(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet
 		poke32(ctx->wrbuffer, 0, sz);
 
 		PRINT_DEBUG("MTP_OPERATION_GET_OBJECT_REFERENCES response (%d Bytes):",sz);
-		PRINT_DEBUG_BUF(ctx->wrbuffer, size);
+		PRINT_DEBUG_BUF(ctx->wrbuffer, sz);
 
 		write_usb(ctx->usb_ctx,EP_DESCRIPTOR_IN,ctx->wrbuffer,sz);
 
