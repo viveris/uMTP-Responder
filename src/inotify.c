@@ -25,39 +25,22 @@
 
 #include "buildconf.h"
 
-#include <stdio.h>
-#include <stdint.h>
+#include <inttypes.h>
+#include <pthread.h>
 #include <string.h>
-#include <stdbool.h>
-#include <stdlib.h>
-
-#include <errno.h>
-
-#include <poll.h>
 #include <sys/inotify.h>
-
-#include <sys/stat.h>
 #include <unistd.h>
-#include <sys/types.h>
-
 #include <signal.h>
 
-#include <pthread.h>
-
-#include "logs_out.h"
-
-#include "mtp_helpers.h"
-
-#include "fs_handles_db.h"
-
 #include "mtp.h"
+#include "mtp_helpers.h"
+#include "mtp_constant.h"
 #include "mtp_datasets.h"
 
 #include "usb_gadget_fct.h"
-
+#include "fs_handles_db.h"
 #include "inotify.h"
-
-#include "mtp_constant.h"
+#include "logs_out.h"
 
 #define INOTIFY_RD_BUF_SIZE ( 32*1024 )
 

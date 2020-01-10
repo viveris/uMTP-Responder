@@ -25,43 +25,31 @@
 
 #include "buildconf.h"
 
+#include <inttypes.h>
+#include <pthread.h>
 #include <sys/types.h>
-#include <unistd.h>
 #include <fcntl.h>
-
 #include <stdio.h>
-#include <stdint.h>
 #include <string.h>
-#include <stdbool.h>
-
-#include <errno.h>
 
 #include <sys/stat.h>
 #include <unistd.h>
-#include <pthread.h>
-
-#include <inttypes.h>
-
-#include "logs_out.h"
-
-#include "mtp_helpers.h"
-
-#include "fs_handles_db.h"
 
 #include "mtp.h"
-#include "mtp_datasets.h"
-#include "mtp_properties.h"
-
-#include "usb_gadget_fct.h"
-
+#include "mtp_helpers.h"
 #include "mtp_constant.h"
 #include "mtp_constant_strings.h"
+#include "mtp_datasets.h"
+#include "mtp_properties.h"
+#include "mtp_operations.h"
 
+#include "usb_gadget_fct.h"
 #include "mtp_support_def.h"
+#include "fs_handles_db.h"
 
 #include "inotify.h"
 
-#include "mtp_operations.h"
+#include "logs_out.h"
 
 mtp_ctx * mtp_init_responder()
 {

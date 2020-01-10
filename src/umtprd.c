@@ -25,17 +25,12 @@
 
 #include "buildconf.h"
 
-#include <stdint.h>
-
-#include <stdio.h>
+#include <inttypes.h>
 #include <stdlib.h>
-
-#include <errno.h>
-
+#include <stdio.h>
 #include <pthread.h>
 
 #include "mtp.h"
-
 
 #include "usb_gadget.h"
 #include "usb_gadget_fct.h"

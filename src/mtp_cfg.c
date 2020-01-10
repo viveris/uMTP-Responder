@@ -25,29 +25,20 @@
 
 #include "buildconf.h"
 
-#include <stdio.h>
-#include <stdint.h>
+#include <inttypes.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
-#include <stdbool.h>
-
-#include <errno.h>
-
-#include <sys/stat.h>
-
-#include <sys/types.h>
-#include <dirent.h>
-
-#include "logs_out.h"
-
-#include "fs_handles_db.h"
 
 #include "mtp.h"
 #include "mtp_cfg.h"
 
+#include "fs_handles_db.h"
 #include "usbstring.h"
 
 #include "default_cfg.h"
+
+#include "logs_out.h"
 
 typedef int (* KW_FUNC)(mtp_ctx * context, char * line, int cmd);
 

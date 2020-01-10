@@ -25,25 +25,19 @@
 
 #include "buildconf.h"
 
-#include <sys/types.h>
+#include <inttypes.h>
 #include <unistd.h>
 #include <fcntl.h>
-
-#include <stdint.h>
-#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <sys/stat.h>
-#include <time.h>
-
 #include <dirent.h>
 
-#include <inttypes.h>
-
-#include "logs_out.h"
-#include "fs_handles_db.h"
 #include "mtp.h"
+#include "fs_handles_db.h"
 #include "inotify.h"
+#include "logs_out.h"
 
 int fs_remove_tree( char *folder )
 {

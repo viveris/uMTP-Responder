@@ -25,37 +25,18 @@
 
 #include "buildconf.h"
 
-#include <sys/types.h>
-
-#include <stdio.h>
-#include <stdint.h>
-
-#include <errno.h>
-
-#include <pthread.h>
-
 #include <inttypes.h>
-
-#include "mtp_datasets.h"
-
-#include "logs_out.h"
-
-#include "mtp_helpers.h"
+#include <pthread.h>
+#include <stdio.h>
 
 #include "mtp.h"
-#include "mtp_datasets.h"
-#include "mtp_properties.h"
-
+#include "mtp_helpers.h"
 #include "mtp_constant.h"
-#include "mtp_constant_strings.h"
-
-#include "mtp_support_def.h"
-
+#include "mtp_operations.h"
+#include "mtp_datasets.h"
 #include "usb_gadget_fct.h"
 
-#include "mtp_operations.h"
-
-#include "inotify.h"
+#include "logs_out.h"
 
 uint32_t mtp_op_GetObjectInfo(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int * size,uint32_t * ret_params, int * ret_params_size)
 {

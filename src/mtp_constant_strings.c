@@ -25,20 +25,11 @@
 
 #include "buildconf.h"
 
-#include <fcntl.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <stdint.h>
-#include <string.h>
+#include <inttypes.h>
 #include <pthread.h>
 
-#include <errno.h>
-
-#include "fs_handles_db.h"
 #include "mtp.h"
 #include "mtp_constant.h"
-
-#include "mtp_constant_strings.h"
 
 const char DevInfos_MTP_Extensions[] = "microsoft.com: 1.0; android.com: 1.0;";
 

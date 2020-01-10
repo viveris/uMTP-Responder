@@ -25,44 +25,20 @@
 
 #include "buildconf.h"
 
-#include <sys/types.h>
-#include <unistd.h>
-#include <fcntl.h>
-
+#include <inttypes.h>
+#include <pthread.h>
+#include <stdlib.h>
 #include <stdio.h>
-#include <stdint.h>
 #include <string.h>
 
-#include <sys/types.h>
-#include <unistd.h>
-#include <fcntl.h>
-
-#include <errno.h>
-
-#include <pthread.h>
-
-#include <inttypes.h>
-
-#include "mtp_datasets.h"
+#include "mtp.h"
+#include "mtp_helpers.h"
+#include "mtp_constant.h"
+#include "mtp_operations.h"
+#include "usb_gadget_fct.h"
+#include "inotify.h"
 
 #include "logs_out.h"
-
-#include "mtp_helpers.h"
-
-#include "mtp.h"
-#include "mtp_datasets.h"
-#include "mtp_properties.h"
-
-#include "mtp_constant.h"
-#include "mtp_constant_strings.h"
-
-#include "mtp_support_def.h"
-
-#include "usb_gadget_fct.h"
-
-#include "mtp_operations.h"
-
-#include "inotify.h"
 
 mtp_size send_file_data( mtp_ctx * ctx, fs_entry * entry,mtp_offset offset, mtp_size maxsize )
 {

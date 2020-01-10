@@ -27,21 +27,17 @@
 
 #include "buildconf.h"
 
-#include <sys/ioctl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/select.h>
+#include <inttypes.h>
 
-#include <linux/types.h>
+#include <sys/ioctl.h>
+
 #include <linux/usb/ch9.h>
 #include <linux/usb/gadgetfs.h>
 
 #include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
-#include <stdint.h>
 #include <string.h>
+#include <stdio.h>
 #include <pthread.h>
 #include <signal.h>
 

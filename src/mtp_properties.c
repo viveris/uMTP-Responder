@@ -25,34 +25,23 @@
 
 #include "buildconf.h"
 
-#include <stdint.h>
-#include <stdio.h>
-#include <string.h>
-
 #include <inttypes.h>
+#include <string.h>
+#include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>
-#include <sys/statvfs.h>
-
 #include <time.h>
 
-#include "logs_out.h"
-
-#include "mtp_helpers.h"
-
-#include "fs_handles_db.h"
-
 #include "mtp.h"
-#include "mtp_datasets.h"
-#include "mtp_properties.h"
-
-#include "usb_gadget_fct.h"
-
+#include "mtp_helpers.h"
 #include "mtp_constant.h"
 #include "mtp_constant_strings.h"
+#include "mtp_properties.h"
 
-#include "mtp_support_def.h"
+#include "fs_handles_db.h"
+#include "usb_gadget_fct.h"
+
+#include "logs_out.h"
 
 formats_property fmt_properties[]=
 {   // prop_code                       data_type         getset    default value          group code

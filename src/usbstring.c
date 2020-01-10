@@ -41,7 +41,7 @@
 
 #include "buildconf.h"
 
-#include <stdint.h>
+#include <inttypes.h>
 
 #include <linux/types.h>
 #include <linux/usb/ch9.h>

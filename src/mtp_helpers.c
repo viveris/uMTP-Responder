@@ -25,7 +25,7 @@
 
 #include "buildconf.h"
 
-#include <stdint.h>
+#include <inttypes.h>
 #include <errno.h>
 
 #include "mtp_helpers.h"
