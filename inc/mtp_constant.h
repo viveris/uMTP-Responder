@@ -453,6 +453,7 @@
 #define MTP_RESPONSE_SPECIFICATION_BY_DEPTH_UNSUPPORTED         0xA808
 #define MTP_RESPONSE_OBJECT_TOO_LARGE                           0xA809
 #define MTP_RESPONSE_OBJECT_PROP_NOT_SUPPORTED                  0xA80A
+#define MTP_RESPONSE_NO_RESPONSE                                0xFFFF
 
 // MTP Event Codes
 #define MTP_EVENT_UNDEFINED                         0x4000
