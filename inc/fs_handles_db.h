@@ -79,7 +79,7 @@ fs_entry * init_search_handle(fs_handles_db * db, uint32_t parent, uint32_t stor
 fs_entry * get_next_child_handle(fs_handles_db * db);
 fs_entry * get_entry_by_handle(fs_handles_db * db, uint32_t handle);
 fs_entry * get_entry_by_handle_and_storageid(fs_handles_db * db, uint32_t handle, uint32_t storage_id);
-fs_entry * get_entry_by_wd(fs_handles_db * db, int watch_descriptor);
+fs_entry * get_entry_by_wd(fs_handles_db * db, int watch_descriptor, fs_entry * entry_list);
 fs_entry * add_entry(fs_handles_db * db, filefoundinfo *fileinfo, uint32_t parent, uint32_t storage_id);
 fs_entry * search_entry(fs_handles_db * db, filefoundinfo *fileinfo, uint32_t parent, uint32_t storage_id);
 fs_entry * alloc_root_entry(fs_handles_db * db, uint32_t storage_id);

@@ -136,66 +136,86 @@ void* inotify_thread(void* arg)
 				{
 					if ( event->mask & IN_CREATE )
 					{
-						pthread_mutex_lock( &ctx->inotify_mutex );
-						entry = get_entry_by_wd( ctx->fs_db, event->wd );
-						if ( get_file_info( ctx, event, entry, &fileinfo, 0 ) )
+						entry = NULL;
+						do
 						{
-							old_entry = search_entry(ctx->fs_db, &fileinfo, entry->handle, entry->storage_id);
-							if( !old_entry )
+							pthread_mutex_lock( &ctx->inotify_mutex );
+							entry = get_entry_by_wd( ctx->fs_db, event->wd, entry );
+							if ( get_file_info( ctx, event, entry, &fileinfo, 0 ) )
 							{
-								// If the entry is not in the db, add it and trigger an MTP_EVENT_OBJECT_ADDED event
-								new_entry = add_entry( ctx->fs_db, &fileinfo, entry->handle, entry->storage_id );
+								old_entry = search_entry(ctx->fs_db, &fileinfo, entry->handle, entry->storage_id);
+								if( !old_entry )
+								{
+									// If the entry is not in the db, add it and trigger an MTP_EVENT_OBJECT_ADDED event
+									new_entry = add_entry( ctx->fs_db, &fileinfo, entry->handle, entry->storage_id );
 
-								// Send an "ObjectAdded" (0x4002) MTP event message with the entry handle.
-								handle[0] = new_entry->handle;
+									// Send an "ObjectAdded" (0x4002) MTP event message with the entry handle.
+									handle[0] = new_entry->handle;
 
-								mtp_push_event( ctx, MTP_EVENT_OBJECT_ADDED, 1, (uint32_t *)&handle );
+									mtp_push_event( ctx, MTP_EVENT_OBJECT_ADDED, 1, (uint32_t *)&handle );
 
-								PRINT_DEBUG( "inotify_thread (IN_CREATE): Entry %s created (Handle 0x%.8X)", event->name, new_entry->handle );
+									PRINT_DEBUG( "inotify_thread (IN_CREATE): Entry %s created (Handle 0x%.8X)", event->name, new_entry->handle );
+								}
+								else
+								{
+									PRINT_DEBUG( "inotify_thread (IN_CREATE): Entry %s already in the db ! (Handle 0x%.8X)", event->name, old_entry->handle );
+								}
 							}
 							else
 							{
-								PRINT_DEBUG( "inotify_thread (IN_CREATE): Entry %s already in the db ! (Handle 0x%.8X)", event->name, old_entry->handle );
+								PRINT_DEBUG( "inotify_thread (IN_CREATE): Watch point descriptor not found in the db ! (Descriptor 0x%.8X)", event->wd );
 							}
-						}
-						else
-						{
-							PRINT_DEBUG( "inotify_thread (IN_CREATE): Watch point descriptor not found in the db ! (Descriptor 0x%.8X)", event->wd );
-						}
-						pthread_mutex_unlock( &ctx->inotify_mutex );
+
+							if(entry)
+							{
+								entry = entry->next;
+							}
+
+							pthread_mutex_unlock( &ctx->inotify_mutex );
+						}while(entry);
 					}
 					else
 					{
 						if ( event->mask & IN_DELETE )
 						{
-							pthread_mutex_lock( &ctx->inotify_mutex );
+							entry = NULL;
 
-							entry = get_entry_by_wd( ctx->fs_db, event->wd );
-							if ( get_file_info( ctx, event, entry, &fileinfo, 1 ) )
+							do
 							{
-								deleted_entry = search_entry(ctx->fs_db, &fileinfo, entry->handle, entry->storage_id);
-								if( deleted_entry )
+								pthread_mutex_lock( &ctx->inotify_mutex );
+
+								entry = get_entry_by_wd( ctx->fs_db, event->wd, entry );
+								if ( get_file_info( ctx, event, entry, &fileinfo, 1 ) )
 								{
-									deleted_entry->flags |= ENTRY_IS_DELETED;
-									if( deleted_entry->watch_descriptor != -1 )
+									deleted_entry = search_entry(ctx->fs_db, &fileinfo, entry->handle, entry->storage_id);
+									if( deleted_entry )
 									{
-										inotify_handler_rmwatch( ctx, deleted_entry->watch_descriptor );
-										deleted_entry->watch_descriptor = -1;
+										deleted_entry->flags |= ENTRY_IS_DELETED;
+										if( deleted_entry->watch_descriptor != -1 )
+										{
+											inotify_handler_rmwatch( ctx, deleted_entry->watch_descriptor );
+											deleted_entry->watch_descriptor = -1;
+										}
+
+										// Send an "ObjectRemoved" (0x4003) MTP event message with the entry handle.
+										handle[0] = deleted_entry->handle;
+										mtp_push_event( ctx, MTP_EVENT_OBJECT_REMOVED, 1, (uint32_t *)&handle );
+
+										PRINT_DEBUG( "inotify_thread (IN_DELETE): Entry %s deleted (Handle 0x%.8X)", event->name, deleted_entry->handle);
 									}
-
-									// Send an "ObjectRemoved" (0x4003) MTP event message with the entry handle.
-									handle[0] = deleted_entry->handle;
-									mtp_push_event( ctx, MTP_EVENT_OBJECT_REMOVED, 1, (uint32_t *)&handle );
-
-									PRINT_DEBUG( "inotify_thread (IN_DELETE): Entry %s deleted (Handle 0x%.8X)", event->name, deleted_entry->handle);
 								}
-							}
-							else
-							{
-								PRINT_DEBUG( "inotify_thread (IN_DELETE): Watch point descriptor not found in the db ! (Descriptor 0x%.8X)", event->wd );
-							}
+								else
+								{
+									PRINT_DEBUG( "inotify_thread (IN_DELETE): Watch point descriptor not found in the db ! (Descriptor 0x%.8X)", event->wd );
+								}
 
-							pthread_mutex_unlock( &ctx->inotify_mutex );
+								if(entry)
+								{
+									entry = entry->next;
+								}
+
+								pthread_mutex_unlock( &ctx->inotify_mutex );
+							}while(entry);
 						}
 					}
 				}

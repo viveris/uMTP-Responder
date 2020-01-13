@@ -639,11 +639,10 @@ void entry_close(int file)
 		close(file);
 }
 
-fs_entry * get_entry_by_wd( fs_handles_db * db, int watch_descriptor )
+fs_entry * get_entry_by_wd( fs_handles_db * db, int watch_descriptor, fs_entry * entry_list )
 {
-	fs_entry * entry_list;
-
-	entry_list = db->entry_list;
+	if(!entry_list)
+		entry_list = db->entry_list;
 
 	while( entry_list )
 	{
