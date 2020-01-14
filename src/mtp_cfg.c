@@ -214,6 +214,33 @@ static int extract_cmd(char * line, char * command)
 	return 0;
 }
 
+int test_flag(char * str, char * flag)
+{
+	int i,flaglen;
+	char previous_char;
+
+	flaglen = strlen(flag);
+	i = 0;
+	previous_char = 0;
+	while( str[i] )
+	{
+		if(!strncmp(&str[i],flag,strlen(flag)))
+		{
+			if( (previous_char == 0 || previous_char == ',') && \
+			    (str[i + flaglen] == 0 || str[i + flaglen] == ',') )
+			{
+				return 1;
+			}
+		}
+
+		previous_char = str[i];
+
+		i++;
+	}
+
+	return 0;
+}
+
 static int get_storage_params(mtp_ctx * context, char * line,int cmd)
 {
 	int i, j, k;
@@ -231,14 +258,19 @@ static int get_storage_params(mtp_ctx * context, char * line,int cmd)
 		k = get_param(line, 3,options);
 		if( k >= 0 )
 		{
-			if(!strcmp(options,"ro"))
+			if(test_flag(options, "ro"))
 			{
 				flags |= UMTP_STORAGE_READONLY;
 			}
 
-			if(!strcmp(options,"rw"))
+			if(test_flag(options, "rw"))
 			{
 				flags |= UMTP_STORAGE_READWRITE;
+			}
+
+			if(test_flag(options, "notmounted"))
+			{
+				flags |= UMTP_STORAGE_NOTMOUNTED;
 			}
 		}
 
