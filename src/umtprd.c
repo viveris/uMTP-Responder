@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <pthread.h>
+#include <string.h>
 
 #include "mtp.h"
 
@@ -36,6 +37,8 @@
 #include "usb_gadget_fct.h"
 
 #include "logs_out.h"
+
+#include "msgqueue.h"
 
 mtp_ctx * mtp_context;
 
@@ -113,6 +116,8 @@ void * main_thread(void* arg)
 	return (void*)(retcode);
 }
 
+#define PARAMETER_IPCCMD "-cmd:"
+
 int main(int argc, char *argv[])
 {
 	pthread_t mtp_thread;
@@ -123,6 +128,19 @@ int main(int argc, char *argv[])
 		  __DATE__, __TIME__);
 
 	PRINT_MSG("(c) 2018 - 2020 Viveris Technologies");
+
+	if(argc>1)
+	{
+		if(argv[1])
+		{
+			if(!strncmp(argv[1],PARAMETER_IPCCMD,sizeof(PARAMETER_IPCCMD)-1))
+			{
+				PRINT_MSG("Sending command : %s",&argv[1][sizeof(PARAMETER_IPCCMD)-1]);
+				retcode = send_message_queue( &argv[1][sizeof(PARAMETER_IPCCMD)-1] );
+				exit(retcode);
+			}
+		}
+	}
 
 	retcode = pthread_create(&mtp_thread, NULL, main_thread, NULL);
 	if( retcode )
