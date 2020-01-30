@@ -96,6 +96,7 @@ void* inotify_thread(void* arg)
 	int i,length;
 	fs_entry * entry;
 	fs_entry * deleted_entry;
+	fs_entry * modified_entry;
 	fs_entry * new_entry;
 	fs_entry * old_entry;
 	filefoundinfo fileinfo;
@@ -151,7 +152,6 @@ void* inotify_thread(void* arg)
 
 									// Send an "ObjectAdded" (0x4002) MTP event message with the entry handle.
 									handle[0] = new_entry->handle;
-
 									mtp_push_event( ctx, MTP_EVENT_OBJECT_ADDED, 1, (uint32_t *)&handle );
 
 									PRINT_DEBUG( "inotify_thread (IN_CREATE): Entry %s created (Handle 0x%.8X)", event->name, new_entry->handle );
@@ -174,49 +174,82 @@ void* inotify_thread(void* arg)
 							pthread_mutex_unlock( &ctx->inotify_mutex );
 						}while(entry);
 					}
-					else
+
+					if ( event->mask & IN_MODIFY )
 					{
-						if ( event->mask & IN_DELETE )
+						entry = NULL;
+
+						do
 						{
-							entry = NULL;
+							pthread_mutex_lock( &ctx->inotify_mutex );
 
-							do
+							entry = get_entry_by_wd( ctx->fs_db, event->wd, entry );
+							if ( get_file_info( ctx, event, entry, &fileinfo, 1 ) )
 							{
-								pthread_mutex_lock( &ctx->inotify_mutex );
-
-								entry = get_entry_by_wd( ctx->fs_db, event->wd, entry );
-								if ( get_file_info( ctx, event, entry, &fileinfo, 1 ) )
+								modified_entry = search_entry(ctx->fs_db, &fileinfo, entry->handle, entry->storage_id);
+								if( modified_entry )
 								{
-									deleted_entry = search_entry(ctx->fs_db, &fileinfo, entry->handle, entry->storage_id);
-									if( deleted_entry )
+									// Send an "ObjectInfoChanged" (0x4007) MTP event message with the entry handle.
+									handle[0] = modified_entry->handle;
+									mtp_push_event( ctx, MTP_EVENT_OBJECT_INFO_CHANGED, 1, (uint32_t *)&handle );
+
+									PRINT_DEBUG( "inotify_thread (IN_MODIFY): Entry %s modified (Handle 0x%.8X)", event->name, modified_entry->handle);
+								}
+							}
+							else
+							{
+								PRINT_DEBUG( "inotify_thread (IN_MODIFY): Watch point descriptor not found in the db ! (Descriptor 0x%.8X)", event->wd );
+							}
+
+							if(entry)
+							{
+								entry = entry->next;
+							}
+
+							pthread_mutex_unlock( &ctx->inotify_mutex );
+						}while(entry);
+					}
+
+					if ( event->mask & IN_DELETE )
+					{
+						entry = NULL;
+
+						do
+						{
+							pthread_mutex_lock( &ctx->inotify_mutex );
+
+							entry = get_entry_by_wd( ctx->fs_db, event->wd, entry );
+							if ( get_file_info( ctx, event, entry, &fileinfo, 1 ) )
+							{
+								deleted_entry = search_entry(ctx->fs_db, &fileinfo, entry->handle, entry->storage_id);
+								if( deleted_entry )
+								{
+									deleted_entry->flags |= ENTRY_IS_DELETED;
+									if( deleted_entry->watch_descriptor != -1 )
 									{
-										deleted_entry->flags |= ENTRY_IS_DELETED;
-										if( deleted_entry->watch_descriptor != -1 )
-										{
-											inotify_handler_rmwatch( ctx, deleted_entry->watch_descriptor );
-											deleted_entry->watch_descriptor = -1;
-										}
-
-										// Send an "ObjectRemoved" (0x4003) MTP event message with the entry handle.
-										handle[0] = deleted_entry->handle;
-										mtp_push_event( ctx, MTP_EVENT_OBJECT_REMOVED, 1, (uint32_t *)&handle );
-
-										PRINT_DEBUG( "inotify_thread (IN_DELETE): Entry %s deleted (Handle 0x%.8X)", event->name, deleted_entry->handle);
+										inotify_handler_rmwatch( ctx, deleted_entry->watch_descriptor );
+										deleted_entry->watch_descriptor = -1;
 									}
-								}
-								else
-								{
-									PRINT_DEBUG( "inotify_thread (IN_DELETE): Watch point descriptor not found in the db ! (Descriptor 0x%.8X)", event->wd );
-								}
 
-								if(entry)
-								{
-									entry = entry->next;
-								}
+									// Send an "ObjectRemoved" (0x4003) MTP event message with the entry handle.
+									handle[0] = deleted_entry->handle;
+									mtp_push_event( ctx, MTP_EVENT_OBJECT_REMOVED, 1, (uint32_t *)&handle );
 
-								pthread_mutex_unlock( &ctx->inotify_mutex );
-							}while(entry);
-						}
+									PRINT_DEBUG( "inotify_thread (IN_DELETE): Entry %s deleted (Handle 0x%.8X)", event->name, deleted_entry->handle);
+								}
+							}
+							else
+							{
+								PRINT_DEBUG( "inotify_thread (IN_DELETE): Watch point descriptor not found in the db ! (Descriptor 0x%.8X)", event->wd );
+							}
+
+							if(entry)
+							{
+								entry = entry->next;
+							}
+
+							pthread_mutex_unlock( &ctx->inotify_mutex );
+						}while(entry);
 					}
 				}
 
@@ -275,7 +308,7 @@ int inotify_handler_addwatch( mtp_ctx * ctx, char * path )
 	{
 		if( !ctx->no_inotify )
 		{
-			return inotify_add_watch( ctx->inotify_fd, path, IN_CREATE | IN_DELETE );
+			return inotify_add_watch( ctx->inotify_fd, path, IN_CREATE | IN_DELETE | IN_MODIFY );
 		}
 	}
 
