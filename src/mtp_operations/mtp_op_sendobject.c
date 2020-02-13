@@ -30,6 +30,7 @@
 #include <fcntl.h>
 #include <pthread.h>
 #include <stdio.h>
+#include <sys/stat.h>
 
 #include "logs_out.h"
 
