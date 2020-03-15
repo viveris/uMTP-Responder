@@ -134,7 +134,7 @@ mtp_ctx * mtp_init_responder();
 int  mtp_incoming_packet(mtp_ctx * ctx);
 void mtp_set_usb_handle(mtp_ctx * ctx, void * handle, uint32_t max_packet_size);
 
-int mtp_load_config_file(mtp_ctx * context);
+int mtp_load_config_file(mtp_ctx * context, const char * conffile);
 
 uint32_t mtp_add_storage(mtp_ctx * ctx, char * path, char * description, uint32_t flags);
 int mtp_get_storage_index_by_name(mtp_ctx * ctx, char * name);
