@@ -61,16 +61,16 @@ void* io_thread(void* arg)
 	return NULL;
 }
 
-void * main_thread(void* arg)
+static int main_thread(void)
 {
 	usb_gadget * usb_ctx;
-	long retcode = 0;
+	int retcode = 0;
 	int loop_continue = 0;
 
 	mtp_context = mtp_init_responder();
 	if(!mtp_context)
 	{
-		return (void*)-1;
+		return -1;
 	}
 
 	mtp_load_config_file(mtp_context);
@@ -113,14 +113,13 @@ void * main_thread(void* arg)
 
 	mtp_deinit_responder(mtp_context);
 
-	return (void*)(retcode);
+	return retcode;
 }
 
 #define PARAMETER_IPCCMD "-cmd:"
 
 int main(int argc, char *argv[])
 {
-	pthread_t mtp_thread;
 	int retcode;
 
 	PRINT_MSG("uMTP Responder");
@@ -142,14 +141,9 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	retcode = pthread_create(&mtp_thread, NULL, main_thread, NULL);
+	retcode = main_thread();
 	if( retcode )
-	{
-		PRINT_ERROR("Error : Couldn't create the main thread...");
-		exit(-1);
-	}
+		PRINT_ERROR("Error : Couldn't run the main thread... (%d)", retcode);
 
-	pthread_join(mtp_thread, NULL);
-
-	exit(retcode);
+	return -retcode;
 }
