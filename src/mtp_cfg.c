@@ -487,7 +487,7 @@ int execute_line(mtp_ctx * context,char * line)
 	return 0;
 }
 
-int mtp_load_config_file(mtp_ctx * context)
+int mtp_load_config_file(mtp_ctx * context, const char * conffile)
 {
 	int err = 0;
 	FILE * f;
@@ -519,7 +519,7 @@ int mtp_load_config_file(mtp_ctx * context)
 
 	context->no_inotify = 0;
 
-	f = fopen(UMTPR_CONF_FILE,"r");
+	f = fopen(conffile, "r");
 	if(f)
 	{
 		do
@@ -537,7 +537,7 @@ int mtp_load_config_file(mtp_ctx * context)
 	}
 	else
 	{
-		PRINT_ERROR("Can't open %s ! Using default settings...", UMTPR_CONF_FILE);
+		PRINT_ERROR("Can't open %s ! Using default settings...", conffile);
 	}
 
 	PRINT_MSG("USB Device path : %s",context->usb_cfg.usb_device_path);

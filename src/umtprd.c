@@ -40,6 +40,8 @@
 
 #include "msgqueue.h"
 
+#include "default_cfg.h"
+
 mtp_ctx * mtp_context;
 
 void* io_thread(void* arg)
@@ -61,19 +63,19 @@ void* io_thread(void* arg)
 	return NULL;
 }
 
-void * main_thread(void* arg)
+static int main_thread(const char *conffile)
 {
 	usb_gadget * usb_ctx;
-	long retcode = 0;
+	int retcode = 0;
 	int loop_continue = 0;
 
 	mtp_context = mtp_init_responder();
 	if(!mtp_context)
 	{
-		return (void*)-1;
+		return -1;
 	}
 
-	mtp_load_config_file(mtp_context);
+	mtp_load_config_file(mtp_context, conffile);
 
 	loop_continue = mtp_context->usb_cfg.loop_on_disconnect;
 
@@ -113,14 +115,15 @@ void * main_thread(void* arg)
 
 	mtp_deinit_responder(mtp_context);
 
-	return (void*)(retcode);
+	return retcode;
 }
 
 #define PARAMETER_IPCCMD "-cmd:"
+#define PARAMETER_CONF "-conf"
 
 int main(int argc, char *argv[])
 {
-	pthread_t mtp_thread;
+	const char *conffile = UMTPR_CONF_FILE;
 	int retcode;
 
 	PRINT_MSG("uMTP Responder");
@@ -139,17 +142,15 @@ int main(int argc, char *argv[])
 				retcode = send_message_queue( &argv[1][sizeof(PARAMETER_IPCCMD)-1] );
 				exit(retcode);
 			}
+
+			if(!strcmp(argv[1],PARAMETER_CONF) && argc > 2)
+				conffile = argv[2];
 		}
 	}
 
-	retcode = pthread_create(&mtp_thread, NULL, main_thread, NULL);
+	retcode = main_thread(conffile);
 	if( retcode )
-	{
-		PRINT_ERROR("Error : Couldn't create the main thread...");
-		exit(-1);
-	}
+		PRINT_ERROR("Error : Couldn't run the main thread... (%d)", retcode);
 
-	pthread_join(mtp_thread, NULL);
-
-	exit(retcode);
+	return -retcode;
 }
