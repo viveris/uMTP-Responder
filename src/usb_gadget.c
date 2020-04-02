@@ -509,7 +509,7 @@ stall:
 int handle_ep0(usb_gadget * ctx)
 {
 	struct timeval timeout;
-	int ret, nevents, i;
+	int ret, nevents, i, cnt;
 	fd_set read_set;
 	struct usb_gadgetfs_event events[5];
 
@@ -528,7 +528,7 @@ int handle_ep0(usb_gadget * ctx)
 		}
 		else
 		{
-			PRINT_DEBUG("Select without timeout");
+			PRINT_DEBUG("handle_ep0 : Select without timeout");
 			ret = select(ctx->usb_device+1, &read_set, NULL, NULL, NULL);
 		}
 
@@ -550,36 +550,71 @@ int handle_ep0(usb_gadget * ctx)
 
 		nevents = ret / sizeof(events[0]);
 
-		PRINT_DEBUG("%d event(s)", nevents);
+		PRINT_DEBUG("handle_ep0 : %d event(s)", nevents);
 
 		for (i=0; i<nevents; i++)
 		{
 			switch (events[i].type)
 			{
-			case GADGETFS_CONNECT:
-				PRINT_DEBUG("EP0 CONNECT");
+				case GADGETFS_CONNECT:
+					PRINT_DEBUG("handle_ep0 : EP0 CONNECT event");
 				break;
-			case GADGETFS_DISCONNECT:
-				PRINT_DEBUG("EP0 DISCONNECT");
-				// Set timeout for a reconnection during the enumeration...
-				timeout.tv_sec = 1;
-				timeout.tv_usec = 0;
 
-				ctx->stop = 1;
-				if( !ctx->thread_not_started )
-				{
-					pthread_cancel(ctx->thread);
-					pthread_join(ctx->thread, NULL);
-					ctx->thread_not_started = 1;
-				}
+				case GADGETFS_DISCONNECT:
+					PRINT_DEBUG("handle_ep0 : EP0 DISCONNECT event");
 
+					// Set timeout for a reconnection during the enumeration...
+					timeout.tv_sec = 1;
+					timeout.tv_usec = 0;
+
+					ctx->stop = 1;
+					if( !ctx->thread_not_started )
+					{
+						pthread_cancel(ctx->thread);
+						pthread_join(ctx->thread, NULL);
+						ctx->thread_not_started = 1;
+					}
 				break;
-			case GADGETFS_SETUP:
-				PRINT_DEBUG("EP0 SETUP");
-				handle_setup_request(ctx, &events[i].u.setup);
+
+				case GADGETFS_SETUP:
+					PRINT_DEBUG("handle_ep0 : EP0 SETUP event");
+					handle_setup_request(ctx, &events[i].u.setup);
 				break;
-			case GADGETFS_NOP:
-			case GADGETFS_SUSPEND:
+
+				case GADGETFS_NOP:
+					PRINT_DEBUG("handle_ep0 : EP0 NOP event");
+				break;
+
+				case GADGETFS_SUSPEND:
+					PRINT_DEBUG("handle_ep0 : EP0 SUSPEND event");
+
+					if(mtp_context->transferring_file_data)
+					{
+						// Cancel the ongoing file transfer
+						mtp_context->cancel_req = 1;
+
+						cnt = 0;
+						while( mtp_context->cancel_req )
+						{
+							// Wait the end of the current transfer
+							if( cnt > 250 )
+							{
+								// Timeout... Unblock pending usb read/write.
+								PRINT_DEBUG("GADGETFS_SUSPEND : Forcing usb file transfer read/write exit...");
+								pthread_kill(ctx->thread, SIGUSR1);
+								usleep(500);
+								break;
+							}
+							else
+								usleep(1000);
+
+							cnt++;
+						}
+					}
+					break;
+
+				default:
+					PRINT_DEBUG("handle_ep0 : EP0 unknown event : %d",events[i].type);
 				break;
 			}
 		}

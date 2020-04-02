@@ -89,6 +89,8 @@ uint32_t mtp_op_SendObject(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int
 
 						if( file != -1 )
 						{
+							ctx->transferring_file_data = 1;
+
 							lseek64(file, ctx->SendObjInfoOffset, SEEK_SET);
 
 							sz = *size - sizeof(MTP_PACKET_HEADER);
@@ -129,6 +131,8 @@ uint32_t mtp_op_SendObject(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int
 							};
 
 							entry->size = lseek64(file, 0, SEEK_END);
+
+							ctx->transferring_file_data = 0;
 
 							close(file);
 

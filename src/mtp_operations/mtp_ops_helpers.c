@@ -86,6 +86,8 @@ mtp_size send_file_data( mtp_ctx * ctx, fs_entry * entry,mtp_offset offset, mtp_
 	file = entry_open(ctx->fs_db, entry);
 	if( file != -1 )
 	{
+		ctx->transferring_file_data = 1;
+
 		j = 0;
 		do
 		{
@@ -155,6 +157,8 @@ mtp_size send_file_data( mtp_ctx * ctx, fs_entry * entry,mtp_offset offset, mtp_
 			ofs = 0;
 
 		}while( j < actualsize && !ctx->cancel_req );
+
+		ctx->transferring_file_data = 0;
 
 		entry_close( file );
 
