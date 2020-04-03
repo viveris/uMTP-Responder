@@ -41,7 +41,11 @@ The uMTP-Responder allows files to be transferred to and from devices through th
 
 - Files & Folders renaming.
 
+- Files / folders changes async events.
+
 - Up to 16 storage instances supported.
+
+- Storages mount / unmount.
 
 - GadgetFS and FunctionFS/libcomposite modes supported.
 
@@ -53,7 +57,7 @@ You also need to enable the board-specific USB device port driver (eg. dwc2 for 
 uMTP-Responder is currently tested with various 4.x.x Linux kernel versions.
 This may work with earlier kernels (v3.x.x and some v2.6.x versions) but without any guarantee.
 
-### Boards successfully tested
+### Successfully tested boards
 
 - Atmel Sama5D2 Xplained.
 
@@ -67,9 +71,9 @@ This may work with earlier kernels (v3.x.x and some v2.6.x versions) but without
 
 - Samsung Artik710. (FunctionFS mode)
 
-### Client operating systems successfully tested
+### Successfully tested client operating systems
 
-- Windows 7, Windows 10, Linux.
+- Windows 7, Windows 10, Linux, Android.
 
 ## How to build it ?
 
