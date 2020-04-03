@@ -1,8 +1,37 @@
 =================================================
 * uMTP Responder
+* Lightweight USB Media Transfer Protocol (MTP) 
+* responder
+*
 * Copyright (c) 2018 - 2020 Viveris Technologies
+*
+* https://github.com/viveris/uMTP-Responder
+*
 * Release notes
 =================================================
+
+Noteworthy changes in release v1.3.6 (2020-Apr-3)
+=================================================
+
+* MTP Storage mount / unmount support (-cmd:mount:[store name] / -cmd:unmount:[store name] / ).
+
+* Config file :
+    * "storage" operation : new "notmounted" option.
+    * New usb_max_rd_buffer_size option (iMX6 issue workaround).
+    * New usb_max_wr_buffer_size option (iMX6 issue workaround).
+    * New read_buffer_cache_size option (iMX6 issue workaround).
+
+* Config file path can be changed in the command line (-conf:[Config file path]).
+
+* Async/inotify event : Send file size changes.
+
+* Fix : gadgetfs -> Handle unexpected disconnection while transferring a file.
+
+* Fix : Shared multi-drives inotify events.
+
+* Code fixes / improvements :
+    * MTP operations : Better errors handling.
+    * Code refactoring (MTP operations code separated).
 
 Noteworthy changes in release v1.0.0 (2019-10-7)
 =================================================
