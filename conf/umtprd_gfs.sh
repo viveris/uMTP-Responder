@@ -1,6 +1,8 @@
 #/bin/sh
 
-# RPi : start dwc2 & gadgetfs
+# GadgetFS uMTPrd startup example/test script
+
+# Raspberry Pi : start dwc2 & gadgetfs
 
 modprobe dwc2
 modprobe gadgetfs
