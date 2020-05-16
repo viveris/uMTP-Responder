@@ -71,7 +71,9 @@ static int get_file_info(mtp_ctx * ctx, const struct inotify_event *event, fs_en
 				{
 					fileinfo->isdirectory = 0;
 					fileinfo->size = 0;
-					strncpy( fileinfo->filename, event->name, 256 );
+
+					fileinfo->filename[FS_HANDLE_MAX_FILENAME_SIZE] = '\0';
+					strncpy( fileinfo->filename, event->name, FS_HANDLE_MAX_FILENAME_SIZE );
 				}
 
 				free( tmp_path );

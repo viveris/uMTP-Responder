@@ -131,7 +131,8 @@ int fs_entry_stat(char *path, filefoundinfo* fileinfo)
 			i--;
 		}
 
-		strncpy(fileinfo->filename,&path[i],256);
+		fileinfo->filename[FS_HANDLE_MAX_FILENAME_SIZE] = '\0';
+		strncpy(fileinfo->filename,&path[i],FS_HANDLE_MAX_FILENAME_SIZE);
 
 		return 1;
 	}

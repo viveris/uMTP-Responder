@@ -54,16 +54,16 @@ typedef struct mtp_usb_cfg_
 	uint16_t usb_max_packet_size;
 	uint8_t  usb_functionfs_mode;
 
-	char usb_device_path[MAX_CFG_STRING_SIZE];
-	char usb_endpoint_in[MAX_CFG_STRING_SIZE];
-	char usb_endpoint_out[MAX_CFG_STRING_SIZE];
-	char usb_endpoint_intin[MAX_CFG_STRING_SIZE];
+	char usb_device_path[MAX_CFG_STRING_SIZE + 1];
+	char usb_endpoint_in[MAX_CFG_STRING_SIZE + 1];
+	char usb_endpoint_out[MAX_CFG_STRING_SIZE + 1];
+	char usb_endpoint_intin[MAX_CFG_STRING_SIZE + 1];
 
-	char usb_string_manufacturer[MAX_CFG_STRING_SIZE];
-	char usb_string_product[MAX_CFG_STRING_SIZE];
-	char usb_string_serial[MAX_CFG_STRING_SIZE];
+	char usb_string_manufacturer[MAX_CFG_STRING_SIZE + 1];
+	char usb_string_product[MAX_CFG_STRING_SIZE + 1];
+	char usb_string_serial[MAX_CFG_STRING_SIZE + 1];
 
-	char usb_string_interface[MAX_CFG_STRING_SIZE];
+	char usb_string_interface[MAX_CFG_STRING_SIZE + 1];
 
 	int wait_connection;
 	int loop_on_disconnect;

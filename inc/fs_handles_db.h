@@ -31,6 +31,8 @@ typedef struct fs_entry fs_entry;
 typedef int64_t mtp_size;
 typedef int64_t mtp_offset;
 
+#define FS_HANDLE_MAX_FILENAME_SIZE 256
+
 struct fs_entry
 {
 	uint32_t handle;
@@ -67,7 +69,7 @@ typedef struct fs_handles_db_
 typedef struct filefoundinfo_
 {
 	int isdirectory;
-	char filename[256];
+	char filename[FS_HANDLE_MAX_FILENAME_SIZE + 1];
 	mtp_size size;
 }filefoundinfo;
 

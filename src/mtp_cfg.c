@@ -124,7 +124,7 @@ static int copy_param(char * dest, char * line, int offs)
 
 	i = 0;
 	insidequote = 0;
-	while( !is_end_line(line[offs]) && ( insidequote || !is_space(line[offs]) ) )
+	while( !is_end_line(line[offs]) && ( insidequote || !is_space(line[offs]) ) && (i < (MAX_CFG_STRING_SIZE - 1)) )
 	{
 		if(line[offs] != '"')
 		{
@@ -200,7 +200,7 @@ static int extract_cmd(char * line, char * command)
 
 	if( !is_end_line(line[offs]) )
 	{
-		while( !is_end_line(line[offs]) && !is_space(line[offs]) )
+		while( !is_end_line(line[offs]) && !is_space(line[offs]) && i < (MAX_CFG_STRING_SIZE - 1) )
 		{
 			command[i] = line[offs];
 			offs++;
@@ -493,6 +493,8 @@ int mtp_load_config_file(mtp_ctx * context, const char * conffile)
 	int err = 0;
 	FILE * f;
 	char line[MAX_CFG_STRING_SIZE];
+
+	memset((void*)&context->usb_cfg,0x00, sizeof(mtp_usb_cfg));
 
 	// Set default config
 	strncpy(context->usb_cfg.usb_device_path,         USB_DEV,                MAX_CFG_STRING_SIZE);
