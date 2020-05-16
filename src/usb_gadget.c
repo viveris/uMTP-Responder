@@ -27,7 +27,10 @@
 
 #include "buildconf.h"
 
+#include <endian.h>
 #include <inttypes.h>
+#include <pthread.h>
+#include <sys/time.h>
 
 #include <sys/ioctl.h>
 
@@ -38,7 +41,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdio.h>
-#include <pthread.h>
+
 #include <signal.h>
 
 #include <errno.h>
