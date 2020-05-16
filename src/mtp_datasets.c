@@ -26,6 +26,7 @@
 #include "buildconf.h"
 
 #include <inttypes.h>
+#include <pthread.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
