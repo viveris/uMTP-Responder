@@ -86,7 +86,7 @@ uint32_t mtp_op_SendObject(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int
 						if( mtp_packet_hdr->code == MTP_OPERATION_SEND_PARTIAL_OBJECT )
 							file = open(full_path,O_RDWR | O_LARGEFILE);
 						else
-							file = open(full_path,O_CREAT|O_WRONLY|O_TRUNC,S_IRUSR|S_IWUSR | O_LARGEFILE);
+							file = open(full_path,O_CREAT|O_WRONLY|O_TRUNC| O_LARGEFILE, S_IRUSR|S_IWUSR);
 
 						if( file != -1 )
 						{
