@@ -20,7 +20,7 @@
 /**
  * @file   mtp_op_sendobject.c
  * @brief  send object operation.
- * @author Jean-Fran�ois DEL NERO <Jean-Francois.DELNERO@viveris.fr>
+ * @author Jean-François DEL NERO <Jean-Francois.DELNERO@viveris.fr>
  */
 
 #include "buildconf.h"

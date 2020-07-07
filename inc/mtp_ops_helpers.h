@@ -20,7 +20,7 @@
 /**
  * @file   mtp_ops_helpers.h
  * @brief  mtp operations helpers
- * @author Jean-François DEL NERO <Jean-Francois.DELNERO@viveris.fr>
+ * @author Jean-FranÃ§ois DEL NERO <Jean-Francois.DELNERO@viveris.fr>
  */
 
 mtp_size send_file_data( mtp_ctx * ctx, fs_entry * entry,mtp_offset offset, mtp_size maxsize );

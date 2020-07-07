@@ -20,7 +20,7 @@
 /**
  * @file   mtp_op_getobject.c
  * @brief  get object operation
- * @author Jean-François DEL NERO <Jean-Francois.DELNERO@viveris.fr>
+ * @author Jean-FranÃ§ois DEL NERO <Jean-Francois.DELNERO@viveris.fr>
  */
 
 #include "buildconf.h"

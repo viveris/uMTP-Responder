@@ -20,7 +20,7 @@
 /**
  * @file   mtp_op_getobjectproplist.c
  * @brief  get object prop list operation.
- * @author Jean-François DEL NERO <Jean-Francois.DELNERO@viveris.fr>
+ * @author Jean-FranÃ§ois DEL NERO <Jean-Francois.DELNERO@viveris.fr>
  */
 
 #include "buildconf.h"

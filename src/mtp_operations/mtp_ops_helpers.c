@@ -20,7 +20,7 @@
 /**
  * @file   mtp_ops_helpers.c
  * @brief  mtp operations helpers
- * @author Jean-François DEL NERO <Jean-Francois.DELNERO@viveris.fr>
+ * @author Jean-FranÃ§ois DEL NERO <Jean-Francois.DELNERO@viveris.fr>
  */
 
 #include "buildconf.h"

@@ -20,7 +20,7 @@
 /**
  * @file   mtp_op_getdevicepropdesc.c
  * @brief  get device prop desc operation
- * @author Jean-François DEL NERO <Jean-Francois.DELNERO@viveris.fr>
+ * @author Jean-FranÃ§ois DEL NERO <Jean-Francois.DELNERO@viveris.fr>
  */
 
 #include "buildconf.h"
