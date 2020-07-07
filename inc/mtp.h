@@ -69,6 +69,7 @@ typedef struct mtp_usb_cfg_
 	int loop_on_disconnect;
 
 	int show_hidden_files;
+	int val_umask;
 
 }mtp_usb_cfg;
 
