@@ -71,6 +71,7 @@ enum
 	LOOP_ON_DISCONNECT,
 
 	SHOW_HIDDEN_FILES,
+	UMASK,
 
 	NO_INOTIFY
 
@@ -409,7 +410,27 @@ static int get_str_param(mtp_ctx * context, char * line,int cmd)
 	return 0;
 }
 
-kw_list kwlist[] =
+static int get_oct_param(mtp_ctx * context, char * line,int cmd)
+{
+    int i;
+    char tmp_txt[MAX_CFG_STRING_SIZE];
+    unsigned long param_value;
+
+    i = get_param(line, 1, tmp_txt);
+
+    if (i >= 0) {
+        param_value = strtol(tmp_txt, 0, 8);
+        switch (cmd) {
+            case UMASK:
+                context->usb_cfg.val_umask = param_value;
+                break;
+
+        }
+    }
+    return 0;
+}
+
+                kw_list kwlist[] =
 {
 	{"storage",                get_storage_params, STORAGE_CMD},
 	{"usb_vendor_id",          get_hex_param,   USBVENDORID_CMD},
@@ -438,6 +459,7 @@ kw_list kwlist[] =
 	{"loop_on_disconnect",     get_hex_param,   LOOP_ON_DISCONNECT},
 
 	{"show_hidden_files",      get_hex_param,   SHOW_HIDDEN_FILES},
+	{"umask",                  get_oct_param,   UMASK},
 
 	{"no_inotify",             get_hex_param,   NO_INOTIFY},
 
@@ -516,6 +538,7 @@ int mtp_load_config_file(mtp_ctx * context, const char * conffile)
 	context->usb_cfg.loop_on_disconnect = 0;
 
 	context->usb_cfg.show_hidden_files = 1;
+	context->usb_cfg.val_umask = 0111;
 
 	context->no_inotify = 0;
 
@@ -573,6 +596,7 @@ int mtp_load_config_file(mtp_ctx * context, const char * conffile)
 	PRINT_MSG("Wait for connection : %i",context->usb_cfg.wait_connection);
 	PRINT_MSG("Loop on disconnect : %i",context->usb_cfg.loop_on_disconnect);
 	PRINT_MSG("Show hidden files : %i",context->usb_cfg.show_hidden_files);
+	PRINT_MSG("umask : %03o",context->usb_cfg.val_umask);
 	PRINT_MSG("inotify : %s",context->no_inotify?"no":"yes");
 
 	return err;
