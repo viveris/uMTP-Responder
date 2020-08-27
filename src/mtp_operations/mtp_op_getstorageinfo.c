@@ -40,7 +40,7 @@
 
 uint32_t mtp_op_GetStorageInfo(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int * size,uint32_t * ret_params, int * ret_params_size)
 {
-	int ofs;
+	int ofs,tmp_ofs;
 	uint32_t storageid;
 
 	if(!ctx->fs_db)
@@ -49,12 +49,18 @@ uint32_t mtp_op_GetStorageInfo(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr,
 	storageid = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER) + 0, 4); // Get param 1 - Storage ID
 	if( mtp_get_storage_root(ctx,storageid) )
 	{
-		ofs = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer,0,0);
+		ofs = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer, ctx->usb_wr_buffer_max_size, 0,0);
+		if(ofs < 0)
+			goto error;
 
-		ofs += build_storageinfo_dataset(ctx, ctx->wrbuffer + sizeof(MTP_PACKET_HEADER), ctx->usb_wr_buffer_max_size - sizeof(MTP_PACKET_HEADER),storageid);
+		tmp_ofs = build_storageinfo_dataset(ctx, ctx->wrbuffer + sizeof(MTP_PACKET_HEADER), ctx->usb_wr_buffer_max_size - sizeof(MTP_PACKET_HEADER),storageid);
+		if(tmp_ofs < 0)
+			goto error;
+
+		ofs += tmp_ofs;
 
 		// Update packet size
-		poke32(ctx->wrbuffer, 0, ofs);
+		poke32(ctx->wrbuffer, 0, ctx->usb_wr_buffer_max_size, ofs);
 
 		PRINT_DEBUG("MTP_OPERATION_GET_STORAGE_INFO response (%d Bytes):",ofs);
 		PRINT_DEBUG_BUF(ctx->wrbuffer, ofs);
@@ -71,4 +77,8 @@ uint32_t mtp_op_GetStorageInfo(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr,
 	{
 		return MTP_RESPONSE_INVALID_STORAGE_ID;
 	}
+
+error:
+	return MTP_RESPONSE_GENERAL_ERROR;
 }
+

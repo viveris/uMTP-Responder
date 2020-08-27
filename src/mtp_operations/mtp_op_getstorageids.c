@@ -44,7 +44,9 @@ uint32_t mtp_op_GetStorageIDs(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, 
 	if(!ctx->fs_db)
 		return MTP_RESPONSE_SESSION_NOT_OPEN;
 
-	ofs = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer,0,0);
+	ofs = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer, ctx->usb_wr_buffer_max_size, 0,0);
+	if(ofs < 0)
+		goto error;
 
 	cnt = 0;
 	i = 0;
@@ -58,10 +60,12 @@ uint32_t mtp_op_GetStorageIDs(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, 
 		i++;
 	}
 
-	ofs = poke_array(ctx->wrbuffer, ofs, 4 * cnt, 4, (void*)ctx->temp_array, 1);
+	ofs = poke_array(ctx->wrbuffer, ofs, ctx->usb_wr_buffer_max_size, 4 * cnt, 4, (void*)ctx->temp_array, 1);
+	if(ofs < 0)
+		goto error;
 
 	// Update packet size
-	poke32(ctx->wrbuffer, 0, ofs);
+	poke32(ctx->wrbuffer, 0, ctx->usb_wr_buffer_max_size, ofs);
 
 	PRINT_DEBUG("MTP_OPERATION_GET_STORAGE_IDS response (%d Bytes):",ofs);
 	PRINT_DEBUG_BUF(ctx->wrbuffer, ofs);
@@ -73,4 +77,8 @@ uint32_t mtp_op_GetStorageIDs(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, 
 	*size = ofs;
 
 	return MTP_RESPONSE_OK;
+
+error:
+
+	return MTP_RESPONSE_GENERAL_ERROR;
 }

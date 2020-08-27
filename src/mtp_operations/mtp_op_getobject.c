@@ -60,7 +60,9 @@ uint32_t mtp_op_GetObject(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int 
 			return response_code;
 		}
 
-		sz = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer,0,0);
+		sz = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer, ctx->usb_wr_buffer_max_size, 0,0);
+		if(sz<0)
+			goto error;
 
 		actualsize = send_file_data( ctx, entry, 0, entry->size );
 		if( actualsize >= 0)
@@ -86,4 +88,9 @@ uint32_t mtp_op_GetObject(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int 
 	pthread_mutex_unlock( &ctx->inotify_mutex );
 
 	return response_code;
+
+error:
+	pthread_mutex_unlock( &ctx->inotify_mutex );
+
+	return MTP_RESPONSE_GENERAL_ERROR;
 }

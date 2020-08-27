@@ -44,7 +44,7 @@ uint32_t mtp_op_GetObjectPropValue(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_
 	uint32_t handle;
 	uint32_t prop_code;
 	fs_entry * entry;
-	int sz;
+	int sz,tmp_sz;
 
 	if(!ctx->fs_db)
 		return MTP_RESPONSE_SESSION_NOT_OPEN;
@@ -59,11 +59,17 @@ uint32_t mtp_op_GetObjectPropValue(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_
 	entry = get_entry_by_handle(ctx->fs_db, handle);
 	if( entry )
 	{
-		sz = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer,0,0);
-		sz += build_ObjectPropValue_dataset(ctx,ctx->wrbuffer + sizeof(MTP_PACKET_HEADER), ctx->usb_wr_buffer_max_size - sizeof(MTP_PACKET_HEADER), handle, prop_code);
+		sz = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer, ctx->usb_wr_buffer_max_size, 0,0);
+		if( sz < 0 )
+			goto error;
 
+		tmp_sz = build_ObjectPropValue_dataset(ctx,ctx->wrbuffer + sizeof(MTP_PACKET_HEADER), ctx->usb_wr_buffer_max_size - sizeof(MTP_PACKET_HEADER), handle, prop_code);
+		if( tmp_sz < 0 )
+			goto error;
+
+		sz += tmp_sz;
 		// Update packet size
-		poke32(ctx->wrbuffer, 0, sz);
+		poke32(ctx->wrbuffer, 0, ctx->usb_wr_buffer_max_size, sz);
 
 		PRINT_DEBUG("MTP_OPERATION_GET_OBJECT_PROP_VALUE response (%d Bytes):",sz);
 		PRINT_DEBUG_BUF(ctx->wrbuffer, sz);
@@ -86,4 +92,9 @@ uint32_t mtp_op_GetObjectPropValue(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_
 	pthread_mutex_unlock( &ctx->inotify_mutex );
 
 	return response_code;
+
+error:
+	pthread_mutex_unlock( &ctx->inotify_mutex );
+
+	return MTP_RESPONSE_GENERAL_ERROR;
 }

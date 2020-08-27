@@ -44,7 +44,7 @@ uint32_t mtp_op_GetObjectPropDesc(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_h
 	uint32_t response_code;
 	uint32_t format_id;
 	uint32_t property_id;
-	int sz;
+	int sz,tmp_sz;
 
 	if(!ctx->fs_db)
 		return MTP_RESPONSE_SESSION_NOT_OPEN;
@@ -54,13 +54,21 @@ uint32_t mtp_op_GetObjectPropDesc(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_h
 	property_id = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER), 4);  // Get param 1 - property id
 	format_id = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER) + 4, 4); // Get param 2 - format
 
-	sz = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer,0,0);
-	sz += build_properties_dataset(ctx,ctx->wrbuffer + sizeof(MTP_PACKET_HEADER), ctx->usb_wr_buffer_max_size - sizeof(MTP_PACKET_HEADER), property_id,format_id);
+	sz = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer, ctx->usb_wr_buffer_max_size, 0,0);
+	if(sz < 0)
+		goto error;
+
+	tmp_sz = build_properties_dataset(ctx,ctx->wrbuffer + sizeof(MTP_PACKET_HEADER), ctx->usb_wr_buffer_max_size - sizeof(MTP_PACKET_HEADER), property_id,format_id);
+
+	if(tmp_sz<0)
+		goto error;
+
+	sz += tmp_sz;
 
 	if ( sz > sizeof(MTP_PACKET_HEADER) )
 	{
 		// Update packet size
-		poke32(ctx->wrbuffer, 0, sz);
+		poke32(ctx->wrbuffer, 0, ctx->usb_wr_buffer_max_size, sz);
 
 		PRINT_DEBUG("MTP_OPERATION_GET_OBJECT_PROP_DESC response (%d Bytes):",sz);
 		PRINT_DEBUG_BUF(ctx->wrbuffer, sz);
@@ -83,4 +91,9 @@ uint32_t mtp_op_GetObjectPropDesc(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_h
 	pthread_mutex_unlock( &ctx->inotify_mutex );
 
 	return response_code;
+
+error:
+	pthread_mutex_unlock( &ctx->inotify_mutex );
+
+	return MTP_RESPONSE_GENERAL_ERROR;
 }

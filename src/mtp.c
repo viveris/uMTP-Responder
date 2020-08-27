@@ -138,7 +138,7 @@ void mtp_deinit_responder(mtp_ctx * ctx)
 	}
 }
 
-int build_response(mtp_ctx * ctx, uint32_t tx_id, uint16_t type, uint16_t status, void * buffer,void * datain,int size)
+int build_response(mtp_ctx * ctx, uint32_t tx_id, uint16_t type, uint16_t status, void * buffer, int maxsize, void * datain,int size)
 {
 	MTP_PACKET_HEADER tmp_hdr;
 	int ofs;
@@ -150,10 +150,10 @@ int build_response(mtp_ctx * ctx, uint32_t tx_id, uint16_t type, uint16_t status
 	tmp_hdr.code = status;
 	tmp_hdr.tx_id = tx_id;
 
-	ofs = poke_array(buffer, ofs, sizeof(MTP_PACKET_HEADER), 1, (unsigned char*)&tmp_hdr,0);
+	ofs = poke_array(buffer, ofs, maxsize, sizeof(MTP_PACKET_HEADER), 1, (unsigned char*)&tmp_hdr,0);
 
 	if(size)
-		ofs = poke_array(buffer, ofs, size, 1, (unsigned char*)datain,0);
+		ofs = poke_array(buffer, ofs, maxsize, size, 1, (unsigned char*)datain,0);
 
 	return ofs;
 }
@@ -569,12 +569,15 @@ int process_in_packet(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int raws
 	// Send the status response
 	if(response_code != MTP_RESPONSE_NO_RESPONSE)
 	{
-		size = build_response(ctx, mtp_packet_hdr->tx_id,MTP_CONTAINER_TYPE_RESPONSE, response_code, ctx->wrbuffer,&params,params_size);
+		size = build_response(ctx, mtp_packet_hdr->tx_id,MTP_CONTAINER_TYPE_RESPONSE, response_code, ctx->wrbuffer, ctx->usb_wr_buffer_max_size , &params,params_size);
 
-		PRINT_DEBUG("Status response (%d Bytes):",size);
-		PRINT_DEBUG_BUF(ctx->wrbuffer, size);
+		if(size >= 0)
+		{
+			PRINT_DEBUG("Status response (%d Bytes):",size);
+			PRINT_DEBUG_BUF(ctx->wrbuffer, size);
 
-		write_usb(ctx->usb_ctx,EP_DESCRIPTOR_IN,ctx->wrbuffer,size);
+			write_usb(ctx->usb_ctx,EP_DESCRIPTOR_IN,ctx->wrbuffer,size);
+		}
 	}
 	else
 	{
@@ -823,6 +826,8 @@ int mtp_push_event(mtp_ctx * ctx, uint32_t event, int nbparams, uint32_t * param
 	int ret;
 
 	size = build_event_dataset( ctx, event_buffer, sizeof(event_buffer), event , ctx->session_id, 0x00000000, nbparams, parameters);
+	if(size < 0)
+		return -1;
 
 	PRINT_DEBUG("mtp_push_event : Event packet buffer - %d Bytes :",size);
 	PRINT_DEBUG_BUF(event_buffer, size);
