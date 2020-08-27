@@ -66,6 +66,7 @@ enum
 	MANUFACTURER_STRING_CMD,
 	PRODUCT_STRING_CMD,
 	SERIAL_STRING_CMD,
+	VERSION_STRING_CMD,
 	INTERFACE_STRING_CMD,
 
 	WAIT_CONNECTION,
@@ -401,6 +402,10 @@ static int get_str_param(mtp_ctx * context, char * line,int cmd)
 				strncpy(context->usb_cfg.usb_string_serial,tmp_txt,MAX_CFG_STRING_SIZE);
 			break;
 
+			case VERSION_STRING_CMD:
+				strncpy(context->usb_cfg.usb_string_version,tmp_txt,MAX_CFG_STRING_SIZE);
+			break;
+
 			case INTERFACE_STRING_CMD:
 				strncpy(context->usb_cfg.usb_string_interface,tmp_txt,MAX_CFG_STRING_SIZE);
 			break;
@@ -433,6 +438,7 @@ kw_list kwlist[] =
 	{"manufacturer",           get_str_param,   MANUFACTURER_STRING_CMD},
 	{"product",                get_str_param,   PRODUCT_STRING_CMD},
 	{"serial",                 get_str_param,   SERIAL_STRING_CMD},
+	{"firmware_version",       get_str_param,   VERSION_STRING_CMD},
 	{"interface",              get_str_param,   INTERFACE_STRING_CMD},
 
 	{"wait",                   get_hex_param,   WAIT_CONNECTION},
@@ -504,6 +510,7 @@ int mtp_load_config_file(mtp_ctx * context, const char * conffile)
 	strncpy(context->usb_cfg.usb_string_manufacturer, MANUFACTURER,           MAX_CFG_STRING_SIZE);
 	strncpy(context->usb_cfg.usb_string_product,      PRODUCT,                MAX_CFG_STRING_SIZE);
 	strncpy(context->usb_cfg.usb_string_serial,       SERIALNUMBER,           MAX_CFG_STRING_SIZE);
+	strncpy(context->usb_cfg.usb_string_version,      "Rev A",                MAX_CFG_STRING_SIZE);
 	strncpy(context->usb_cfg.usb_string_interface,    "MTP",                  MAX_CFG_STRING_SIZE);
 
 	context->usb_cfg.usb_vendor_id       = USB_DEV_VENDOR_ID;
@@ -555,6 +562,7 @@ int mtp_load_config_file(mtp_ctx * context, const char * conffile)
 	PRINT_MSG("Manufacturer string : %s",context->usb_cfg.usb_string_manufacturer);
 	PRINT_MSG("Product string : %s",context->usb_cfg.usb_string_product);
 	PRINT_MSG("Serial string : %s",context->usb_cfg.usb_string_serial);
+	PRINT_MSG("Firmware Version string : %s", context->usb_cfg.usb_string_version);
 	PRINT_MSG("Interface string : %s",context->usb_cfg.usb_string_interface);
 
 	PRINT_MSG("USB Vendor ID : 0x%.4X",context->usb_cfg.usb_vendor_id);
