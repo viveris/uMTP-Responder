@@ -33,6 +33,8 @@
 
 #include "mtp_constant.h"
 
+#include "logs_out.h"
+
 int poke32(void * buffer, int index, int maxsize,uint32_t data)
 {
 	unsigned char *ptr;
@@ -41,7 +43,12 @@ int poke32(void * buffer, int index, int maxsize,uint32_t data)
 		return index;
 
 	if(index + 4 >= maxsize)
+	{
+#ifdef DEBUG
+		PRINT_DEBUG("poke32 : buffer overrun operation attempt ! index : %d, maxise : %d",index,maxsize);
+#endif
 		return -1;
+	}
 
 	ptr = ((unsigned char *)buffer);
 
@@ -63,7 +70,12 @@ int poke16(void * buffer, int index, int maxsize, uint16_t data)
 		return index;
 
 	if(index + 2 >= maxsize)
+	{
+#ifdef DEBUG
+		PRINT_DEBUG("poke16 : buffer overrun operation attempt ! index : %d, maxise : %d",index,maxsize);
+#endif
 		return -1;
+	}
 
 	ptr = ((unsigned char *)buffer);
 
@@ -81,7 +93,12 @@ int poke08(void * buffer, int index, int maxsize, uint8_t data)
 		return index;
 
 	if(index + 1 >= maxsize)
+	{
+#ifdef DEBUG
+		PRINT_DEBUG("poke08 : buffer overrun operation attempt ! index : %d, maxise : %d",index,maxsize);
+#endif
 		return -1;
+	}
 
 	*(((unsigned char *)buffer) + index) = ((uint8_t)data);
 	return index + 1;
@@ -141,7 +158,12 @@ int poke_string(void * buffer, int index, int maxsize, const char *str)
 	ptr = ((unsigned char *)buffer);
 
 	if( index + 1 >= maxsize )
+	{
+#ifdef DEBUG
+		PRINT_DEBUG("poke_string : buffer overrun operation attempt ! index : %d, maxise : %d",index,maxsize);
+#endif
 		return -1;
+	}
 
 	// Reserve string size .
 	sizeposition = index;
@@ -153,7 +175,12 @@ int poke_string(void * buffer, int index, int maxsize, const char *str)
 	len = char2unicodestring((char*)ptr, index, maxsize, (char*)str, 256);
 
 	if(len < 0)
+	{
+#ifdef DEBUG
+		PRINT_DEBUG("poke_string : char2unicodestring error %d !",len);
+#endif
 		return -1;
+	}
 
 	index += (len*2);
 
@@ -172,7 +199,12 @@ int poke_array(void * buffer, int index, int maxsize, int size, int elementsize,
 		return index;
 
 	if( index + (size + (prefixed*4)) >= maxsize )
+	{
+#ifdef DEBUG
+		PRINT_DEBUG("poke_array : buffer overrun operation attempt ! prefixed : %d, index : %d, maxise : %d",prefixed,index,maxsize);
+#endif
 		return -1;
+	}
 
 	ptr = ((unsigned char *)buffer);
 
