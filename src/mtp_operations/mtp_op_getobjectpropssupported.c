@@ -48,11 +48,11 @@ uint32_t mtp_op_GetObjectPropsSupported(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_pa
 	format_id = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER), 4); // Get param 1 - format
 
 	sz = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer, ctx->usb_wr_buffer_max_size, 0,0);
-	if(sz)
+	if(sz < 0)
 		goto error;
 
 	tmp_sz = build_properties_supported_dataset(ctx,ctx->wrbuffer + sizeof(MTP_PACKET_HEADER), ctx->usb_wr_buffer_max_size - sizeof(MTP_PACKET_HEADER), format_id);
-	if(tmp_sz)
+	if(tmp_sz < 0)
 		goto error;
 
 	sz += tmp_sz;
