@@ -92,7 +92,7 @@ int build_deviceinfo_dataset(mtp_ctx * ctx, void * buffer, int maxsize)
 
 	ofs = poke_string(buffer, ofs, maxsize, ctx->usb_cfg.usb_string_manufacturer);                     // Manufacturer
 	ofs = poke_string(buffer, ofs, maxsize, ctx->usb_cfg.usb_string_product);                          // Model
-	ofs = poke_string(buffer, ofs, maxsize, "Rev A");                                                  // Device Version
+	ofs = poke_string(buffer, ofs, maxsize, ctx->usb_cfg.usb_string_version);                                                  // Device Version
 	ofs = poke_string(buffer, ofs, maxsize, ctx->usb_cfg.usb_string_serial);                           // Serial Number
 
 	return ofs;

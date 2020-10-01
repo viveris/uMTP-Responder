@@ -62,6 +62,7 @@ typedef struct mtp_usb_cfg_
 	char usb_string_manufacturer[MAX_CFG_STRING_SIZE + 1];
 	char usb_string_product[MAX_CFG_STRING_SIZE + 1];
 	char usb_string_serial[MAX_CFG_STRING_SIZE + 1];
+	char usb_string_version[MAX_CFG_STRING_SIZE + 1];
 
 	char usb_string_interface[MAX_CFG_STRING_SIZE + 1];
 
