@@ -137,7 +137,8 @@ uint32_t mtp_op_SendObject(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int
 
 							close(file);
 
-              chmod(full_path, 0777 & (~ctx->usb_cfg.val_umask));
+							if(ctx->usb_cfg.val_umask >= 0)
+								chmod(full_path, 0777 & (~ctx->usb_cfg.val_umask));
 
 							if(ctx->cancel_req)
 							{
