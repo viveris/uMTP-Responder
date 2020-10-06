@@ -610,9 +610,13 @@ int mtp_load_config_file(mtp_ctx * context, const char * conffile)
 	PRINT_MSG("Loop on disconnect : %i",context->usb_cfg.loop_on_disconnect);
 	PRINT_MSG("Show hidden files : %i",context->usb_cfg.show_hidden_files);
 	if(context->usb_cfg.val_umask >= 0)
+	{
 		PRINT_MSG("File creation umask : %03o",context->usb_cfg.val_umask);
+	}
 	else
+	{
 		PRINT_MSG("File creation umask : System default umask");
+	}
 	PRINT_MSG("inotify : %s",context->no_inotify?"no":"yes");
 
 	return err;
