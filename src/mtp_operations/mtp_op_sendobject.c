@@ -20,7 +20,7 @@
 /**
  * @file   mtp_op_sendobject.c
  * @brief  send object operation.
- * @author Jean-Fran�ois DEL NERO <Jean-Francois.DELNERO@viveris.fr>
+ * @author Jean-François DEL NERO <Jean-Francois.DELNERO@viveris.fr>
  */
 
 #include "buildconf.h"
@@ -136,7 +136,8 @@ uint32_t mtp_op_SendObject(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int
 							ctx->transferring_file_data = 0;
 
 							close(file);
-							chmod(full_path, 0777 & (~ctx->usb_cfg.val_umask));
+
+              chmod(full_path, 0777 & (~ctx->usb_cfg.val_umask));
 
 							if(ctx->cancel_req)
 							{

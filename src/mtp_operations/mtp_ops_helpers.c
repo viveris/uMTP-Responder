@@ -77,7 +77,7 @@ mtp_size send_file_data( mtp_ctx * ctx, fs_entry * entry,mtp_offset offset, mtp_
 			actualsize = maxsize;
 	}
 
-	poke32(ctx->wrbuffer, 0, sizeof(MTP_PACKET_HEADER) + actualsize);
+	poke32(ctx->wrbuffer, 0, ctx->usb_wr_buffer_max_size, sizeof(MTP_PACKET_HEADER) + actualsize);
 
 	ofs = sizeof(MTP_PACKET_HEADER);
 

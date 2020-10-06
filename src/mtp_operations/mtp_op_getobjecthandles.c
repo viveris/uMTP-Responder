@@ -48,6 +48,7 @@ uint32_t mtp_op_GetObjectHandles(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hd
 	fs_entry * entry;
 	char * full_path;
 	char * tmp_str;
+	int sz;
 
 	if(!ctx->fs_db)
 		return MTP_RESPONSE_SESSION_NOT_OPEN;
@@ -56,7 +57,9 @@ uint32_t mtp_op_GetObjectHandles(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hd
 
 	storageid = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER) + 0, 4);        // Get param 1 - Storage ID
 
-	build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer,0,0);
+	sz = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer, ctx->usb_wr_buffer_max_size, 0,0);
+	if(sz < 0)
+		goto error;
 
 	parent_handle = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER)+ 8, 4);     // Get param 3 - parent handle
 
@@ -122,12 +125,12 @@ uint32_t mtp_op_GetObjectHandles(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hd
 	}
 
 	// Update packet size
-	poke32(ctx->wrbuffer, 0, sizeof(MTP_PACKET_HEADER) + ((1+nb_of_handles)*4) );
+	poke32(ctx->wrbuffer, 0, ctx->usb_wr_buffer_max_size, sizeof(MTP_PACKET_HEADER) + ((1+nb_of_handles)*4) );
 
 	// Build and send the handles array
 	ofs = sizeof(MTP_PACKET_HEADER);
 
-	ofs = poke32(ctx->wrbuffer, ofs, nb_of_handles);
+	ofs = poke32(ctx->wrbuffer, ofs, ctx->usb_wr_buffer_max_size, nb_of_handles);
 
 	PRINT_DEBUG("MTP_OPERATION_GET_OBJECT_HANDLES response :");
 
@@ -140,11 +143,14 @@ uint32_t mtp_op_GetObjectHandles(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hd
 			if(entry)
 			{
 				PRINT_DEBUG("File : %s Handle:%.8x",entry->name,entry->handle);
-				ofs = poke32(ctx->wrbuffer, ofs, entry->handle);
+				ofs = poke32(ctx->wrbuffer, ofs, ctx->usb_wr_buffer_max_size, entry->handle);
 
 				handle_index++;
 			}
-		}while( ofs < ctx->max_packet_size && handle_index < nb_of_handles);
+		}while( ofs >= 0 && ofs < ctx->max_packet_size && handle_index < nb_of_handles);
+
+		if(sz < 0)
+			goto error;
 
 		PRINT_DEBUG_BUF(ctx->wrbuffer, ofs);
 
@@ -161,4 +167,9 @@ uint32_t mtp_op_GetObjectHandles(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hd
 	pthread_mutex_unlock( &ctx->inotify_mutex );
 
 	return MTP_RESPONSE_OK;
+
+error:
+	pthread_mutex_unlock( &ctx->inotify_mutex );
+
+	return MTP_RESPONSE_GENERAL_ERROR;
 }

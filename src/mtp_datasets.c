@@ -49,13 +49,13 @@ int build_deviceinfo_dataset(mtp_ctx * ctx, void * buffer, int maxsize)
 {
 	int ofs,i,elements_cnt;
 
-	ofs = poke16(buffer, 0, MTP_VERSION);                                                   // Standard Version
-	ofs = poke32(buffer, ofs, 0x00000006);                                                  // MTP Vendor Extension ID
-	ofs = poke16(buffer, ofs, MTP_VERSION);                                                 // MTP Version
-	ofs = poke_string(buffer, ofs, DevInfos_MTP_Extensions);                                // MTP Extensions
-	ofs = poke16(buffer, ofs, 0x0000);                                                      // Functional Mode
-	ofs = poke_array(buffer, ofs, supported_op_size, 2, (void*)&supported_op,1);            // Operations Supported
-	ofs = poke_array(buffer, ofs, supported_event_size, 2, (void*)&supported_event,1);      // Events Supported
+	ofs = poke16(buffer, 0, maxsize, MTP_VERSION);                                                   // Standard Version
+	ofs = poke32(buffer, ofs, maxsize, 0x00000006);                                                  // MTP Vendor Extension ID
+	ofs = poke16(buffer, ofs, maxsize, MTP_VERSION);                                                 // MTP Version
+	ofs = poke_string(buffer, ofs, maxsize, DevInfos_MTP_Extensions);                                // MTP Extensions
+	ofs = poke16(buffer, ofs, maxsize, 0x0000);                                                      // Functional Mode
+	ofs = poke_array(buffer, ofs, maxsize, supported_op_size, 2, (void*)&supported_op,1);            // Operations Supported
+	ofs = poke_array(buffer, ofs, maxsize, supported_event_size, 2, (void*)&supported_event,1);      // Events Supported
 
 	// Supported device properties
 	elements_cnt = 0;
@@ -64,10 +64,10 @@ int build_deviceinfo_dataset(mtp_ctx * ctx, void * buffer, int maxsize)
 		elements_cnt++;
 	}
 
-	ofs = poke32(buffer, ofs, elements_cnt);
+	ofs = poke32(buffer, ofs, maxsize, elements_cnt);
 	for( i = 0; i < elements_cnt ; i++ )
 	{
-		ofs = poke16(buffer, ofs, dev_properties[i].prop_code);
+		ofs = poke16(buffer, ofs, maxsize, dev_properties[i].prop_code);
 	}
 
 
@@ -75,7 +75,7 @@ int build_deviceinfo_dataset(mtp_ctx * ctx, void * buffer, int maxsize)
 
 	// Capture Formats... (No capture format)
 
-	ofs = poke32(buffer, ofs, 0x00000000);
+	ofs = poke32(buffer, ofs, maxsize, 0x00000000);
 
 	// Playback Formats
 	elements_cnt = 0;
@@ -84,16 +84,16 @@ int build_deviceinfo_dataset(mtp_ctx * ctx, void * buffer, int maxsize)
 		elements_cnt++;
 	}
 
-	ofs = poke32(buffer, ofs, elements_cnt);
+	ofs = poke32(buffer, ofs, maxsize, elements_cnt);
 	for( i = 0; i < elements_cnt ; i++ )
 	{
-		ofs = poke16(buffer, ofs, fmt_properties[i].format_code);
+		ofs = poke16(buffer, ofs, maxsize, fmt_properties[i].format_code);
 	}
 
-	ofs = poke_string(buffer, ofs, ctx->usb_cfg.usb_string_manufacturer);                     // Manufacturer
-	ofs = poke_string(buffer, ofs, ctx->usb_cfg.usb_string_product);                          // Model
-	ofs = poke_string(buffer, ofs, "Rev A");                                                  // Device Version
-	ofs = poke_string(buffer, ofs, ctx->usb_cfg.usb_string_serial);                           // Serial Number
+	ofs = poke_string(buffer, ofs, maxsize, ctx->usb_cfg.usb_string_manufacturer);                     // Manufacturer
+	ofs = poke_string(buffer, ofs, maxsize, ctx->usb_cfg.usb_string_product);                          // Model
+	ofs = poke_string(buffer, ofs, maxsize, ctx->usb_cfg.usb_string_version);                                                  // Device Version
+	ofs = poke_string(buffer, ofs, maxsize, ctx->usb_cfg.usb_string_serial);                           // Serial Number
 
 	return ofs;
 }
@@ -118,14 +118,14 @@ int build_storageinfo_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uint32_t 
 	if(storage_description && storage_path)
 	{
 		PRINT_DEBUG("Add storageinfo for %s", storage_path);
-		ofs = poke16(buffer, ofs, MTP_STORAGE_FIXED_RAM);                               // Storage Type
-		ofs = poke16(buffer, ofs, MTP_STORAGE_FILESYSTEM_HIERARCHICAL);                 // Filesystem Type
+		ofs = poke16(buffer, ofs, maxsize, MTP_STORAGE_FIXED_RAM);                               // Storage Type
+		ofs = poke16(buffer, ofs, maxsize, MTP_STORAGE_FILESYSTEM_HIERARCHICAL);                 // Filesystem Type
 
 		// Access Capability
 		if( storage_flags & UMTP_STORAGE_READONLY )
-			ofs = poke16(buffer, ofs, MTP_STORAGE_READ_ONLY_WITHOUT_DELETE);
+			ofs = poke16(buffer, ofs, maxsize, MTP_STORAGE_READ_ONLY_WITHOUT_DELETE);
 		else
-			ofs = poke16(buffer, ofs, MTP_STORAGE_READ_WRITE);
+			ofs = poke16(buffer, ofs, maxsize, MTP_STORAGE_READ_WRITE);
 
 		if(statvfs(storage_path, &fsbuf) == 0)
 		{
@@ -139,18 +139,18 @@ int build_storageinfo_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uint32_t 
 			PRINT_WARN("Failed to get statvfs for %s", storage_path);
 		}
 
-		ofs = poke32(buffer, ofs, totalspace&0x00000000FFFFFFFF);                       // Max Capacity
-		ofs = poke32(buffer, ofs, (totalspace>>32));                                    //
+		ofs = poke32(buffer, ofs, maxsize, totalspace&0x00000000FFFFFFFF);                       // Max Capacity
+		ofs = poke32(buffer, ofs, maxsize, (totalspace>>32));                                    //
 
-		ofs = poke32(buffer, ofs, freespace&0x00000000FFFFFFFF);                        // Free space in Bytes
-		ofs = poke32(buffer, ofs, (freespace>>32));                                     //
+		ofs = poke32(buffer, ofs, maxsize, freespace&0x00000000FFFFFFFF);                        // Free space in Bytes
+		ofs = poke32(buffer, ofs, maxsize, (freespace>>32));                                     //
 
-		ofs = poke32(buffer, ofs, 0x40000000);                                          // Free Space In Objects
+		ofs = poke32(buffer, ofs, maxsize, 0x40000000);                                          // Free Space In Objects
 
-		ofs = poke_string(buffer, ofs, storage_description);                            // Storage Description
+		ofs = poke_string(buffer, ofs, maxsize, storage_description);                            // Storage Description
 
 		sprintf(volumeident,"UMTPRD_%.8X",storageid);
-		ofs = poke_string(buffer, ofs, volumeident);                                    // Volume Identifier
+		ofs = poke_string(buffer, ofs, maxsize, volumeident);                                    // Volume Identifier
 	}
 	else
 	{
@@ -186,47 +186,47 @@ int build_objectinfo_dataset(mtp_ctx * ctx, void * buffer, int maxsize,fs_entry 
 		return 0;
 	}
 
-	ofs = poke32(buffer, ofs, entry->storage_id);                                       // StorageID  (NR)
+	ofs = poke32(buffer, ofs, maxsize, entry->storage_id);                                       // StorageID  (NR)
 	if(entry->flags & ENTRY_IS_DIR)
-		ofs = poke16(buffer, ofs, MTP_FORMAT_ASSOCIATION);                              // ObjectFormat Code
+		ofs = poke16(buffer, ofs, maxsize, MTP_FORMAT_ASSOCIATION);                              // ObjectFormat Code
 	else
-		ofs = poke16(buffer, ofs, MTP_FORMAT_UNDEFINED);                                // ObjectFormat Code
-	ofs = poke16(buffer, ofs, 0x0000);                                                  // Protection Status (NR)
+		ofs = poke16(buffer, ofs, maxsize, MTP_FORMAT_UNDEFINED);                                // ObjectFormat Code
+	ofs = poke16(buffer, ofs, maxsize, 0x0000);                                                  // Protection Status (NR)
 
 	entry->size = entrystat.st_size;
 
-	ofs = poke32(buffer, ofs, entry->size);                                             // Object Compressed Size
-	ofs = poke16(buffer, ofs, 0x0000);                                                  // Thumb Format (NR)
-	ofs = poke32(buffer, ofs, 0x00000000);                                              // Thumb Compressed Size (NR)
-	ofs = poke32(buffer, ofs, 0x00000000);                                              // Thumb Pix Width (NR)
-	ofs = poke32(buffer, ofs, 0x00000000);                                              // Thumb Pix Height (NR)
-	ofs = poke32(buffer, ofs, 0x00000000);                                              // Image Pix Width (NR)
-	ofs = poke32(buffer, ofs, 0x00000000);                                              // Image Pix Height (NR)
-	ofs = poke32(buffer, ofs, 0x00000000);                                              // Image Bit Depth (NR)
-	ofs = poke32(buffer, ofs, entry->parent);                                           // Parent Object (NR)
+	ofs = poke32(buffer, ofs, maxsize, entry->size);                                             // Object Compressed Size
+	ofs = poke16(buffer, ofs, maxsize, 0x0000);                                                  // Thumb Format (NR)
+	ofs = poke32(buffer, ofs, maxsize, 0x00000000);                                              // Thumb Compressed Size (NR)
+	ofs = poke32(buffer, ofs, maxsize, 0x00000000);                                              // Thumb Pix Width (NR)
+	ofs = poke32(buffer, ofs, maxsize, 0x00000000);                                              // Thumb Pix Height (NR)
+	ofs = poke32(buffer, ofs, maxsize, 0x00000000);                                              // Image Pix Width (NR)
+	ofs = poke32(buffer, ofs, maxsize, 0x00000000);                                              // Image Pix Height (NR)
+	ofs = poke32(buffer, ofs, maxsize, 0x00000000);                                              // Image Bit Depth (NR)
+	ofs = poke32(buffer, ofs, maxsize, entry->parent);                                           // Parent Object (NR)
 
 	if(entry->flags & 0x000001)
-		ofs = poke16(buffer, ofs, MTP_ASSOCIATION_TYPE_GENERIC_FOLDER);                 // Association Type
+		ofs = poke16(buffer, ofs, maxsize, MTP_ASSOCIATION_TYPE_GENERIC_FOLDER);                 // Association Type
 	else
-		ofs = poke16(buffer, ofs, 0x0000);                                              // Association Type
+		ofs = poke16(buffer, ofs, maxsize, 0x0000);                                              // Association Type
 
-	ofs = poke32(buffer, ofs, 0x00000000);                                              // Association Description
-	ofs = poke32(buffer, ofs, 0x00000000);                                              // Sequence Number (NR)
-	ofs = poke_string(buffer, ofs,entry->name);                                         // Filename
+	ofs = poke32(buffer, ofs, maxsize, 0x00000000);                                              // Association Description
+	ofs = poke32(buffer, ofs, maxsize, 0x00000000);                                              // Sequence Number (NR)
+	ofs = poke_string(buffer, ofs, maxsize, entry->name);                                         // Filename
 
 	// Date Created (NR) "YYYYMMDDThhmmss.s"
 	t = entrystat.st_mtime;
 	localtime_r(&t, &lt);
 	snprintf(timestr,sizeof(timestr),"%.4d%.2d%.2dT%.2d%.2d%.2d",1900 + lt.tm_year, lt.tm_mon + 1, lt.tm_mday, lt.tm_hour, lt.tm_min, lt.tm_sec);
-	ofs = poke_string(buffer, ofs,timestr);
+	ofs = poke_string(buffer, ofs, maxsize, timestr);
 
 	// Date Modified (NR) "YYYYMMDDThhmmss.s"
 	t = entrystat.st_mtime;
 	localtime_r(&t, &lt);
 	snprintf(timestr,sizeof(timestr),"%.4d%.2d%.2dT%.2d%.2d%.2d",1900 + lt.tm_year, lt.tm_mon + 1, lt.tm_mday, lt.tm_hour, lt.tm_min, lt.tm_sec);
-	ofs = poke_string(buffer, ofs,timestr);
+	ofs = poke_string(buffer, ofs, maxsize, timestr);
 
-	ofs = poke08(buffer, ofs, 0x00);      // Keywords (NR)
+	ofs = poke08(buffer, ofs, maxsize, 0x00);      // Keywords (NR)
 
 	if(path)
 	{
@@ -241,17 +241,17 @@ int build_event_dataset(mtp_ctx * ctx, void * buffer, int maxsize, uint32_t even
 
 	ofs = 0;
 
-	ofs = poke32(buffer, ofs, 0);                                            // Size
-	ofs = poke16(buffer, ofs, MTP_CONTAINER_TYPE_EVENT);                     // Type
-	ofs = poke16(buffer, ofs, event );                                       // Event Code
-	ofs = poke32(buffer, ofs, ctx->session_id);                              // MTP Session ID
+	ofs = poke32(buffer, ofs, maxsize, 0);                                            // Size
+	ofs = poke16(buffer, ofs, maxsize, MTP_CONTAINER_TYPE_EVENT);                     // Type
+	ofs = poke16(buffer, ofs, maxsize, event );                                       // Event Code
+	ofs = poke32(buffer, ofs, maxsize, ctx->session_id);                              // MTP Session ID
 	for(i=0;i<nbparams;i++)
 	{
-		ofs = poke32(buffer, ofs, parameters[i]);
+		ofs = poke32(buffer, ofs, maxsize, parameters[i]);
 	}
 
 	// Update size
-	poke32(buffer, 0, ofs);
+	poke32(buffer, 0, maxsize, ofs);
 
 	return ofs;
 }

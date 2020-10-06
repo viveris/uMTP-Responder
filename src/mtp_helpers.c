@@ -33,9 +33,22 @@
 
 #include "mtp_constant.h"
 
-int poke32(void * buffer, int index,uint32_t data)
+#include "logs_out.h"
+
+int poke32(void * buffer, int index, int maxsize,uint32_t data)
 {
 	unsigned char *ptr;
+
+	if(index < 0)
+		return index;
+
+	if(index + 4 >= maxsize)
+	{
+#ifdef DEBUG
+		PRINT_DEBUG("poke32 : buffer overrun operation attempt ! index : %d, maxise : %d",index,maxsize);
+#endif
+		return -1;
+	}
 
 	ptr = ((unsigned char *)buffer);
 
@@ -49,9 +62,20 @@ int poke32(void * buffer, int index,uint32_t data)
 	return index + 4;
 }
 
-int poke16(void * buffer, int index, uint16_t data)
+int poke16(void * buffer, int index, int maxsize, uint16_t data)
 {
 	unsigned char *ptr;
+
+	if(index < 0)
+		return index;
+
+	if(index + 2 >= maxsize)
+	{
+#ifdef DEBUG
+		PRINT_DEBUG("poke16 : buffer overrun operation attempt ! index : %d, maxise : %d",index,maxsize);
+#endif
+		return -1;
+	}
 
 	ptr = ((unsigned char *)buffer);
 
@@ -63,8 +87,19 @@ int poke16(void * buffer, int index, uint16_t data)
 	return index + 2;
 }
 
-int poke08(void * buffer, int index, uint8_t data)
+int poke08(void * buffer, int index, int maxsize, uint8_t data)
 {
+	if(index < 0)
+		return index;
+
+	if(index + 1 >= maxsize)
+	{
+#ifdef DEBUG
+		PRINT_DEBUG("poke08 : buffer overrun operation attempt ! index : %d, maxise : %d",index,maxsize);
+#endif
+		return -1;
+	}
+
 	*(((unsigned char *)buffer) + index) = ((uint8_t)data);
 	return index + 1;
 }
@@ -111,13 +146,24 @@ uint64_t peek64(void * buffer, int index, int typesize)
 	return data;
 }
 
-int poke_string(void * buffer, int index, const char *str)
+int poke_string(void * buffer, int index, int maxsize, const char *str)
 {
 	unsigned char *ptr;
 	int sizeposition;
 	int len;
 
+	if(index < 0)
+		return index;
+
 	ptr = ((unsigned char *)buffer);
+
+	if( index + 1 >= maxsize )
+	{
+#ifdef DEBUG
+		PRINT_DEBUG("poke_string : buffer overrun operation attempt ! index : %d, maxise : %d",index,maxsize);
+#endif
+		return -1;
+	}
 
 	// Reserve string size .
 	sizeposition = index;
@@ -126,20 +172,39 @@ int poke_string(void * buffer, int index, const char *str)
 	index++;
 
 	// Char to unicode...
-	len = char2unicodestring((char*)&ptr[index], (char*)str, 256);
+	len = char2unicodestring((char*)ptr, index, maxsize, (char*)str, 256);
+
+	if(len < 0)
+	{
+#ifdef DEBUG
+		PRINT_DEBUG("poke_string : char2unicodestring error %d !",len);
+#endif
+		return -1;
+	}
 
 	index += (len*2);
 
 	// Update size position
 	ptr[sizeposition] = len;
-	
+
 	return index;
 }
 
-int poke_array(void * buffer, int index, int size, int elementsize, const unsigned char *bufferin,int prefixed)
+int poke_array(void * buffer, int index, int maxsize, int size, int elementsize, const unsigned char *bufferin,int prefixed)
 {
 	unsigned char *ptr;
 	int i,nbelement;
+
+	if(index < 0)
+		return index;
+
+	if( index + (size + (prefixed*4)) >= maxsize )
+	{
+#ifdef DEBUG
+		PRINT_DEBUG("poke_array : buffer overrun operation attempt ! prefixed : %d, index : %d, maxise : %d",prefixed,index,maxsize);
+#endif
+		return -1;
+	}
 
 	ptr = ((unsigned char *)buffer);
 

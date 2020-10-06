@@ -317,26 +317,31 @@ uint16_t utf2unicode(const unsigned char* pInput, int * ofs)
 	return 0x0000;
 }
 
-int char2unicodestring(char * unicodestr, char * str, int unicodestrsize)
+int char2unicodestring(char * unicodestr, int index, int maxsize, char * str, int unicodestrsize)
 {
 	uint16_t unicode;
-	int ofs, i, len;
+	int ofs, len, start;
 
+	start = index;
 	len = 0;
-	i = 0;
 	ofs = 0;
 	do{
 		unicode = utf2unicode((unsigned char*)str, &ofs);
 		str = str + ofs;
-		unicodestr[i++] = unicode & 0xFF;
-		unicodestr[i++] = (unicode >> 8) & 0xFF;
+		if(index + 2 >= maxsize)
+			return -1;
+		unicodestr[index++] = unicode & 0xFF;
+		unicodestr[index++] = (unicode >> 8) & 0xFF;
 		len++;
-	}while(unicode && ofs && i < unicodestrsize*2);
+	}while(unicode && ofs && index < unicodestrsize*2);
 
-	if( i >= unicodestrsize*2)
+	if( len >= unicodestrsize)
 	{
-		unicodestr[(unicodestrsize*2)-2] = 0x00;
-		unicodestr[(unicodestrsize*2)-1] = 0x00;
+		if(start + ((unicodestrsize*2)-2) >= maxsize)
+			return -1;
+
+		unicodestr[start + ((unicodestrsize*2)-2)] = 0x00;
+		unicodestr[start + ((unicodestrsize*2)-1)] = 0x00;
 		len = unicodestrsize;
 	}
 

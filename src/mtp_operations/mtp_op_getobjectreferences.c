@@ -53,12 +53,15 @@ uint32_t mtp_op_GetObjectReferences(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet
 	entry = get_entry_by_handle(ctx->fs_db, handle);
 	if( entry )
 	{
-		sz = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer,0,0);
+		sz = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer, ctx->usb_wr_buffer_max_size, 0,0);
 
-		sz = poke32(ctx->wrbuffer, sz, 0x0000000);
+		sz = poke32(ctx->wrbuffer, sz, ctx->usb_wr_buffer_max_size, 0x0000000);
+
+		if(sz < 0)
+			goto error;
 
 		// Update packet size
-		poke32(ctx->wrbuffer, 0, sz);
+		poke32(ctx->wrbuffer, 0, ctx->usb_wr_buffer_max_size, sz);
 
 		PRINT_DEBUG("MTP_OPERATION_GET_OBJECT_REFERENCES response (%d Bytes):",sz);
 		PRINT_DEBUG_BUF(ctx->wrbuffer, sz);
@@ -79,4 +82,9 @@ uint32_t mtp_op_GetObjectReferences(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet
 	pthread_mutex_unlock( &ctx->inotify_mutex );
 
 	return response_code;
+
+error:
+	pthread_mutex_unlock( &ctx->inotify_mutex );
+
+	return MTP_RESPONSE_GENERAL_ERROR;
 }
