@@ -327,11 +327,11 @@ static int get_hex_param(mtp_ctx * context, char * line,int cmd)
 			break;
 
 			case USBMAXRDBUFFERSIZE_CMD:
-				context->usb_rd_buffer_max_size = param_value;
+				context->usb_rd_buffer_max_size = param_value & (~(512-1));
 			break;
 
 			case USBMAXWRBUFFERSIZE_CMD:
-				context->usb_wr_buffer_max_size = param_value;
+				context->usb_wr_buffer_max_size = param_value & (~(512-1));
 			break;
 
 			case READBUFFERSIZE_CMD:
