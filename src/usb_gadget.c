@@ -232,6 +232,19 @@ void fill_ep_descriptor(mtp_ctx * ctx, usb_gadget * usbctx,struct usb_endpoint_d
 		desc->bInterval = 6;
 	}
 
+#if defined(CONFIG_USB_SS_SUPPORT)
+	if(flags & EP_SS_MODE)
+	{
+		ep_cfg_descriptor * ss_descriptor;
+
+		ss_descriptor = (ep_cfg_descriptor *)desc;
+
+		ss_descriptor->ep_desc_comp.bLength = sizeof(struct usb_ss_ep_comp_descriptor);
+		ss_descriptor->ep_desc_comp.bDescriptorType = USB_DT_SS_ENDPOINT_COMP;
+		ss_descriptor->ep_desc_comp.bMaxBurst = 15;
+	}
+#endif
+
 	PRINT_DEBUG("fill_ep_descriptor:");
 	PRINT_DEBUG_BUF(desc, sizeof(struct usb_endpoint_descriptor_no_audio));
 
@@ -241,7 +254,8 @@ void fill_ep_descriptor(mtp_ctx * ctx, usb_gadget * usbctx,struct usb_endpoint_d
 int init_ep(usb_gadget * ctx,int index,int ffs_mode)
 {
 	int fd,ret;
-	struct usb_endpoint_descriptor_no_audio * descriptor_ptr;
+	void * descriptor_ptr;
+	int descriptor_size;
 
 	PRINT_DEBUG("Init end point %s (%d)",ctx->ep_path[index],index);
 	fd = open(ctx->ep_path[index], O_RDWR);
@@ -255,14 +269,19 @@ int init_ep(usb_gadget * ctx,int index,int ffs_mode)
 
 	ctx->ep_config[index]->head = 1;
 
+	descriptor_size = 0;
+
 	if( ctx->usb_ffs_config )
 	{
-#ifdef CONFIG_USB_FS_SUPPORT
-		descriptor_ptr = (struct usb_endpoint_descriptor_no_audio *)&ctx->usb_ffs_config->ep_desc;
-#elif  CONFIG_USB_HS_SUPPORT
-		descriptor_ptr = (struct usb_endpoint_descriptor_no_audio *)&ctx->usb_ffs_config->ep_desc_hs;
-#elif  CONFIG_USB_SS_SUPPORT
-		descriptor_ptr = (struct usb_endpoint_descriptor_no_audio *)&ctx->usb_ffs_config->ep_desc_ss;
+#if defined(CONFIG_USB_SS_SUPPORT)
+		descriptor_ptr = (void *)&ctx->usb_ffs_config->ep_desc_ss;
+		descriptor_size = sizeof(ep_cfg_descriptor);
+#elif defined(CONFIG_USB_HS_SUPPORT)
+		descriptor_ptr = (void *)&ctx->usb_ffs_config->ep_desc_hs;
+		descriptor_size = sizeof(struct usb_endpoint_descriptor_no_audio);
+#elif defined(CONFIG_USB_FS_SUPPORT)
+		descriptor_ptr = (void *)&ctx->usb_ffs_config->ep_desc_fs;
+		descriptor_size = sizeof(struct usb_endpoint_descriptor_no_audio);
 #else
 
 #error Configuration Error ! At least one USB mode support must be enabled ! (CONFIG_USB_FS_SUPPORT/CONFIG_USB_HS_SUPPORT/CONFIG_USB_SS_SUPPORT)
@@ -271,12 +290,15 @@ int init_ep(usb_gadget * ctx,int index,int ffs_mode)
 	}
 	else
 	{
-#ifdef CONFIG_USB_FS_SUPPORT
-		descriptor_ptr = (struct usb_endpoint_descriptor_no_audio *)&ctx->usb_config->ep_desc;
-#elif  CONFIG_USB_HS_SUPPORT
-		descriptor_ptr = (struct usb_endpoint_descriptor_no_audio *)&ctx->usb_config->ep_desc_hs;
-#elif  CONFIG_USB_SS_SUPPORT
-		descriptor_ptr = (struct usb_endpoint_descriptor_no_audio *)&ctx->usb_config->ep_desc_ss;
+#if defined(CONFIG_USB_SS_SUPPORT)
+		descriptor_ptr = (void *)&ctx->usb_config->ep_desc_ss;
+		descriptor_size = sizeof(ep_cfg_descriptor);
+#elif defined(CONFIG_USB_HS_SUPPORT)
+		descriptor_ptr = (void *)&ctx->usb_config->ep_desc_hs;
+		descriptor_size = sizeof(struct usb_endpoint_descriptor_no_audio);
+#elif defined(CONFIG_USB_FS_SUPPORT)
+		descriptor_ptr = (void *)&ctx->usb_config->ep_desc_fs;
+		descriptor_size = sizeof(struct usb_endpoint_descriptor_no_audio);
 #else
 
 #error Configuration Error ! At least one USB mode support must be enabled ! (CONFIG_USB_FS_SUPPORT/CONFIG_USB_HS_SUPPORT/CONFIG_USB_SS_SUPPORT)
@@ -284,8 +306,39 @@ int init_ep(usb_gadget * ctx,int index,int ffs_mode)
 #endif
 	}
 
-	memcpy(&ctx->ep_config[index]->ep_desc[0], &descriptor_ptr[index],sizeof(struct usb_endpoint_descriptor_no_audio));
-	memcpy(&ctx->ep_config[index]->ep_desc[1], &descriptor_ptr[index],sizeof(struct usb_endpoint_descriptor_no_audio));
+#if defined(CONFIG_USB_SS_SUPPORT)
+	switch(index)
+	{
+		case EP_DESCRIPTOR_IN:
+			memcpy(&ctx->ep_config[index]->ep_desc[0], &((SSEndPointsDesc*)descriptor_ptr)->ep_desc_in,descriptor_size);
+			memcpy(&ctx->ep_config[index]->ep_desc[1], &((SSEndPointsDesc*)descriptor_ptr)->ep_desc_in,descriptor_size);
+		break;
+		case EP_DESCRIPTOR_OUT:
+			memcpy(&ctx->ep_config[index]->ep_desc[0], &((SSEndPointsDesc*)descriptor_ptr)->ep_desc_out,descriptor_size);
+			memcpy(&ctx->ep_config[index]->ep_desc[1], &((SSEndPointsDesc*)descriptor_ptr)->ep_desc_out,descriptor_size);
+		break;
+		case EP_DESCRIPTOR_INT_IN:
+			memcpy(&ctx->ep_config[index]->ep_desc[0], &((SSEndPointsDesc*)descriptor_ptr)->ep_desc_int_in,descriptor_size);
+			memcpy(&ctx->ep_config[index]->ep_desc[1], &((SSEndPointsDesc*)descriptor_ptr)->ep_desc_int_in,descriptor_size);
+		break;
+	}
+#else
+	switch(index)
+	{
+		case EP_DESCRIPTOR_IN:
+			memcpy(&ctx->ep_config[index]->ep_desc[0], &((EndPointsDesc*)descriptor_ptr)->ep_desc_in,descriptor_size);
+			memcpy(&ctx->ep_config[index]->ep_desc[1], &((EndPointsDesc*)descriptor_ptr)->ep_desc_in,descriptor_size);
+		break;
+		case EP_DESCRIPTOR_OUT:
+			memcpy(&ctx->ep_config[index]->ep_desc[0], &((EndPointsDesc*)descriptor_ptr)->ep_desc_out,descriptor_size);
+			memcpy(&ctx->ep_config[index]->ep_desc[1], &((EndPointsDesc*)descriptor_ptr)->ep_desc_out,descriptor_size);
+		break;
+		case EP_DESCRIPTOR_INT_IN:
+			memcpy(&ctx->ep_config[index]->ep_desc[0], &((EndPointsDesc*)descriptor_ptr)->ep_desc_int_in,descriptor_size);
+			memcpy(&ctx->ep_config[index]->ep_desc[1], &((EndPointsDesc*)descriptor_ptr)->ep_desc_int_in,descriptor_size);
+		break;
+	}
+#endif
 
 	PRINT_DEBUG("init_ep (%d):",index);
 	PRINT_DEBUG_BUF(ctx->ep_config[index], sizeof(ep_cfg));
@@ -929,28 +982,28 @@ usb_gadget * init_usb_mtp_gadget(mtp_ctx * ctx)
 			usbctx->usb_ffs_config->length = htole32(sizeof(usb_ffs_cfg));
 
 #ifdef CONFIG_USB_FS_SUPPORT
-			usbctx->usb_ffs_config->fs_count = htole32(4);
+			usbctx->usb_ffs_config->fs_count = htole32(1 + 3);
 
-			fill_if_descriptor(ctx, usbctx, &usbctx->usb_ffs_config->if_desc);
-			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_ffs_config->ep_desc[EP_DESCRIPTOR_IN],1, EP_BULK_MODE | EP_IN_DIR);
-			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_ffs_config->ep_desc[EP_DESCRIPTOR_OUT],2, EP_BULK_MODE | EP_OUT_DIR);
-			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_ffs_config->ep_desc[EP_DESCRIPTOR_INT_IN],3, EP_INT_MODE | EP_IN_DIR);
+			fill_if_descriptor(ctx, usbctx, &usbctx->usb_ffs_config->ep_desc_fs.if_desc);
+			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_ffs_config->ep_desc_fs.ep_desc_in,1, EP_BULK_MODE | EP_IN_DIR);
+			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_ffs_config->ep_desc_fs.ep_desc_out,2, EP_BULK_MODE | EP_OUT_DIR);
+			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_ffs_config->ep_desc_fs.ep_desc_int_in,3, EP_INT_MODE | EP_IN_DIR);
 #endif
 
 #ifdef CONFIG_USB_HS_SUPPORT
-			usbctx->usb_ffs_config->hs_count = htole32(4);
-			fill_if_descriptor(ctx, usbctx, &usbctx->usb_ffs_config->if_desc_hs);
-			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_ffs_config->ep_desc_hs[EP_DESCRIPTOR_IN],1, EP_BULK_MODE | EP_IN_DIR | EP_HS_MODE);
-			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_ffs_config->ep_desc_hs[EP_DESCRIPTOR_OUT],2, EP_BULK_MODE | EP_OUT_DIR | EP_HS_MODE);
-			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_ffs_config->ep_desc_hs[EP_DESCRIPTOR_INT_IN],3, EP_INT_MODE | EP_IN_DIR | EP_HS_MODE);
+			usbctx->usb_ffs_config->hs_count = htole32(1 + 3);
+			fill_if_descriptor(ctx, usbctx, &usbctx->usb_ffs_config->ep_desc_hs.if_desc);
+			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_ffs_config->ep_desc_hs.ep_desc_in,1, EP_BULK_MODE | EP_IN_DIR | EP_HS_MODE);
+			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_ffs_config->ep_desc_hs.ep_desc_out,2, EP_BULK_MODE | EP_OUT_DIR | EP_HS_MODE);
+			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_ffs_config->ep_desc_hs.ep_desc_int_in,3, EP_INT_MODE | EP_IN_DIR | EP_HS_MODE);
 #endif
 
 #ifdef CONFIG_USB_SS_SUPPORT
-			usbctx->usb_ffs_config->ss_count = htole32(4);
-			fill_if_descriptor(ctx, usbctx, &usbctx->usb_ffs_config->if_desc_ss);
-			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_ffs_config->ep_desc_ss[EP_DESCRIPTOR_IN],1, EP_BULK_MODE | EP_IN_DIR | EP_SS_MODE);
-			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_ffs_config->ep_desc_ss[EP_DESCRIPTOR_OUT],2, EP_BULK_MODE | EP_OUT_DIR | EP_SS_MODE);
-			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_ffs_config->ep_desc_ss[EP_DESCRIPTOR_INT_IN],3, EP_INT_MODE | EP_IN_DIR | EP_SS_MODE);
+			usbctx->usb_ffs_config->ss_count = htole32(1 + (3*2));
+			fill_if_descriptor(ctx, usbctx, &usbctx->usb_ffs_config->ep_desc_ss.if_desc);
+			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_ffs_config->ep_desc_ss.ep_desc_in,1, EP_BULK_MODE | EP_IN_DIR | EP_SS_MODE);
+			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_ffs_config->ep_desc_ss.ep_desc_out,2, EP_BULK_MODE | EP_OUT_DIR | EP_SS_MODE);
+			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_ffs_config->ep_desc_ss.ep_desc_int_in,3, EP_INT_MODE | EP_IN_DIR | EP_SS_MODE);
 #endif
 
 			PRINT_DEBUG("init_usb_mtp_gadget :");
@@ -994,27 +1047,27 @@ usb_gadget * init_usb_mtp_gadget(mtp_ctx * ctx)
 			usbctx->usb_config->head = 0x00000000;
 
 #ifdef CONFIG_USB_FS_SUPPORT
-			fill_config_descriptor(ctx, usbctx, &usbctx->usb_config->cfg, cfg_size, 0);
-			fill_if_descriptor(ctx, usbctx, &usbctx->usb_config->if_desc);
-			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_config->ep_desc[EP_DESCRIPTOR_IN],1, EP_BULK_MODE | EP_IN_DIR);
-			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_config->ep_desc[EP_DESCRIPTOR_OUT],2, EP_BULK_MODE | EP_OUT_DIR);
-			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_config->ep_desc[EP_DESCRIPTOR_INT_IN],3, EP_INT_MODE | EP_IN_DIR);
+			fill_config_descriptor(ctx, usbctx, &usbctx->usb_config->cfg_fs, cfg_size, 0);
+			fill_if_descriptor(ctx, usbctx, &usbctx->usb_config->ep_desc_fs.if_desc);
+			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_config->ep_desc_fs.ep_desc_in,1, EP_BULK_MODE | EP_IN_DIR);
+			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_config->ep_desc_fs.ep_desc_out,2, EP_BULK_MODE | EP_OUT_DIR);
+			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_config->ep_desc_fs.ep_desc_int_in,3, EP_INT_MODE | EP_IN_DIR);
 #endif
 
 #ifdef CONFIG_USB_HS_SUPPORT
 			fill_config_descriptor(ctx, usbctx, &usbctx->usb_config->cfg_hs, cfg_size, 1);
-			fill_if_descriptor(ctx, usbctx, &usbctx->usb_config->if_desc_hs);
-			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_config->ep_desc_hs[EP_DESCRIPTOR_IN],1, EP_BULK_MODE | EP_IN_DIR | EP_HS_MODE);
-			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_config->ep_desc_hs[EP_DESCRIPTOR_OUT],2, EP_BULK_MODE | EP_OUT_DIR | EP_HS_MODE);
-			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_config->ep_desc_hs[EP_DESCRIPTOR_INT_IN],3, EP_INT_MODE | EP_IN_DIR | EP_HS_MODE);
+			fill_if_descriptor(ctx, usbctx, &usbctx->usb_config->ep_desc_hs.if_desc);
+			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_config->ep_desc_hs.ep_desc_in,1, EP_BULK_MODE | EP_IN_DIR | EP_HS_MODE);
+			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_config->ep_desc_hs.ep_desc_out,2, EP_BULK_MODE | EP_OUT_DIR | EP_HS_MODE);
+			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_config->ep_desc_hs.ep_desc_int_in,3, EP_INT_MODE | EP_IN_DIR | EP_HS_MODE);
 #endif
 
 #ifdef CONFIG_USB_SS_SUPPORT
 			fill_config_descriptor(ctx, usbctx, &usbctx->usb_config->cfg_ss, cfg_size, 1);
-			fill_if_descriptor(ctx, usbctx, &usbctx->usb_config->if_desc_ss);
-			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_config->ep_desc_ss[EP_DESCRIPTOR_IN],1, EP_BULK_MODE | EP_IN_DIR | EP_SS_MODE);
-			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_config->ep_desc_ss[EP_DESCRIPTOR_OUT],2, EP_BULK_MODE | EP_OUT_DIR | EP_SS_MODE);
-			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_config->ep_desc_ss[EP_DESCRIPTOR_INT_IN],3, EP_INT_MODE | EP_IN_DIR | EP_SS_MODE);
+			fill_if_descriptor(ctx, usbctx, &usbctx->usb_config->ep_desc_ss.if_desc);
+			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_config->ep_desc_ss.ep_desc_in,1, EP_BULK_MODE | EP_IN_DIR | EP_SS_MODE);
+			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_config->ep_desc_ss.ep_desc_out,2, EP_BULK_MODE | EP_OUT_DIR | EP_SS_MODE);
+			fill_ep_descriptor(ctx, usbctx, &usbctx->usb_config->ep_desc_ss.ep_desc_int_in,3, EP_INT_MODE | EP_IN_DIR | EP_SS_MODE);
 #endif
 
 			fill_dev_descriptor(ctx, usbctx,&usbctx->usb_config->dev_desc);
