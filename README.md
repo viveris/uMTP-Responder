@@ -71,6 +71,8 @@ This may work with earlier kernels (v3.x.x and some v2.6.x versions) but without
 
 - Samsung Artik710. (FunctionFS mode)
 
+- Ultra96-V2 (Zynq UltraScale+, FunctionFS mode, SuperSpeed USB)
+
 ### Successfully tested client operating systems
 
 - Windows 7, Windows 10, Linux, Android.
