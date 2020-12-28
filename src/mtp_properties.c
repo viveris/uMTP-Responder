@@ -729,6 +729,9 @@ int build_objectproplist_dataset(mtp_ctx * ctx, void * buffer, int maxsize,fs_en
 		return 0;
 	}
 
+	/* update the file size infomation */
+	entry->size = entrystat.st_size;
+
 	numberofelements = 0;
 
 	ofs = poke32(buffer, 0, maxsize, numberofelements);   // Number of elements
