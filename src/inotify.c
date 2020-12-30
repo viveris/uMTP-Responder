@@ -137,7 +137,7 @@ void* inotify_thread(void* arg)
 				// Sanity check to prevent possible buffer overrun/overflow.
 				if ( event->len && (i + (( sizeof (struct inotify_event) ) + event->len) < sizeof(inotify_buffer)) )
 				{
-					if ( event->mask & IN_CREATE )
+					if ( event->mask & IN_CREATE || event->mask & IN_MOVED_TO )
 					{
 						entry = NULL;
 						do
@@ -212,7 +212,7 @@ void* inotify_thread(void* arg)
 						}while(entry);
 					}
 
-					if ( event->mask & IN_DELETE )
+					if ( event->mask & IN_CREATE || event->mask & IN_MOVED_FROM )
 					{
 						entry = NULL;
 
@@ -310,7 +310,7 @@ int inotify_handler_addwatch( mtp_ctx * ctx, char * path )
 	{
 		if( !ctx->no_inotify )
 		{
-			return inotify_add_watch( ctx->inotify_fd, path, IN_CREATE | IN_DELETE | IN_MODIFY );
+			return inotify_add_watch( ctx->inotify_fd, path, IN_CREATE | IN_DELETE | IN_MODIFY | IN_MOVED_FROM | IN_MOVED_TO );
 		}
 	}
 
