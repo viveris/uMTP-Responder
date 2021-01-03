@@ -137,7 +137,7 @@ void* inotify_thread(void* arg)
 				// Sanity check to prevent possible buffer overrun/overflow.
 				if ( event->len && (i + (( sizeof (struct inotify_event) ) + event->len) < sizeof(inotify_buffer)) )
 				{
-					if ( event->mask & IN_CREATE || event->mask & IN_MOVED_TO )
+					if ( ( event->mask & IN_CREATE ) || ( event->mask & IN_MOVED_TO ) )
 					{
 						entry = NULL;
 						do
@@ -212,7 +212,7 @@ void* inotify_thread(void* arg)
 						}while(entry);
 					}
 
-					if ( event->mask & IN_CREATE || event->mask & IN_MOVED_FROM )
+					if ( ( event->mask & IN_DELETE ) || ( event->mask & IN_MOVED_FROM ) )
 					{
 						entry = NULL;
 
