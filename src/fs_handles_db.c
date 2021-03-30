@@ -174,7 +174,8 @@ DIR * fs_find_first_file(char *folder, filefoundinfo* fileinfo)
 
 		}
 
-		closedir(dir);
+		if (dir)
+			closedir(dir);
 		dir = NULL;
 	}
 	else
