@@ -241,7 +241,21 @@ int test_flag(char * str, char * flag)
 	return 0;
 }
 
-static int get_storage_params(mtp_ctx * context, char * line,int cmd)
+int mtp_remove_storage_from_line(mtp_ctx * context, char * name, int idx)
+{
+	char storagename[MAX_CFG_STRING_SIZE];
+	int i;
+
+	i = get_param(name, idx, storagename);
+	if (i < 0)
+		return i;
+
+	PRINT_MSG("Remove storage %s", storagename);
+
+	return mtp_remove_storage(context, storagename);
+}
+
+void mtp_add_storage_from_line(mtp_ctx * context, char * line, int idx)
 {
 	int i, j, k;
 	char storagename[MAX_CFG_STRING_SIZE];
@@ -249,13 +263,13 @@ static int get_storage_params(mtp_ctx * context, char * line,int cmd)
 	char options[MAX_CFG_STRING_SIZE];
 	uint32_t flags;
 
-	i = get_param(line, 2,storagename);
-	j = get_param(line, 1,storagepath);
+	i = get_param(line, idx + 1,storagename);
+	j = get_param(line, idx,storagepath);
 	flags = UMTP_STORAGE_READWRITE;
 
 	if( i >= 0 && j >= 0 )
 	{
-		k = get_param(line, 3,options);
+		k = get_param(line, idx + 2,options);
 		if( k >= 0 )
 		{
 			if(test_flag(options, "ro"))
@@ -278,6 +292,11 @@ static int get_storage_params(mtp_ctx * context, char * line,int cmd)
 
 		mtp_add_storage(context, storagepath, storagename, flags);
 	}
+}
+
+static int get_storage_params(mtp_ctx * context, char * line,int cmd)
+{
+	mtp_add_storage_from_line(context, line, 1);
 
 	return 0;
 }

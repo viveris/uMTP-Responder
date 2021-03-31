@@ -692,6 +692,24 @@ uint32_t mtp_add_storage(mtp_ctx * ctx, char * path, char * description, uint32_
 	return 0x00000000;
 }
 
+int mtp_remove_storage(mtp_ctx * ctx, char * name)
+{
+	int index = mtp_get_storage_index_by_name(ctx, name);
+
+	if (index < 0)
+		return index;
+
+	free(ctx->storages[index].root_path);
+	free(ctx->storages[index].description);
+
+	ctx->storages[index].root_path = NULL;
+	ctx->storages[index].description = NULL;
+	ctx->storages[index].flags = 0x00000000;
+	ctx->storages[index].storage_id = 0x00000000;
+
+	return 0;
+}
+
 uint32_t mtp_get_storage_id_by_name(mtp_ctx * ctx, char * name)
 {
 	int i;
