@@ -159,8 +159,7 @@ static int get_param_offset(char * line, int param)
 	offs = 0;
 	offs = get_next_word(line, offs);
 
-	param_cnt = 0;
-	do
+	for (param_cnt = 0; param_cnt < param; param_cnt++)
 	{
 		offs = copy_param(NULL, line, offs);
 
@@ -168,9 +167,7 @@ static int get_param_offset(char * line, int param)
 
 		if(line[offs] == 0 || line[offs] == '#')
 			return -1;
-
-		param_cnt++;
-	}while( param_cnt < param );
+	}
 
 	return offs;
 }
