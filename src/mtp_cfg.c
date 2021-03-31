@@ -275,6 +275,11 @@ static int get_storage_params(mtp_ctx * context, char * line,int cmd)
 			{
 				flags |= UMTP_STORAGE_NOTMOUNTED;
 			}
+
+			if(test_flag(options, "removable"))
+			{
+				flags |= UMTP_STORAGE_REMOVABLE;
+			}
 		}
 
 		PRINT_MSG("Add storage %s - Root Path: %s - Flags: 0x%.8X", storagename, storagepath,flags);
