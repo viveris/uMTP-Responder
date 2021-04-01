@@ -108,6 +108,7 @@ int build_storageinfo_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uint32_t 
 	uint64_t freespace = 0x4000000000000000U;
 	uint64_t totalspace = 0x8000000000000000U;
 	uint32_t storage_flags;
+	uint16_t storage_type;
 
 	ofs = 0;
 
@@ -115,10 +116,15 @@ int build_storageinfo_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uint32_t 
 	storage_path = mtp_get_storage_root(ctx, storageid);
 	storage_flags = mtp_get_storage_flags(ctx, storageid);
 
+	if (storage_flags & UMTP_STORAGE_REMOVABLE)
+		storage_type = MTP_STORAGE_REMOVABLE_RAM;
+	else
+		storage_type = MTP_STORAGE_FIXED_RAM;
+
 	if(storage_description && storage_path)
 	{
 		PRINT_DEBUG("Add storageinfo for %s", storage_path);
-		ofs = poke16(buffer, ofs, maxsize, MTP_STORAGE_FIXED_RAM);                               // Storage Type
+		ofs = poke16(buffer, ofs, maxsize, storage_type);                                        // Storage Type
 		ofs = poke16(buffer, ofs, maxsize, MTP_STORAGE_FILESYSTEM_HIERARCHICAL);                 // Filesystem Type
 
 		// Access Capability

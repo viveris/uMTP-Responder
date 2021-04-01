@@ -83,6 +83,7 @@ typedef struct mtp_storage_
 	uint32_t flags;
 }mtp_storage;
 
+#define UMTP_STORAGE_REMOVABLE   0x00000004
 #define UMTP_STORAGE_NOTMOUNTED  0x00000002
 #define UMTP_STORAGE_READONLY    0x00000001
 #define UMTP_STORAGE_READWRITE   0x00000000
