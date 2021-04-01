@@ -90,7 +90,7 @@ uint32_t mtp_op_GetObjectHandles(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hd
 		// root folder
 		parent_handle = 0x00000000;
 		full_path = mtp_get_storage_root(ctx,storageid);
-		entry = get_entry_by_handle(ctx->fs_db, parent_handle);
+		entry = get_entry_by_handle_and_storageid(ctx->fs_db, parent_handle, storageid);
 	}
 
 	nb_of_handles = 0;
