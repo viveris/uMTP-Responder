@@ -41,6 +41,7 @@
 #include <errno.h>
 
 #include "mtp.h"
+#include "mtp_cfg.h"
 #include "mtp_helpers.h"
 #include "mtp_constant.h"
 #include "mtp_datasets.h"
@@ -88,6 +89,14 @@ void* msgqueue_thread( void* arg )
 		if( msgrcv(ctx->msgqueue_id, &msg_buf, sizeof(msg_buf), 1, 0) > 0 )
 		{
 			PRINT_DEBUG("msgqueue_thread : New message received : %s",msg_buf.mesg_text);
+
+			if (!strncmp(msg_buf.mesg_text,"addstorage:", 11)) {
+				mtp_add_storage_from_line(ctx, &msg_buf.mesg_text[11], 0);
+			}
+
+			if (!strncmp(msg_buf.mesg_text,"rmstorage:", 10)) {
+				mtp_remove_storage_from_line(ctx, &msg_buf.mesg_text[10], 0);
+			}
 
 			if(!strncmp((char*)&msg_buf.mesg_text,"mount:",6))
 			{

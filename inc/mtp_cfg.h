@@ -27,4 +27,6 @@
 #include "mtp.h"
 
 int mtp_create_storage(mtp_ctx * context);
+void mtp_add_storage_from_line(mtp_ctx *context, char *line, int idx);
+int mtp_remove_storage_from_line(mtp_ctx * context, char * name, int idx);
 #endif
