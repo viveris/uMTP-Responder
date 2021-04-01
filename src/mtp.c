@@ -647,6 +647,9 @@ uint32_t mtp_add_storage(mtp_ctx * ctx, char * path, char * description, uint32_
 
 	PRINT_DEBUG("mtp_add_storage : %s", path );
 
+	if (mtp_get_storage_id_by_name(ctx, description) != 0xFFFFFFFF)
+		return 0x00000000;
+
 	i = 0;
 	while(i < MAX_STORAGE_NB)
 	{
