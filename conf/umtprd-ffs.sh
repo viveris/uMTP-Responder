@@ -1,4 +1,4 @@
-#/bin/sh
+#!/bin/sh
 
 # FunctionFS uMTPrd startup example/test script
 # Must be launched from a writable/temporary folder.

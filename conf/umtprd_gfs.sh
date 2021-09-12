@@ -1,4 +1,4 @@
-#/bin/sh
+#!/bin/sh
 
 # GadgetFS uMTPrd startup example/test script
 
