@@ -13,10 +13,10 @@ umtprd: $(objects) $(ops_objects)
 	${CC} -o $@    $^ $(LDFLAGS) -lpthread
 
 $(objects): obj/%.o: src/%.c
-	${CC} -o $@ $^ -c $(CFLAGS)
+	${CC} -o $@ $^ -c $(CPPFLAGS) $(CFLAGS)
 
 $(ops_objects): obj/%.o: src/mtp_operations/%.c
-	${CC} -o $@ $^ -c $(CFLAGS)
+	${CC} -o $@ $^ -c $(CPPFLAGS) $(CFLAGS)
 
 output_dir:
 	@mkdir -p obj
