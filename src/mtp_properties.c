@@ -451,6 +451,7 @@ int setObjectPropValue(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, uint32_
 	fs_entry * entry;
 	char * path;
 	char * path2;
+	char * old_filename;
 	char tmpstr[256+1];
 	unsigned int stringlen;
 	uint32_t response_code;
@@ -483,21 +484,30 @@ int setObjectPropValue(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, uint32_
 				unicode2charstring(tmpstr, (uint16_t *) ((char*)(mtp_packet_hdr) + sizeof(MTP_PACKET_HEADER) + 1), sizeof(tmpstr));
 				tmpstr[ sizeof(tmpstr) - 1 ] = 0;
 
-				if( entry->name )
-				{
-					free(entry->name);
-					entry->name = NULL;
-				}
+				old_filename = entry->name;
 
 				entry->name = malloc(strlen(tmpstr)+1);
 				if( entry->name )
 				{
 					strcpy(entry->name,tmpstr);
 				}
+				else
+				{
+					entry->name = old_filename;
+					return MTP_RESPONSE_GENERAL_ERROR;
+				}
 
 				path2 = build_full_path(ctx->fs_db, mtp_get_storage_root(ctx, entry->storage_id), entry);
 				if(!path2)
 				{
+					if( old_filename )
+					{
+						if(entry->name)
+							free(entry->name);
+
+						entry->name = old_filename;
+					}
+
 					free(path);
 					return MTP_RESPONSE_GENERAL_ERROR;
 				}
@@ -505,6 +515,14 @@ int setObjectPropValue(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, uint32_
 				if(rename(path, path2))
 				{
 					PRINT_ERROR("setObjectPropValue : Can't rename %s to %s", path, path2);
+
+					if( old_filename )
+					{
+						if(entry->name)
+							free(entry->name);
+
+						entry->name = old_filename;
+					}
 
 					free(path);
 					free(path2);
