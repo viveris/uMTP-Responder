@@ -264,6 +264,9 @@ int parse_incomming_dataset(mtp_ctx * ctx,void * datain,int size,uint32_t * newh
 								return ret_code;
 							}
 
+                                                        if(ctx->usb_cfg.val_umask >= 0)
+                                                                chmod(tmp_path, 0777 & (~ctx->usb_cfg.val_umask));
+
 							tmp_file_entry.isdirectory = 1;
 							strcpy(tmp_file_entry.filename,tmp_str);
 							tmp_file_entry.size = 0;
