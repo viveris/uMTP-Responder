@@ -1,6 +1,6 @@
 /*
  * uMTP Responder
- * Copyright (c) 2018 - 2020 Viveris Technologies
+ * Copyright (c) 2018 - 2021 Viveris Technologies
  *
  * uMTP Responder is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public
@@ -417,6 +417,16 @@ int check_handle_access( mtp_ctx * ctx, fs_entry * entry, uint32_t handle, int w
 
 			if( response )
 				*response = MTP_RESPONSE_INVALID_STORAGE_ID;
+
+			return 1;
+		}
+
+		if( (storage_flags & UMTP_STORAGE_LOCKED) )
+		{
+			PRINT_DEBUG("check_handle_access : Storage 0x%.8x is locked !",entry->storage_id);
+
+			if( response )
+				*response = MTP_RESPONSE_STORE_NOT_AVAILABLE;
 
 			return 1;
 		}

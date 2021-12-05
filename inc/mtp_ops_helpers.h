@@ -1,6 +1,6 @@
 /*
  * uMTP Responder
- * Copyright (c) 2018 - 2020 Viveris Technologies
+ * Copyright (c) 2018 - 2021 Viveris Technologies
  *
  * uMTP Responder is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public
@@ -25,3 +25,6 @@
 
 mtp_size send_file_data( mtp_ctx * ctx, fs_entry * entry,mtp_offset offset, mtp_size maxsize );
 int delete_tree(mtp_ctx * ctx,uint32_t handle);
+
+int umount_store(mtp_ctx * ctx, int store_index, int update_flag);
+int mount_store(mtp_ctx * ctx, int store_index, int update_flag);

@@ -1,6 +1,6 @@
 /*
  * uMTP Responder
- * Copyright (c) 2018 - 2020 Viveris Technologies
+ * Copyright (c) 2018 - 2021 Viveris Technologies
  *
  * uMTP Responder is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public
@@ -235,4 +235,55 @@ int delete_tree(mtp_ctx * ctx,uint32_t handle)
 	}
 
 	return ret;
+}
+
+int umount_store(mtp_ctx * ctx, int store_index, int update_flag)
+{
+	fs_entry * entry;
+
+	if(store_index >= 0 && store_index < MAX_STORAGE_NB )
+	{
+		if( ctx->storages[store_index].root_path )
+		{
+			entry = NULL;
+			do
+			{
+				entry = get_entry_by_storageid( ctx->fs_db, ctx->storages[store_index].storage_id, entry );
+				if(entry)
+				{
+					entry->flags |= ENTRY_IS_DELETED;
+					if( entry->watch_descriptor != -1 )
+					{
+						inotify_handler_rmwatch( ctx, entry->watch_descriptor );
+						entry->watch_descriptor = -1;
+					}
+					entry = entry->next;
+				}
+			}while(entry);
+
+			if( update_flag )
+				ctx->storages[store_index].flags |= UMTP_STORAGE_NOTMOUNTED;
+		}
+	}
+
+	return 0;
+}
+
+int mount_store(mtp_ctx * ctx, int store_index, int update_flag)
+{
+	if(store_index >= 0 && store_index < MAX_STORAGE_NB )
+	{
+		if( ctx->storages[store_index].root_path )
+		{
+			if( ctx->storages[store_index].flags & UMTP_STORAGE_NOTMOUNTED )
+			{
+				alloc_root_entry(ctx->fs_db, ctx->storages[store_index].storage_id);
+			}
+
+			if( update_flag )
+				ctx->storages[store_index].flags &= ~UMTP_STORAGE_NOTMOUNTED;
+		}
+	}
+
+	return 0;
 }

@@ -1,6 +1,6 @@
 /*
  * uMTP Responder
- * Copyright (c) 2018 - 2020 Viveris Technologies
+ * Copyright (c) 2018 - 2021 Viveris Technologies
  *
  * uMTP Responder is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public
@@ -83,6 +83,8 @@ typedef struct mtp_storage_
 	uint32_t flags;
 }mtp_storage;
 
+#define UMTP_STORAGE_LOCKED      0x00000010
+#define UMTP_STORAGE_LOCKABLE    0x00000008
 #define UMTP_STORAGE_REMOVABLE   0x00000004
 #define UMTP_STORAGE_NOTMOUNTED  0x00000002
 #define UMTP_STORAGE_READONLY    0x00000001
@@ -159,6 +161,6 @@ int build_response(mtp_ctx * ctx, uint32_t tx_id, uint16_t type, uint16_t status
 int check_and_send_USB_ZLP(mtp_ctx * ctx , int size);
 int parse_incomming_dataset(mtp_ctx * ctx,void * datain,int size,uint32_t * newhandle, uint32_t parent_handle, uint32_t storage_id);
 
-#define APP_VERSION "v1.4.3"
+#define APP_VERSION "v1.5.1"
 
 #endif

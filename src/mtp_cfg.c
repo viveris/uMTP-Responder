@@ -1,6 +1,6 @@
 /*
  * uMTP Responder
- * Copyright (c) 2018 - 2020 Viveris Technologies
+ * Copyright (c) 2018 - 2021 Viveris Technologies
  *
  * uMTP Responder is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public
@@ -290,6 +290,11 @@ void mtp_add_storage_from_line(mtp_ctx * context, char * line, int idx)
 			if(test_flag(options, "removable"))
 			{
 				flags |= UMTP_STORAGE_REMOVABLE;
+			}
+
+			if(test_flag(options, "locked"))
+			{
+				flags |= (UMTP_STORAGE_LOCKABLE | UMTP_STORAGE_LOCKED);
 			}
 		}
 

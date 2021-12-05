@@ -1,6 +1,6 @@
 /*
  * uMTP Responder
- * Copyright (c) 2018 - 2020 Viveris Technologies
+ * Copyright (c) 2018 - 2021 Viveris Technologies
  *
  * uMTP Responder is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public
@@ -52,7 +52,8 @@ uint32_t mtp_op_GetStorageIDs(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, 
 	i = 0;
 	while( (i < MAX_STORAGE_NB) && ctx->storages[i].root_path)
 	{
-		if( !(ctx->storages[i].flags & UMTP_STORAGE_NOTMOUNTED) )
+		if( !(ctx->storages[i].flags & UMTP_STORAGE_NOTMOUNTED) &&
+			!(ctx->storages[i].flags & UMTP_STORAGE_LOCKED) )
 		{
 			ctx->temp_array[cnt] = ctx->storages[i].storage_id; // Storage ID
 			cnt++;
