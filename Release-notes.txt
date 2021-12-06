@@ -1,6 +1,6 @@
 =================================================
 * uMTP Responder
-* Lightweight USB Media Transfer Protocol (MTP) 
+* Lightweight USB Media Transfer Protocol (MTP)
 * responder
 *
 * Copyright (c) 2018 - 2021 Viveris Technologies
@@ -9,6 +9,76 @@
 *
 * Release notes
 =================================================
+
+Noteworthy changes in release v1.5.1 (2021-Dec-6)
+=================================================
+
+* Storages : new flags and modes :
+
+    * "locked" flag support.
+
+    * "removable" flag support.
+
+* New dynamic/runtime commands (umtprd -cmd:COMMAND) :
+
+    * "lock"/"unlock" commands to dynamically lock/unlock lockable storages.
+
+        Examples:
+
+        # unlock all locked storages (set with the 'locked' option in the configuration file) :
+
+        umtprd -cmd:unlock
+
+        # lock all lockable storages (set with the 'locked' option in the configuration file) :
+
+        umtprd -cmd:lock
+
+    * "addstorage"/"rmstorage" commands to dynamically add/remove storages.
+
+        Examples:
+
+        umtprd '-cmd:addstorage:/tmp Tmp rw'
+        umtprd '-cmd:rmstorage:Tmp'
+
+        Use double-quotes when arguments have spaces in them:
+
+        umtprd '-cmd:addstorage:/path "My Path" rw,removable'
+        umtprd '-cmd:rmstorage:"My Path"'
+
+* Added umask configuration entry and fix permissions on send objects.
+
+* USB 3.0 SuperSpeed support.
+
+* Supports files rename at the MTP device side.
+
+* New "firmware_version" configuration field : set the MTP device info value.
+
+* Many fixes and improvements :
+
+    * Fix inotify for root folders when using multiple storages.
+
+    * Add guard to avoid storage from being added twice.
+
+    * Update the file size information to the dataset when modifying the file content.
+
+    * Check that fs handles db is valid before using it to get entries.
+
+    * Security fix : Fix the invalid ".." setObjectPropValue access trick.
+
+    * Fix deadlock when SendObject / GetObjectHandles fail.
+
+    * Fix permissions on newly created folders.
+
+    * Configuration file : realign user usb buffers size.
+
+    * Internal : Remove redundant code and possible double closedir issue.
+      (Fix segmentation fault with uClibc).
+
+    * Reduce the default max usb read/write buffer size to 8KB.
+      (This is required by some SoCs, e.g. the iMX series)
+
+
+    Many thanks to all the contributors !
 
 Noteworthy changes in release v1.3.6 (2020-Apr-3)
 =================================================
