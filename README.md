@@ -153,6 +153,7 @@ Use double-quotes when arguments have spaces in them:
 
 ```c
 umtprd '-cmd:addstorage:/path "My Path" rw,removable'
+```
 
 ```c
 umtprd '-cmd:rmstorage:"My Path"'
