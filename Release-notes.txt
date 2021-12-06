@@ -13,7 +13,7 @@
 Noteworthy changes in release v1.5.1 (2021-Dec-6)
 =================================================
 
-* Storages : new flags and modes :
+* Storage : new flags and modes :
 
     * "locked" flag support.
 
@@ -21,19 +21,19 @@ Noteworthy changes in release v1.5.1 (2021-Dec-6)
 
 * New dynamic/runtime commands (umtprd -cmd:COMMAND) :
 
-    * "lock"/"unlock" commands to dynamically lock/unlock lockable storages.
+    * "lock"/"unlock" commands to dynamically lock/unlock lockable storage.
 
         Examples:
 
-        # unlock all locked storages (set with the 'locked' option in the configuration file) :
+        # unlock all locked storage (set with the 'locked' option in the configuration file) :
 
         umtprd -cmd:unlock
 
-        # lock all lockable storages (set with the 'locked' option in the configuration file) :
+        # lock all lockable storage (set with the 'locked' option in the configuration file) :
 
         umtprd -cmd:lock
 
-    * "addstorage"/"rmstorage" commands to dynamically add/remove storages.
+    * "addstorage"/"rmstorage" commands to dynamically add/remove storage.
 
         Examples:
 
@@ -55,7 +55,7 @@ Noteworthy changes in release v1.5.1 (2021-Dec-6)
 
 * Many fixes and improvements :
 
-    * Fix inotify for root folders when using multiple storages.
+    * Fix inotify for root folders when using multiple storage.
 
     * Add guard to avoid storage from being added twice.
 

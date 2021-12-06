@@ -45,9 +45,9 @@ The uMTP-Responder allows files to be transferred to and from devices through th
 
 - Up to 16 storage instances supported.
 
-- Storages mount / unmount.
+- Storage mount / unmount.
 
-- Storages lock / unlock.
+- Storage lock / unlock.
 
 - GadgetFS and FunctionFS/libcomposite modes supported.
 
@@ -123,23 +123,23 @@ Once you have configured the correct settings in umtprd.conf, you can use umtprd
 
 ## Runtime operations
 
-uMTP-Responder supports dynamic commands to add/mount/umount/remove storages and lock/unlock storages.
+uMTP-Responder supports dynamic commands to add/mount/umount/remove storage and lock/unlock storage.
 
 Examples:
 
-Unlock all locked storages (set with the 'locked' option in the configuration file) :
+Unlock all locked storage (set with the 'locked' option in the configuration file) :
 
 ```c
 umtprd -cmd:unlock
 ```
 
-Lock all lockable storages (set with the 'locked' option in the configuration file) :
+Lock all lockable storage (set with the 'locked' option in the configuration file) :
 
 ```c
 umtprd -cmd:lock
 ```
 
-"addstorage"/"rmstorage" commands to dynamically add/remove storages :
+"addstorage"/"rmstorage" commands to dynamically add/remove storage :
 
 ```c
 umtprd '-cmd:addstorage:/tmp Tmp rw'
@@ -159,7 +159,7 @@ umtprd '-cmd:addstorage:/path "My Path" rw,removable'
 umtprd '-cmd:rmstorage:"My Path"'
 ```
 
-"mount"/"unmount" commands to dynamically mount/unmount storages.
+"mount"/"unmount" commands to dynamically mount/unmount storage.
 
 ```c
 umtprd '-cmd:mount:"Storage name"'
