@@ -47,6 +47,8 @@ The uMTP-Responder allows files to be transferred to and from devices through th
 
 - Storages mount / unmount.
 
+- Storages lock / unlock.
+
 - GadgetFS and FunctionFS/libcomposite modes supported.
 
 ## Which platforms are supported ?
@@ -118,6 +120,53 @@ Check the file [umtprd.conf](conf/umtprd.conf) file for details on available opt
 ## How to launch it ?
 
 Once you have configured the correct settings in umtprd.conf, you can use umtprd_ffs.sh or umtprd_gfs.sh to launch it in FunctionFS/GadgetFS mode or use udev to launch the deamon when the usb device port is connected.
+
+## Runtime operations
+
+uMTP-Responder supports dynamic commands to add/mount/umount/remove storages and lock/unlock storages.
+
+Examples:
+
+Unlock all locked storages (set with the 'locked' option in the configuration file) :
+
+```c
+umtprd -cmd:unlock
+```
+
+Lock all lockable storages (set with the 'locked' option in the configuration file) :
+
+```c
+umtprd -cmd:lock
+```
+
+"addstorage"/"rmstorage" commands to dynamically add/remove storages :
+
+```c
+umtprd '-cmd:addstorage:/tmp Tmp rw'
+```
+
+```c
+umtprd '-cmd:rmstorage:Tmp'
+```
+
+Use double-quotes when arguments have spaces in them:
+
+```c
+umtprd '-cmd:addstorage:/path "My Path" rw,removable'
+
+```c
+umtprd '-cmd:rmstorage:"My Path"'
+```
+
+"mount"/"unmount" commands to dynamically mount/unmount storages.
+
+```c
+umtprd '-cmd:mount:"Storage name"'
+```
+
+```c
+umtprd '-cmd:unmount:"Storage name"'
+```
 
 ## License
 
