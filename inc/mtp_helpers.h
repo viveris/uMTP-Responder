@@ -34,4 +34,10 @@ uint64_t peek64(void * buffer, int index, int typesize);
 int poke_string(void * buffer, int index, int maxsize, const char *str);
 int poke_array(void * buffer, int index, int maxsize, int size, int elementsize, const unsigned char *bufferin,int prefixed);
 uint16_t posix_to_mtp_errcode(int err);
+
+int set_giduid(mtp_ctx * ctx,int uid,int gid);
+
+int set_storage_giduid(mtp_ctx * ctx,uint32_t storage_id);
+int restore_giduid(mtp_ctx * ctx);
+
 #endif

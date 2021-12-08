@@ -81,6 +81,8 @@ typedef struct mtp_storage_
 	char * description;
 	uint32_t storage_id;
 	uint32_t flags;
+	int uid;
+	int gid;
 }mtp_storage;
 
 #define UMTP_STORAGE_LOCKED      0x00000010
@@ -132,6 +134,12 @@ typedef struct mtp_ctx_
 
 	int no_inotify;
 
+	int uid,euid;
+	int gid,egid;
+
+	int default_uid;
+	int default_gid;
+
 	volatile int cancel_req;
 	volatile int transferring_file_data;
 }mtp_ctx;
@@ -143,9 +151,10 @@ void mtp_set_usb_handle(mtp_ctx * ctx, void * handle, uint32_t max_packet_size);
 
 int mtp_load_config_file(mtp_ctx * context, const char * conffile);
 
-uint32_t mtp_add_storage(mtp_ctx * ctx, char * path, char * description, uint32_t flags);
+uint32_t mtp_add_storage(mtp_ctx * ctx, char * path, char * description, int uid, int gid, uint32_t flags);
 int mtp_remove_storage(mtp_ctx * ctx, char * name);
 int mtp_get_storage_index_by_name(mtp_ctx * ctx, char * name);
+int mtp_get_storage_index_by_id(mtp_ctx * ctx, uint32_t storage_id);
 uint32_t mtp_get_storage_id_by_name(mtp_ctx * ctx, char * name);
 char * mtp_get_storage_description(mtp_ctx * ctx, uint32_t storage_id);
 char * mtp_get_storage_root(mtp_ctx * ctx, uint32_t storage_id);
@@ -161,6 +170,6 @@ int build_response(mtp_ctx * ctx, uint32_t tx_id, uint16_t type, uint16_t status
 int check_and_send_USB_ZLP(mtp_ctx * ctx , int size);
 int parse_incomming_dataset(mtp_ctx * ctx,void * datain,int size,uint32_t * newhandle, uint32_t parent_handle, uint32_t storage_id);
 
-#define APP_VERSION "v1.5.1"
+#define APP_VERSION "v1.6.1"
 
 #endif

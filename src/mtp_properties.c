@@ -455,6 +455,7 @@ int setObjectPropValue(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, uint32_
 	char tmpstr[256+1];
 	unsigned int stringlen;
 	uint32_t response_code;
+	int ret;
 
 	PRINT_DEBUG("setObjectPropValue : (Handle : 0x%.8X - Prop code : 0x%.4X )", handle, prop_code);
 
@@ -512,7 +513,15 @@ int setObjectPropValue(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, uint32_
 					return MTP_RESPONSE_GENERAL_ERROR;
 				}
 
-				if(rename(path, path2))
+				ret = -1;
+
+				if(!set_storage_giduid(ctx, entry->storage_id))
+				{
+					ret = rename(path, path2);
+				}
+				restore_giduid(ctx);
+
+				if(ret)
 				{
 					PRINT_ERROR("setObjectPropValue : Can't rename %s to %s", path, path2);
 
@@ -611,7 +620,6 @@ int build_ObjectPropValue_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uint3
 			case MTP_PROPERTY_ASSOCIATION_DESC:
 				ofs = poke32(buffer, ofs, maxsize, 0x00000000);
 			break;
-
 
 			case MTP_PROPERTY_DATE_CREATED:
 			case MTP_PROPERTY_DATE_MODIFIED:

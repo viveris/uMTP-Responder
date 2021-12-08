@@ -26,8 +26,19 @@
 #include "buildconf.h"
 
 #include <inttypes.h>
+#include <inttypes.h>
+#include <pthread.h>
+#include <sys/types.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <string.h>
+
+#include <sys/stat.h>
+#include <sys/fsuid.h>
+#include <unistd.h>
 #include <errno.h>
 
+#include "mtp.h"
 #include "mtp_helpers.h"
 #include "usbstring.h"
 
@@ -357,4 +368,53 @@ uint16_t posix_to_mtp_errcode(int err)
 	}
 
 	return code;
+}
+
+int set_giduid(mtp_ctx * ctx,int uid,int gid)
+{
+	int ret;
+
+	ret = 0;
+
+	if(uid >= 0)
+	{
+		if(setfsuid(uid))
+			ret = -1;
+	}
+
+	if(gid >= 0)
+	{
+		if(setfsgid(gid))
+			ret = -1;
+	}
+
+	return ret;
+}
+
+int restore_giduid(mtp_ctx * ctx)
+{
+	return set_giduid( ctx, ctx->uid, ctx->gid );
+}
+
+int set_storage_giduid(mtp_ctx * ctx,uint32_t storage_id)
+{
+	int i,uid,gid;
+
+	i = mtp_get_storage_index_by_id(ctx, storage_id);
+
+	if( i >= 0 && i < MAX_STORAGE_NB )
+	{
+		uid = ctx->default_uid;
+		gid = ctx->default_gid;
+
+		if(ctx->storages[i].uid != -1)
+			uid = ctx->storages[i].uid;
+
+		if(ctx->storages[i].gid != -1)
+			gid = ctx->storages[i].uid;
+
+		return set_giduid(ctx,uid,gid);
+	}
+
+	return -1;
 }

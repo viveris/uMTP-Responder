@@ -77,6 +77,14 @@ mtp_ctx * mtp_init_responder()
 		if(!ctx->temp_array)
 			goto init_error;
 
+		ctx->uid = getuid();
+		ctx->euid = geteuid();
+		ctx->gid = getgid();
+		ctx->egid = getegid();
+
+		ctx->default_uid = -1;
+		ctx->default_gid = -1;
+
 		ctx->SetObjectPropValue_Handle = 0xFFFFFFFF;
 
 		pthread_mutex_init ( &ctx->inotify_mutex, NULL);
@@ -172,7 +180,7 @@ int parse_incomming_dataset(mtp_ctx * ctx,void * datain,int size,uint32_t * newh
 	char * parent_folder;
 	char * tmp_path;
 	uint32_t storage_flags;
-	int i,ret_code;
+	int i,ret_code,ret;
 	fs_entry * entry;
 	int file;
 	filefoundinfo tmp_file_entry;
@@ -250,7 +258,16 @@ int parse_incomming_dataset(mtp_ctx * ctx,void * datain,int size,uint32_t * newh
 							sprintf(tmp_path,"%s/%s",parent_folder,tmp_str);
 							PRINT_DEBUG("MTP_OPERATION_SEND_OBJECT_INFO : Creating %s ...",tmp_path);
 
-							if( mkdir(tmp_path, 0700) )
+							ret = -1;
+
+							if(!set_storage_giduid(ctx, entry->storage_id))
+							{
+								ret = mkdir(tmp_path, 0700);
+							}
+
+							restore_giduid(ctx);
+
+							if( ret )
 							{
 								PRINT_WARN("MTP_OPERATION_SEND_OBJECT_INFO : Can't create %s ...",tmp_path);
 
@@ -334,7 +351,15 @@ int parse_incomming_dataset(mtp_ctx * ctx,void * datain,int size,uint32_t * newh
 							strcpy(tmp_file_entry.filename,tmp_str);
 							tmp_file_entry.size = objectsize;
 
-							file = open(tmp_path,O_WRONLY | O_CREAT | O_TRUNC | O_LARGEFILE, S_IRUSR|S_IWUSR);
+							file = -1;
+
+							if(!set_storage_giduid(ctx, storage_id))
+							{
+								file = open(tmp_path,O_WRONLY | O_CREAT | O_TRUNC | O_LARGEFILE, S_IRUSR|S_IWUSR);
+							}
+
+							restore_giduid(ctx);
+
 							if( file == -1)
 							{
 								PRINT_WARN("MTP_OPERATION_SEND_OBJECT_INFO : Can't create %s ...",tmp_path);
@@ -654,7 +679,7 @@ void mtp_set_usb_handle(mtp_ctx * ctx, void * handle, uint32_t max_packet_size)
 	ctx->max_packet_size = max_packet_size;
 }
 
-uint32_t mtp_add_storage(mtp_ctx * ctx, char * path, char * description, uint32_t flags)
+uint32_t mtp_add_storage(mtp_ctx * ctx, char * path, char * description, int uid, int gid, uint32_t flags)
 {
 	int i;
 
@@ -673,6 +698,9 @@ uint32_t mtp_add_storage(mtp_ctx * ctx, char * path, char * description, uint32_
 
 			if(ctx->storages[i].root_path && ctx->storages[i].description)
 			{
+				ctx->storages[i].uid = uid;
+				ctx->storages[i].gid = gid;
+
 				strcpy(ctx->storages[i].root_path,path);
 				strcpy(ctx->storages[i].description,description);
 				ctx->storages[i].flags = flags;
@@ -698,6 +726,8 @@ uint32_t mtp_add_storage(mtp_ctx * ctx, char * path, char * description, uint32_
 				ctx->storages[i].description =  NULL;
 				ctx->storages[i].flags =  0x00000000;
 				ctx->storages[i].storage_id = 0x00000000;
+				ctx->storages[i].uid = -1;
+				ctx->storages[i].gid = -1;
 
 				return ctx->storages[i].storage_id;
 			}
@@ -722,6 +752,8 @@ int mtp_remove_storage(mtp_ctx * ctx, char * name)
 	ctx->storages[index].description = NULL;
 	ctx->storages[index].flags = 0x00000000;
 	ctx->storages[index].storage_id = 0x00000000;
+	ctx->storages[index].uid = -1;
+	ctx->storages[index].gid = -1;
 
 	return 0;
 }
@@ -769,6 +801,31 @@ int mtp_get_storage_index_by_name(mtp_ctx * ctx, char * name)
 					    ctx->storages[i].root_path,
 						i);
 
+				return i;
+			}
+		}
+		i++;
+	}
+
+	return -1;
+}
+
+int mtp_get_storage_index_by_id(mtp_ctx * ctx, uint32_t storage_id)
+{
+	int i;
+
+	PRINT_DEBUG("mtp_get_storage_index_by_id : 0x%X", storage_id );
+
+	i = 0;
+	while(i < MAX_STORAGE_NB)
+	{
+		if( ctx->storages[i].root_path )
+		{
+			if( ctx->storages[i].storage_id == storage_id )
+			{
+				PRINT_DEBUG("mtp_get_storage_index_by_id : %.8X -> %d",
+					    storage_id,
+					    i );
 				return i;
 			}
 		}

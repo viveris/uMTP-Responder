@@ -40,6 +40,7 @@ uint32_t mtp_op_DeleteObject(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, i
 {
 	uint32_t response_code;
 	uint32_t handle;
+	fs_entry * entry;
 
 	if(!ctx->fs_db)
 		return MTP_RESPONSE_SESSION_NOT_OPEN;
@@ -55,14 +56,23 @@ uint32_t mtp_op_DeleteObject(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, i
 		return response_code;
 	}
 
-	if(delete_tree(ctx, handle))
+	response_code = MTP_RESPONSE_OBJECT_WRITE_PROTECTED;
+
+	entry = get_entry_by_handle(ctx->fs_db, handle);
+
+	if(!set_storage_giduid(ctx, entry->storage_id))
 	{
-		response_code = MTP_RESPONSE_OBJECT_WRITE_PROTECTED;
+		if(delete_tree(ctx, handle))
+		{
+			response_code = MTP_RESPONSE_OBJECT_WRITE_PROTECTED;
+		}
+		else
+		{
+			response_code = MTP_RESPONSE_OK;
+		}
 	}
-	else
-	{
-		response_code = MTP_RESPONSE_OK;
-	}
+
+	restore_giduid(ctx);
 
 	pthread_mutex_unlock( &ctx->inotify_mutex );
 

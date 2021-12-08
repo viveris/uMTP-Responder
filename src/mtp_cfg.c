@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "mtp.h"
 #include "mtp_cfg.h"
@@ -74,6 +75,8 @@ enum
 
 	SHOW_HIDDEN_FILES,
 	UMASK,
+	DEFAULT_UID_CMD,
+	DEFAULT_GID_CMD,
 
 	NO_INOTIFY
 
@@ -214,9 +217,9 @@ static int extract_cmd(char * line, char * command)
 	return 0;
 }
 
-int test_flag(char * str, char * flag)
+int test_flag(char * str, char * flag, char * param)
 {
-	int i,flaglen;
+	int i,j,flaglen;
 	char previous_char;
 
 	flaglen = strlen(flag);
@@ -227,8 +230,22 @@ int test_flag(char * str, char * flag)
 		if(!strncmp(&str[i],flag,strlen(flag)))
 		{
 			if( (previous_char == 0 || previous_char == ',') && \
-			    (str[i + flaglen] == 0 || str[i + flaglen] == ',') )
+			    (str[i + flaglen] == 0 || str[i + flaglen] == ','  || str[i + flaglen] == '=') )
 			{
+				if(param && str[i + flaglen] == '=')
+				{
+					// get the parameter
+					i = i + flaglen + 1;
+					j = 0;
+					while(str[i] && str[i] != ',' && str[i] != ' ' && j < (MAX_CFG_STRING_SIZE - 1))
+					{
+						param[j] = str[i];
+						i++;
+						j++;
+					}
+					param[j] = 0;
+				}
+
 				return 1;
 			}
 		}
@@ -257,11 +274,15 @@ int mtp_remove_storage_from_line(mtp_ctx * context, char * name, int idx)
 
 void mtp_add_storage_from_line(mtp_ctx * context, char * line, int idx)
 {
-	int i, j, k;
+	int i, j, k, uid, gid, print_uid, print_gid;
 	char storagename[MAX_CFG_STRING_SIZE];
 	char storagepath[MAX_CFG_STRING_SIZE];
 	char options[MAX_CFG_STRING_SIZE];
+	char tmpstr[MAX_CFG_STRING_SIZE];
 	uint32_t flags;
+
+	uid = -1;
+	gid = -1;
 
 	i = get_param(line, idx + 1,storagename);
 	j = get_param(line, idx,storagepath);
@@ -272,35 +293,55 @@ void mtp_add_storage_from_line(mtp_ctx * context, char * line, int idx)
 		k = get_param(line, idx + 2,options);
 		if( k >= 0 )
 		{
-			if(test_flag(options, "ro"))
+			if(test_flag(options, "ro",NULL))
 			{
 				flags |= UMTP_STORAGE_READONLY;
 			}
 
-			if(test_flag(options, "rw"))
+			if(test_flag(options, "rw",NULL))
 			{
 				flags |= UMTP_STORAGE_READWRITE;
 			}
 
-			if(test_flag(options, "notmounted"))
+			if(test_flag(options, "notmounted",NULL))
 			{
 				flags |= UMTP_STORAGE_NOTMOUNTED;
 			}
 
-			if(test_flag(options, "removable"))
+			if(test_flag(options, "removable",NULL))
 			{
 				flags |= UMTP_STORAGE_REMOVABLE;
 			}
 
-			if(test_flag(options, "locked"))
+			if(test_flag(options, "locked",NULL))
 			{
 				flags |= (UMTP_STORAGE_LOCKABLE | UMTP_STORAGE_LOCKED);
 			}
+
+			if(test_flag(options, "uid",tmpstr))
+			{
+				uid = atoi(tmpstr);
+			}
+
+			if(test_flag(options, "gid",tmpstr))
+			{
+				gid = atoi(tmpstr);
+			}
 		}
 
-		PRINT_MSG("Add storage %s - Root Path: %s - Flags: 0x%.8X", storagename, storagepath,flags);
+		if(uid == -1)
+			print_uid = context->default_uid;
+		else
+			print_uid = uid;
 
-		mtp_add_storage(context, storagepath, storagename, flags);
+		if(gid == -1)
+			print_gid = context->default_gid;
+		else
+			print_gid = gid;
+
+		PRINT_MSG("Add storage %s - Root Path: %s - UID: %d - GID: %d - Flags: 0x%.8X", storagename, storagepath, print_uid, print_gid, flags);
+
+		mtp_add_storage(context, storagepath, storagename, uid, gid, flags);
 	}
 }
 
@@ -463,6 +504,30 @@ static int get_oct_param(mtp_ctx * context, char * line,int cmd)
 	return 0;
 }
 
+static int get_dec_param(mtp_ctx * context, char * line,int cmd)
+{
+	int i;
+	char tmp_txt[MAX_CFG_STRING_SIZE];
+	unsigned long param_value;
+
+	i = get_param(line, 1, tmp_txt);
+
+	if (i >= 0)
+	{
+		param_value = strtol(tmp_txt, 0, 10);
+		switch (cmd)
+		{
+			case DEFAULT_UID_CMD:
+				context->default_uid = param_value;
+			break;
+			case DEFAULT_GID_CMD:
+				context->default_gid = param_value;
+			break;
+		}
+	}
+	return 0;
+}
+
 kw_list kwlist[] =
 {
 	{"storage",                get_storage_params, STORAGE_CMD},
@@ -494,6 +559,8 @@ kw_list kwlist[] =
 
 	{"show_hidden_files",      get_hex_param,   SHOW_HIDDEN_FILES},
 	{"umask",                  get_oct_param,   UMASK},
+	{"default_uid",            get_dec_param,   DEFAULT_UID_CMD},
+	{"default_gid",            get_dec_param,   DEFAULT_GID_CMD},
 
 	{"no_inotify",             get_hex_param,   NO_INOTIFY},
 
@@ -578,6 +645,9 @@ int mtp_load_config_file(mtp_ctx * context, const char * conffile)
 
 	context->usb_cfg.val_umask = -1;
 
+	context->default_gid = -1;
+	context->default_uid = -1;
+
 	context->no_inotify = 0;
 
 	f = fopen(conffile, "r");
@@ -643,6 +713,25 @@ int mtp_load_config_file(mtp_ctx * context, const char * conffile)
 	{
 		PRINT_MSG("File creation umask : System default umask");
 	}
+
+	if(context->default_uid != -1)
+	{
+		PRINT_MSG("Default UID : %d",context->default_uid);
+	}
+	else
+	{
+		PRINT_MSG("Default UID : %d",geteuid());
+	}
+
+	if(context->default_gid != -1)
+	{
+		PRINT_MSG("Default GID : %d",context->default_gid);
+	}
+	else
+	{
+		PRINT_MSG("Default GID : %d",getegid());
+	}
+
 	PRINT_MSG("inotify : %s",context->no_inotify?"no":"yes");
 
 	return err;

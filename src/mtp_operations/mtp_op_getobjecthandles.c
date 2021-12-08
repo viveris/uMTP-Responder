@@ -48,7 +48,7 @@ uint32_t mtp_op_GetObjectHandles(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hd
 	fs_entry * entry;
 	char * full_path;
 	char * tmp_str;
-	int sz;
+	int sz,ret;
 
 	if(!ctx->fs_db)
 		return MTP_RESPONSE_SESSION_NOT_OPEN;
@@ -100,7 +100,23 @@ uint32_t mtp_op_GetObjectHandles(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hd
 	if( full_path )
 	{
 		// Count the number of files...
-		scan_and_add_folder(ctx->fs_db, full_path, parent_handle, storageid);
+		ret = -1;
+
+		if(!set_storage_giduid(ctx, entry->storage_id))
+		{
+			ret = scan_and_add_folder(ctx->fs_db, full_path, parent_handle, storageid);
+		}
+		restore_giduid(ctx);
+
+		if(ret < 0)
+		{
+			PRINT_WARN("MTP_OPERATION_GET_OBJECT_HANDLES : FOLDER ACCESS ERROR !");
+
+			pthread_mutex_unlock( &ctx->inotify_mutex );
+
+			return MTP_RESPONSE_ACCESS_DENIED;
+		}
+
 		init_search_handle(ctx->fs_db, parent_handle, storageid);
 
 		while( get_next_child_handle(ctx->fs_db) )

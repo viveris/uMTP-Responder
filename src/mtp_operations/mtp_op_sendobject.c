@@ -85,10 +85,17 @@ uint32_t mtp_op_SendObject(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int
 					full_path = build_full_path(ctx->fs_db, mtp_get_storage_root(ctx, entry->storage_id), entry);
 					if(full_path)
 					{
-						if( mtp_packet_hdr->code == MTP_OPERATION_SEND_PARTIAL_OBJECT )
-							file = open(full_path,O_RDWR | O_LARGEFILE);
-						else
-							file = open(full_path,O_CREAT|O_WRONLY|O_TRUNC| O_LARGEFILE, S_IRUSR|S_IWUSR);
+						file = -1;
+
+						if(!set_storage_giduid(ctx, entry->storage_id))
+						{
+							if( mtp_packet_hdr->code == MTP_OPERATION_SEND_PARTIAL_OBJECT )
+								file = open(full_path,O_RDWR | O_LARGEFILE);
+							else
+								file = open(full_path,O_CREAT|O_WRONLY|O_TRUNC| O_LARGEFILE, S_IRUSR|S_IWUSR);
+						}
+
+						restore_giduid(ctx);
 
 						if( file != -1 )
 						{

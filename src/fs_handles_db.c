@@ -36,6 +36,8 @@
 #include <dirent.h>
 
 #include "mtp.h"
+#include "mtp_helpers.h"
+
 #include "fs_handles_db.h"
 #include "inotify.h"
 #include "logs_out.h"
@@ -448,7 +450,10 @@ int scan_and_add_folder(fs_handles_db * db, char * base, uint32_t parent, uint32
 		}
 	}while(entry);
 
-	return 0;
+	if(dir)
+		return 0;
+	else
+		return -1;
 }
 
 fs_entry * init_search_handle(fs_handles_db * db, uint32_t parent, uint32_t storage_id)
@@ -602,7 +607,14 @@ int entry_open(fs_handles_db * db, fs_entry * entry)
 	full_path = build_full_path(db,mtp_get_storage_root(db->mtp_ctx, entry->storage_id), entry);
 	if( full_path )
 	{
-		file = open(full_path,O_RDONLY | O_LARGEFILE);
+		file = -1;
+
+		if(!set_storage_giduid(db->mtp_ctx, entry->storage_id))
+		{
+			file = open(full_path,O_RDONLY | O_LARGEFILE);
+		}
+
+		restore_giduid(db->mtp_ctx);
 
 		if( file == -1 )
 			PRINT_DEBUG("entry_open : Can't open %s !",full_path);
