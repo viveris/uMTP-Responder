@@ -10,6 +10,19 @@
 * Release notes
 =================================================
 
+Noteworthy changes in release v1.6.2 (2021-Dec-26)
+=================================================
+
+* Storage : Global and per storage UID/GID override options :
+
+    * Global and per storage UID/GID can be specified
+      in the configuration file.
+
+* Code fixes / improvements :
+
+    * Message queue (-cmd: operations) possible issue fixed.
+    * More checks added during the MTP operations.
+
 Noteworthy changes in release v1.5.1 (2021-Dec-6)
 =================================================
 

@@ -45,9 +45,11 @@ The uMTP-Responder allows files to be transferred to and from devices through th
 
 - Up to 16 storage instances supported.
 
-- Storage mount / unmount.
+- Storages mount / unmount.
 
-- Storage lock / unlock.
+- Storages lock / unlock.
+
+- Global and Storages GID/UID override options.
 
 - GadgetFS and FunctionFS/libcomposite modes supported.
 
