@@ -59,17 +59,23 @@ uint32_t mtp_op_DeleteObject(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, i
 	response_code = MTP_RESPONSE_OBJECT_WRITE_PROTECTED;
 
 	entry = get_entry_by_handle(ctx->fs_db, handle);
-
-	if(!set_storage_giduid(ctx, entry->storage_id))
+	if(entry)
 	{
-		if(delete_tree(ctx, handle))
+		if(!set_storage_giduid(ctx, entry->storage_id))
 		{
-			response_code = MTP_RESPONSE_OBJECT_WRITE_PROTECTED;
+			if(delete_tree(ctx, handle))
+			{
+				response_code = MTP_RESPONSE_OBJECT_WRITE_PROTECTED;
+			}
+			else
+			{
+				response_code = MTP_RESPONSE_OK;
+			}
 		}
-		else
-		{
-			response_code = MTP_RESPONSE_OK;
-		}
+	}
+	else
+	{
+		response_code = MTP_RESPONSE_INVALID_OBJECT_HANDLE;
 	}
 
 	restore_giduid(ctx);
