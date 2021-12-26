@@ -52,9 +52,11 @@
 #include "inotify.h"
 #include "logs_out.h"
 
+#define MAX_MSG_SIZE 100
+
 typedef struct mesg_buffer_ {
 	long mesg_type;
-	char mesg_text[100];
+	char mesg_text[MAX_MSG_SIZE];
 } queue_msg_buf;
 
 void *msgqueue_gotsig(int sig, siginfo_t *info, void *ucontext)
@@ -86,7 +88,7 @@ void* msgqueue_thread( void* arg )
 
 	do
 	{
-		if( msgrcv(ctx->msgqueue_id, &msg_buf, sizeof(msg_buf), 1, 0) > 0 )
+		if( msgrcv(ctx->msgqueue_id, &msg_buf, MAX_MSG_SIZE, 1, 0) > 0 )
 		{
 			PRINT_DEBUG("msgqueue_thread : New message received : %s",msg_buf.mesg_text);
 
@@ -229,7 +231,7 @@ int get_current_exec_path( char * exec_path, int maxsize )
 
 	if(strlen(tmp_exec_path) < maxsize)
 	{
-		strcpy(exec_path,tmp_exec_path);
+		strncpy(exec_path,tmp_exec_path,maxsize);
 		return 0;
 	}
 	else
@@ -254,9 +256,9 @@ int send_message_queue( char * message )
 		PRINT_DEBUG("send_message_queue : msgqueue_id = %d", msgqueue_id);
 
 		msg_buf.mesg_type = 1;
-		msg_buf.mesg_text[sizeof(msg_buf.mesg_text) - 1] = '\0';		// to be sure to terminate the string - see the strncpy's behavior.
-		strncpy(msg_buf.mesg_text,message,sizeof(msg_buf.mesg_text) - 1);
-		if( msgsnd(msgqueue_id, &msg_buf, sizeof(msg_buf), 0) == 0 )
+		msg_buf.mesg_text[MAX_MSG_SIZE - 1] = '\0';   // to be sure to terminate the string - see the strncpy's behavior.
+		strncpy(msg_buf.mesg_text,message,MAX_MSG_SIZE - 1);
+		if( msgsnd(msgqueue_id, &msg_buf, MAX_MSG_SIZE, 0) == 0 )
 		{
 			return 0;
 		}
@@ -275,7 +277,7 @@ int msgqueue_handler_init( mtp_ctx * ctx )
 
 	if( ctx )
 	{
-		if(get_current_exec_path(exec_path, sizeof(exec_path)) >= 0)
+		if(get_current_exec_path(exec_path, sizeof(exec_path)-1) >= 0)
 		{
 			PRINT_DEBUG("msgqueue_handler_init : current exec path : %s", exec_path);
 
