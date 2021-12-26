@@ -498,7 +498,10 @@ fs_entry * get_entry_by_handle(fs_handles_db * db, uint32_t handle)
 	{
 		if( !( entry_list->flags & ENTRY_IS_DELETED ) && ( entry_list->handle == handle ) )
 		{
-			return entry_list;
+			if( mtp_get_storage_root(db->mtp_ctx, entry_list->storage_id) )
+			{
+				return entry_list;
+			}
 		}
 
 		entry_list = entry_list->next;
