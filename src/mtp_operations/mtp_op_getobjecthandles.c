@@ -102,7 +102,7 @@ uint32_t mtp_op_GetObjectHandles(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hd
 		// Count the number of files...
 		ret = -1;
 
-		if(!set_storage_giduid(ctx, entry->storage_id))
+		if(!set_storage_giduid(ctx, storageid))
 		{
 			ret = scan_and_add_folder(ctx->fs_db, full_path, parent_handle, storageid);
 		}
