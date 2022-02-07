@@ -30,13 +30,19 @@ if use_syslog
   add_project_arguments('-DUSE_SYSLOG', language: 'c')
 endif
 
+with_systemd_notify = get_option('systemd-notify')
+if with_systemd_notify
+  add_project_arguments('-DSYSTEMD_NOTIFY', language: 'c')
+endif
+
 subdir('src')
 
 umtprd_include_dirs  = include_directories('inc')
 
 threads_dep = dependency('threads')
+libsystemd_dep = dependency('libsystemd', required: with_systemd_notify)
 
-umtprd_deps = [threads_dep]
+umtprd_deps = [threads_dep, libsystemd_dep]
 
 executable('umtprd',
            umtprd_sources,

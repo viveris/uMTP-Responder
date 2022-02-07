@@ -3,3 +3,4 @@ option('usb-hs-support', type : 'boolean', value : false, description : 'Enable 
 option('usb-ss-support', type : 'boolean', value : false, description : 'Enable super speed USB support (USB 3.0)')
 option('print-debug', type : 'boolean', value : false, description : 'Enable debug output')
 option('use-syslog', type : 'boolean', value : true, description : 'Enable syslog support')
+option('systemd-notify', type : 'boolean', value : false, description : 'Notify systemd when endpoint setup is complete')
