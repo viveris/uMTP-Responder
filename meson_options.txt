@@ -1,0 +1,5 @@
+option('usb-fs-support', type : 'boolean', value : false, description : 'Enable full speed USB support (USB 1.1)')
+option('usb-hs-support', type : 'boolean', value : false, description : 'Enable high speed USB support (USB 2.0)')
+option('usb-ss-support', type : 'boolean', value : false, description : 'Enable super speed USB support (USB 3.0)')
+option('print-debug', type : 'boolean', value : false, description : 'Enable debug output')
+option('use-syslog', type : 'boolean', value : true, description : 'Enable syslog support')
