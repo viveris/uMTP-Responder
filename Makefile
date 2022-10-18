@@ -7,15 +7,15 @@ objects := $(sources:src/%.c=obj/%.o)
 ops_sources := $(wildcard src/mtp_operations/*.c)
 ops_objects := $(ops_sources:src/mtp_operations/%.c=obj/%.o)
 
-all: output_dir umtprd
+all: umtprd
 
 umtprd: $(objects) $(ops_objects)
 	${CC} -o $@    $^ $(LDFLAGS) -lpthread
 
-$(objects): obj/%.o: src/%.c
+$(objects): obj/%.o: src/%.c | output_dir
 	${CC} -o $@ $^ -c $(CPPFLAGS) $(CFLAGS)
 
-$(ops_objects): obj/%.o: src/mtp_operations/%.c
+$(ops_objects): obj/%.o: src/mtp_operations/%.c | output_dir
 	${CC} -o $@ $^ -c $(CPPFLAGS) $(CFLAGS)
 
 output_dir:
