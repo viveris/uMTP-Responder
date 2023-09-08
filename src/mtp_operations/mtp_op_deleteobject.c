@@ -20,7 +20,7 @@
 /**
  * @file   mtp_op_deleteobject.c
  * @brief  Delete object operation
- * @author Jean-François DEL NERO <Jean-Francois.DELNERO@viveris.fr>
+ * @author Jean-Franï¿½ois DEL NERO <Jean-Francois.DELNERO@viveris.fr>
  */
 
 #include "buildconf.h"
@@ -49,7 +49,7 @@ uint32_t mtp_op_DeleteObject(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, i
 
 	handle = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER), 4); // Get param 1 - object handle
 
-	if( check_handle_access( ctx, NULL, handle, 1, &response_code) )
+	if( check_handle_access( ctx, NULL, handle, 2, &response_code) )
 	{
 		pthread_mutex_unlock( &ctx->inotify_mutex );
 

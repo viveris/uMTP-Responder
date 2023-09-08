@@ -297,6 +297,11 @@ void mtp_add_storage_from_line(mtp_ctx * context, char * line, int idx)
 			{
 				flags |= UMTP_STORAGE_READONLY;
 			}
+		
+			if(test_flag(options, "d",NULL))
+			{
+				flags |= UMTP_STORAGE_DELETE;
+			}
 
 			if(test_flag(options, "rw",NULL))
 			{

@@ -85,6 +85,7 @@ typedef struct mtp_storage_
 	int gid;
 }mtp_storage;
 
+#define UMTP_STORAGE_DELETE      0x00000020
 #define UMTP_STORAGE_LOCKED      0x00000010
 #define UMTP_STORAGE_LOCKABLE    0x00000008
 #define UMTP_STORAGE_REMOVABLE   0x00000004
