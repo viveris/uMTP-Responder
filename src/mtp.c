@@ -682,6 +682,8 @@ void mtp_set_usb_handle(mtp_ctx * ctx, void * handle, uint32_t max_packet_size)
 uint32_t mtp_add_storage(mtp_ctx * ctx, char * path, char * description, int uid, int gid, uint32_t flags)
 {
 	int i;
+	int root_path_len;
+	int description_len;
 
 	PRINT_DEBUG("mtp_add_storage : %s", path );
 
@@ -693,16 +695,23 @@ uint32_t mtp_add_storage(mtp_ctx * ctx, char * path, char * description, int uid
 	{
 		if( !ctx->storages[i].root_path )
 		{
-			ctx->storages[i].root_path = malloc(strlen(path) + 1);
-			ctx->storages[i].description = malloc(strlen(description) + 1);
+			root_path_len = strlen(path);
+			description_len = strlen(description);
+
+			ctx->storages[i].root_path = malloc(root_path_len + 1);
+			ctx->storages[i].description = malloc(description_len + 1);
 
 			if(ctx->storages[i].root_path && ctx->storages[i].description)
 			{
 				ctx->storages[i].uid = uid;
 				ctx->storages[i].gid = gid;
 
-				strcpy(ctx->storages[i].root_path,path);
-				strcpy(ctx->storages[i].description,description);
+				strncpy( ctx->storages[i].root_path, path, root_path_len + 1);
+				ctx->storages[i].root_path[root_path_len] = 0;
+
+				strncpy( ctx->storages[i].description, description, description_len + 1);
+				ctx->storages[i].description[description_len] = 0;
+
 				ctx->storages[i].flags = flags;
 
 				ctx->storages[i].storage_id = 0xFFFF0000 + (i + 1);
