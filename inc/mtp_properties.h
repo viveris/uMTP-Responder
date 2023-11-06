@@ -45,9 +45,9 @@ typedef struct format_property_
 	uint16_t * properties;
 }formats_property;
 
-extern profile_property dev_properties[];
-extern profile_property properties[];
-extern formats_property fmt_properties[];
+extern const profile_property dev_properties[];
+extern const profile_property properties[];
+extern const formats_property fmt_properties[];
 
 int build_properties_supported_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uint32_t format_id);
 int build_properties_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uint32_t property_id,uint32_t format_id);
