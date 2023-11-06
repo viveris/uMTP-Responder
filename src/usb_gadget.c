@@ -259,7 +259,7 @@ int init_ep(usb_gadget * ctx,int index,int ffs_mode)
 
 	PRINT_DEBUG("Init end point %s (%d)",ctx->ep_path[index],index);
 	fd = open(ctx->ep_path[index], O_RDWR);
-	if ( fd <= 0 )
+	if ( fd < 0 )
 	{
 		PRINT_ERROR("init_ep : Endpoint %s (%d) init failed ! : Can't open the endpoint ! (error %d - %m)",ctx->ep_path[index],index,fd);
 		goto init_ep_error;
@@ -361,18 +361,22 @@ int init_ep(usb_gadget * ctx,int index,int ffs_mode)
 	return fd;
 
 init_ep_error:
-	return 0;
+
+	if(fd >= 0)
+		close(fd);
+
+	return -1;
 }
 
 int init_eps(usb_gadget * ctx, int ffs_mode)
 {
-	if( !init_ep(ctx, EP_DESCRIPTOR_IN, ffs_mode) )
+	if( init_ep(ctx, EP_DESCRIPTOR_IN, ffs_mode) < 0 )
 		goto init_eps_error;
 
-	if( !init_ep(ctx, EP_DESCRIPTOR_OUT, ffs_mode) )
+	if( init_ep(ctx, EP_DESCRIPTOR_OUT, ffs_mode) < 0 )
 		goto init_eps_error;
 
-	if( !init_ep(ctx, EP_DESCRIPTOR_INT_IN, ffs_mode) )
+	if( init_ep(ctx, EP_DESCRIPTOR_INT_IN, ffs_mode) < 0 )
 		goto init_eps_error;
 
 	return 0;
@@ -902,7 +906,6 @@ usb_gadget * init_usb_mtp_gadget(mtp_ctx * ctx)
 	usbctx = malloc(sizeof(usb_gadget));
 	if(usbctx)
 	{
-
 		memset(usbctx,0,sizeof(usb_gadget));
 
 		usbctx->usb_device = -1;
@@ -942,7 +945,7 @@ usb_gadget * init_usb_mtp_gadget(mtp_ctx * ctx)
 
 		usbctx->usb_device = open(ctx->usb_cfg.usb_device_path, O_RDWR|O_SYNC);
 
-		if (usbctx->usb_device <= 0)
+		if (usbctx->usb_device < 0)
 		{
 			PRINT_ERROR("init_usb_mtp_gadget : Unable to open %s (%m)", ctx->usb_cfg.usb_device_path);
 			goto init_error;
@@ -1094,7 +1097,7 @@ init_error:
 
 	deinit_usb_mtp_gadget(usbctx);
 
-	return 0;
+	return NULL;
 }
 
 void deinit_usb_mtp_gadget(usb_gadget * usbctx)
