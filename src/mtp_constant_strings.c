@@ -112,7 +112,6 @@ const propertystring property_codes[]=
 	{ "MTP_DEVICE_PROPERTY_DEVICE_FRIENDLY_NAME",          0xD402 },
 	{ "MTP_DEVICE_PROPERTY_IMAGE_SIZE",                    0x5003 },
 	{ "MTP_DEVICE_PROPERTY_BATTERY_LEVEL",                 0x5001 },
-	{ "MTP_PROPERTY_OBJECT_FORMAT",                        0xDC02 },
 	{ "MTP_PROPERTY_STORAGE_ID",                           0xDC01 },
 	{ "MTP_PROPERTY_OBJECT_FORMAT",                        0xDC02 },
 	{ "MTP_PROPERTY_PROTECTION_STATUS",                    0xDC03 },
