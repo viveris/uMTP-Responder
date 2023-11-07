@@ -31,6 +31,11 @@
 #include <pthread.h>
 #include <string.h>
 
+#ifdef SYSTEMD_NOTIFY
+#include <systemd/sd-login.h>
+#include <systemd/sd-daemon.h>
+#endif
+
 #include "mtp.h"
 
 #include "usb_gadget.h"
@@ -85,6 +90,12 @@ static int main_thread(const char *conffile)
 		if(usb_ctx)
 		{
 			mtp_set_usb_handle(mtp_context, usb_ctx, mtp_context->usb_cfg.usb_max_packet_size);
+
+#ifdef SYSTEMD_NOTIFY
+			/* Tell systemd that we are ready */
+			sd_notify(0, "READY=1");
+#endif
+
 			if( mtp_context->usb_cfg.usb_functionfs_mode )
 			{
 				PRINT_DEBUG("uMTP Responder : FunctionFS Mode - entering handle_ffs_ep0");
