@@ -167,7 +167,7 @@ uint32_t mtp_op_GetObjectHandles(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hd
 			}
 		}while( ofs >= 0 && ofs < ctx->max_packet_size && handle_index < nb_of_handles);
 
-		if(sz < 0)
+		if(ofs < 0)
 			goto error;
 
 		PRINT_DEBUG_BUF(ctx->wrbuffer, ofs);
