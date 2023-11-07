@@ -335,6 +335,9 @@ fs_entry * alloc_root_entry(fs_handles_db * db, uint32_t storage_id)
 {
 	fs_entry * entry;
 
+	if( !db )
+		return NULL;
+
 	entry = malloc(sizeof(fs_entry));
 	if( entry )
 	{
