@@ -362,35 +362,85 @@ static int get_hex_param(mtp_ctx * context, char * line,int cmd)
 
 	if( i >= 0 )
 	{
-		param_value = strtol(tmp_txt,0,16);
+		param_value = strtoul(tmp_txt,0,16);
 		switch(cmd)
 		{
 			case USBVENDORID_CMD:
-				context->usb_cfg.usb_vendor_id = param_value;
+				if( param_value < 0x10000 )
+				{
+					context->usb_cfg.usb_vendor_id = param_value;
+				}
+				else
+				{
+					PRINT_MSG("Bad vendor id value !\n");
+				}
 			break;
 
 			case USBPRODUCTID_CMD:
-				context->usb_cfg.usb_product_id = param_value;
+				if( param_value < 0x10000 )
+				{
+					context->usb_cfg.usb_product_id = param_value;
+				}
+				else
+				{
+					PRINT_MSG("Bad product id value !\n");
+				}
 			break;
 
 			case USBCLASS_CMD:
-				context->usb_cfg.usb_class = param_value;
+				if( param_value < 256 )
+				{
+					context->usb_cfg.usb_class = param_value;
+				}
+				else
+				{
+					PRINT_MSG("Bad class value !\n");
+				}
 			break;
 
 			case USBSUBCLASS_CMD:
-				context->usb_cfg.usb_subclass = param_value;
+				if( param_value < 256 )
+				{
+					context->usb_cfg.usb_subclass = param_value;
+				}
+				else
+				{
+					PRINT_MSG("Bad subclass value !\n");
+				}
 			break;
 
 			case USBPROTOCOL_CMD:
-				context->usb_cfg.usb_protocol = param_value;
+				if( param_value < 256 )
+				{
+					context->usb_cfg.usb_protocol = param_value;
+				}
+				else
+				{
+					PRINT_MSG("Bad protocol value !\n");
+				}
 			break;
 
 			case USBDEVVERSION_CMD:
-				context->usb_cfg.usb_dev_version = param_value;
+				if( param_value < 0x10000 )
+				{
+					context->usb_cfg.usb_dev_version = param_value;
+				}
+				else
+				{
+					PRINT_MSG("Bad version value !\n");
+				}
 			break;
 
 			case USBMAXPACKETSIZE_CMD:
-				context->usb_cfg.usb_max_packet_size = param_value;
+				if( param_value < 0x10000)
+				{
+					context->usb_cfg.usb_max_packet_size = param_value;
+				}
+				else
+				{
+					PRINT_MSG("Bad max packet size value !\n");
+					context->usb_cfg.usb_max_packet_size = MAX_PACKET_SIZE;
+				}
 			break;
 
 			case USBMAXRDBUFFERSIZE_CMD:
@@ -406,7 +456,10 @@ static int get_hex_param(mtp_ctx * context, char * line,int cmd)
 			break;
 
 			case USBFUNCTIONFSMODE_CMD:
-				context->usb_cfg.usb_functionfs_mode = param_value;
+				if( param_value )
+					context->usb_cfg.usb_functionfs_mode = USB_FFS_MODE;
+				else
+					context->usb_cfg.usb_functionfs_mode = 0;
 			break;
 
 			case WAIT_CONNECTION:
@@ -493,7 +546,7 @@ static int get_oct_param(mtp_ctx * context, char * line,int cmd)
 
 	if (i >= 0)
 	{
-		param_value = strtol(tmp_txt, 0, 8);
+		param_value = strtoul(tmp_txt, 0, 8);
 		switch (cmd)
 		{
 			case UMASK:
@@ -514,7 +567,7 @@ static int get_dec_param(mtp_ctx * context, char * line,int cmd)
 
 	if (i >= 0)
 	{
-		param_value = strtol(tmp_txt, 0, 10);
+		param_value = strtoul(tmp_txt, 0, 10);
 		switch (cmd)
 		{
 			case DEFAULT_UID_CMD:
