@@ -37,6 +37,7 @@
 #include "mtp_helpers.h"
 #include "mtp_constant.h"
 #include "mtp_constant_strings.h"
+#include "mtp_datasets.h"
 #include "mtp_properties.h"
 
 #include "fs_handles_db.h"
@@ -788,12 +789,14 @@ int build_objectproplist_dataset(mtp_ctx * ctx, void * buffer, int maxsize,fs_en
 	numberofelements += objectproplist_element(ctx, buffer, &ofs, maxsize, MTP_PROPERTY_DISPLAY_NAME, handle, 0,prop_code);
 
 	// Date Created (NR) "YYYYMMDDThhmmss.s"
+	set_default_date(&lt);
 	t = entrystat.st_mtime;
 	localtime_r(&t, &lt);
 	snprintf(timestr,sizeof(timestr),"%.4d%.2d%.2dT%.2d%.2d%.2d",1900 + lt.tm_year, lt.tm_mon + 1, lt.tm_mday, lt.tm_hour, lt.tm_min, lt.tm_sec);
 	numberofelements += objectproplist_element(ctx, buffer, &ofs, maxsize, MTP_PROPERTY_DATE_CREATED, handle, &timestr,prop_code);
 
 	// Date Modified (NR) "YYYYMMDDThhmmss.s"
+	set_default_date(&lt);
 	t = entrystat.st_mtime;
 	localtime_r(&t, &lt);
 	snprintf(timestr,sizeof(timestr),"%.4d%.2d%.2dT%.2d%.2d%.2d",1900 + lt.tm_year, lt.tm_mon + 1, lt.tm_mday, lt.tm_hour, lt.tm_min, lt.tm_sec);

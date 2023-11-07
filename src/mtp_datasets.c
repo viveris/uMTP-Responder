@@ -32,6 +32,7 @@
 #include <sys/statvfs.h>
 #include <time.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "mtp.h"
 #include "mtp_helpers.h"
@@ -44,6 +45,12 @@
 #include "usb_gadget_fct.h"
 #include "fs_handles_db.h"
 #include "logs_out.h"
+
+void set_default_date(struct tm * date)
+{
+	memset(date, 0, sizeof(struct tm));
+	date->tm_year = 110;
+}
 
 int build_deviceinfo_dataset(mtp_ctx * ctx, void * buffer, int maxsize)
 {
@@ -221,12 +228,14 @@ int build_objectinfo_dataset(mtp_ctx * ctx, void * buffer, int maxsize,fs_entry 
 	ofs = poke_string(buffer, ofs, maxsize, entry->name);                                         // Filename
 
 	// Date Created (NR) "YYYYMMDDThhmmss.s"
+	set_default_date(&lt);
 	t = entrystat.st_mtime;
 	localtime_r(&t, &lt);
 	snprintf(timestr,sizeof(timestr),"%.4d%.2d%.2dT%.2d%.2d%.2d",1900 + lt.tm_year, lt.tm_mon + 1, lt.tm_mday, lt.tm_hour, lt.tm_min, lt.tm_sec);
 	ofs = poke_string(buffer, ofs, maxsize, timestr);
 
 	// Date Modified (NR) "YYYYMMDDThhmmss.s"
+	set_default_date(&lt);
 	t = entrystat.st_mtime;
 	localtime_r(&t, &lt);
 	snprintf(timestr,sizeof(timestr),"%.4d%.2d%.2dT%.2d%.2d%.2d",1900 + lt.tm_year, lt.tm_mon + 1, lt.tm_mday, lt.tm_hour, lt.tm_min, lt.tm_sec);
