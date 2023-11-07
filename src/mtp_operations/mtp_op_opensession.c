@@ -57,6 +57,11 @@ uint32_t mtp_op_OpenSession(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, in
 	ctx->session_id = id;
 
 	ctx->fs_db = init_fs_db(ctx);
+	if( !ctx->fs_db )
+	{
+		PRINT_DEBUG("Open session - init fs db failure");
+		return MTP_RESPONSE_GENERAL_ERROR;
+	}
 
 	i = 0;
 	while( (i < MAX_STORAGE_NB) && ctx->storages[i].root_path)
