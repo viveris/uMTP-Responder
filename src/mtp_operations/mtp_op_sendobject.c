@@ -128,16 +128,19 @@ uint32_t mtp_op_SendObject(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int
 								sz = ctx->usb_rd_buffer_max_size;
 							}
 
-							while( sz == ctx->usb_rd_buffer_max_size && !ctx->cancel_req)
+							while( ( sz == ctx->usb_rd_buffer_max_size ) && ( !ctx->cancel_req ) && ( sz >= 0 ) )
 							{
 								sz = read_usb(ctx->usb_ctx, ctx->rdbuffer2, ctx->usb_rd_buffer_max_size);
 
-								if( write(file, tmp_ptr, sz) != sz)
+								if( sz >= 0 )
 								{
-									// TODO : Handle this error case properly
-								}
+									if( write(file, tmp_ptr, sz) != sz)
+									{
+										// TODO : Handle this error case properly
+									}
 
-								ctx->SendObjInfoSize -= sz;
+									ctx->SendObjInfoSize -= sz;
+								}
 							};
 
 							entry->size = lseek64(file, 0, SEEK_END);
