@@ -58,7 +58,7 @@ The uMTP-Responder allows files to be transferred to and from devices through th
 Any board with a USB device port should be compatible. The only requirement is to have the USB FunctionFS (CONFIG_USB_FUNCTIONFS) or GadgetFS (CONFIG_USB_GADGETFS) support enabled in your Linux kernel.
 You also need to enable the board-specific USB device port driver (eg. dwc2 for the RaspberryPi Zero).
 
-uMTP-Responder is currently tested with various 4.x.x Linux kernel versions.
+uMTP-Responder was tested on various Linux kernel versions (4.x.x / 5.x.x / 6.x.x ...) .
 This may work with earlier kernels (v3.x.x and some v2.6.x versions) but without any guarantee.
 
 ### Successfully tested boards
@@ -79,7 +79,7 @@ This may work with earlier kernels (v3.x.x and some v2.6.x versions) but without
 
 ### Successfully tested client operating systems
 
-- Windows 7, Windows 10, Linux, Android.
+- Windows 7, Windows 10, Windows 11, Linux, Android.
 
 ## How to build it ?
 
@@ -100,17 +100,29 @@ make CC=armv6j-hardfloat-linux-gnueabi-gcc
 On a cross-compile environment with both syslog support and debug output options enabled :
 
 ```c
-make CC=armv6j-hardfloat-linux-gnueabi-gcc CFLAGS="-DUSE_SYSLOG -DDEBUG"
+make CC=armv6j-hardfloat-linux-gnueabi-gcc USE_SYSLOG=1 DEBUG=1
 ```
 
 Note: syslog support and debug output options can be enabled separately.
 
 (replace "armv6j-hardfloat-linux-gnueabi-gcc" with your target gcc cross-compiler)
 
-If you want to use it on a Kernel version < 3.15 you need to compile uMTPrd with old-style FunctionFS descriptors support:
+If you want to use it on a Kernel version < 3.15 you need to compile uMTPrd with old-style FunctionFS descriptors support :
 
 ```c
-make CC=armv6j-hardfloat-linux-gnueabi-gcc CFLAGS="-DOLD_FUNCTIONFS_DESCRIPTORS"
+make CC=armv6j-hardfloat-linux-gnueabi-gcc OLD_FUNCTIONFS_DESCRIPTORS=1
+```
+
+To enable the systemd notify event support when the endpoint setup is done :
+
+```c
+make CC=armv6j-hardfloat-linux-gnueabi-gcc SYSTEMD=1
+```
+
+To get the current flags/options available :
+
+```c
+make help
 ```
 
 ## How to set it up ?
