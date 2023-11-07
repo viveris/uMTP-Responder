@@ -151,12 +151,18 @@ void* inotify_thread(void* arg)
 								{
 									// If the entry is not in the db, add it and trigger an MTP_EVENT_OBJECT_ADDED event
 									new_entry = add_entry( ctx->fs_db, &fileinfo, entry->handle, entry->storage_id );
+									if( new_entry )
+									{
+										// Send an "ObjectAdded" (0x4002) MTP event message with the entry handle.
+										handle[0] = new_entry->handle;
+										mtp_push_event( ctx, MTP_EVENT_OBJECT_ADDED, 1, (uint32_t *)&handle );
 
-									// Send an "ObjectAdded" (0x4002) MTP event message with the entry handle.
-									handle[0] = new_entry->handle;
-									mtp_push_event( ctx, MTP_EVENT_OBJECT_ADDED, 1, (uint32_t *)&handle );
-
-									PRINT_DEBUG( "inotify_thread (IN_CREATE): Entry %s created (Handle 0x%.8X)", event->name, new_entry->handle );
+										PRINT_DEBUG( "inotify_thread (IN_CREATE): Entry %s created (Handle 0x%.8X)", event->name, new_entry->handle );
+									}
+									else
+									{
+										PRINT_DEBUG( "inotify_thread (IN_CREATE): Entry %s creation failure !", event->name );
+									}
 								}
 								else
 								{
