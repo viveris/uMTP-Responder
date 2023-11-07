@@ -40,8 +40,10 @@ void timestamp(char * timestr, int maxsize)
 	timestr[0] = 0;
 
 	local_time = localtime(&ltime);
-
-	snprintf(timestr, maxsize, "%.2d:%.2d:%.2d",local_time->tm_hour, local_time->tm_min, local_time->tm_sec );
+	if(local_time)
+		snprintf(timestr, maxsize, "%.2d:%.2d:%.2d",local_time->tm_hour, local_time->tm_min, local_time->tm_sec );
+	else
+		snprintf(timestr, maxsize, "??:??:??");
 }
 
 #ifdef DEBUG
