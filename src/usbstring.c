@@ -321,28 +321,37 @@ int char2unicodestring(char * unicodestr, int index, int maxsize, char * str, in
 {
 	uint16_t unicode;
 	int ofs, len, start;
+	int unicode_size;
 
 	start = index;
 	len = 0;
 	ofs = 0;
-	do{
+	unicode_size = 0;
+	do
+	{
 		unicode = utf2unicode((unsigned char*)str, &ofs);
 		str = str + ofs;
+
 		if(index + 2 >= maxsize)
 			return -1;
+
 		unicodestr[index++] = unicode & 0xFF;
 		unicodestr[index++] = (unicode >> 8) & 0xFF;
-		len++;
-	}while(unicode && ofs && index < unicodestrsize*2);
 
-	if( len >= unicodestrsize)
+		unicode_size += 2;
+
+		len++;
+	} while(unicode && ofs && unicode_size < unicodestrsize*2 && unicode_size < 255 * 2 );
+
+	if( unicode_size >= 255 * 2 )
 	{
 		if(start + ((unicodestrsize*2)-2) >= maxsize)
 			return -1;
 
-		unicodestr[start + ((unicodestrsize*2)-2)] = 0x00;
-		unicodestr[start + ((unicodestrsize*2)-1)] = 0x00;
-		len = unicodestrsize;
+		unicodestr[start + ((255*2)-2)] = 0x00;
+		unicodestr[start + ((255*2)-1)] = 0x00;
+
+		len = 255;
 	}
 
 	return len;

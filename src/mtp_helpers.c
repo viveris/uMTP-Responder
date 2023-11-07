@@ -182,8 +182,11 @@ int poke_string(void * buffer, int index, int maxsize, const char *str)
 
 	index++;
 
+	if( str[0] == '\0' )
+		return index;  // Empty string case.
+
 	// Char to unicode...
-	len = char2unicodestring((char*)ptr, index, maxsize, (char*)str, 256);
+	len = char2unicodestring((char*)ptr, index, maxsize, (char*)str, 255);
 
 	if(len < 0)
 	{
