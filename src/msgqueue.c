@@ -256,8 +256,8 @@ int send_message_queue( char * message )
 		PRINT_DEBUG("send_message_queue : msgqueue_id = %d", msgqueue_id);
 
 		msg_buf.mesg_type = 1;
-		msg_buf.mesg_text[MAX_MSG_SIZE - 1] = '\0';   // to be sure to terminate the string - see the strncpy's behavior.
 		strncpy(msg_buf.mesg_text,message,MAX_MSG_SIZE - 1);
+		msg_buf.mesg_text[MAX_MSG_SIZE - 1] = '\0';   // to be sure to terminate the string - see the strncpy's behavior.
 		if( msgsnd(msgqueue_id, &msg_buf, MAX_MSG_SIZE, 0) == 0 )
 		{
 			return 0;
