@@ -127,6 +127,7 @@ typedef struct mtp_ctx_
 
 	int inotify_fd;
 	pthread_t inotify_thread;
+	pthread_mutexattr_t inotify_mutex_attr;
 	pthread_mutex_t inotify_mutex;
 
 	int msgqueue_id;

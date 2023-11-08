@@ -87,7 +87,14 @@ mtp_ctx * mtp_init_responder()
 
 		ctx->SetObjectPropValue_Handle = 0xFFFFFFFF;
 
-		pthread_mutex_init ( &ctx->inotify_mutex, NULL);
+		if( pthread_mutexattr_init( &ctx->inotify_mutex_attr ) )
+			goto init_error;
+
+		if( pthread_mutexattr_settype( &ctx->inotify_mutex_attr, PTHREAD_MUTEX_NORMAL ) )
+			goto init_error;
+
+		if( pthread_mutex_init (&ctx->inotify_mutex, &ctx->inotify_mutex_attr ) )
+			goto init_error;
 
 		inotify_handler_init( ctx );
 		msgqueue_handler_init( ctx );
@@ -117,7 +124,7 @@ init_error:
 
 	PRINT_ERROR("init_mtp_responder : Failed !");
 
-	return 0;
+	return NULL;
 }
 
 void mtp_deinit_responder(mtp_ctx * ctx)
