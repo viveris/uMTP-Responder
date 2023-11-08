@@ -26,6 +26,7 @@
 #include "buildconf.h"
 
 #include <inttypes.h>
+#include <stdio.h>
 #include <pthread.h>
 #include <string.h>
 #include <sys/inotify.h>
@@ -142,7 +143,12 @@ void* inotify_thread(void* arg)
 						entry = NULL;
 						do
 						{
-							pthread_mutex_lock( &ctx->inotify_mutex );
+							if ( pthread_mutex_lock( &ctx->inotify_mutex ) )
+							{
+								PRINT_ERROR( "inotify_thread - pthread_mutex_lock failure !");
+								return NULL;
+							}
+
 							entry = get_entry_by_wd( ctx->fs_db, event->wd, entry );
 							if ( get_file_info( ctx, event, entry, &fileinfo, 0 ) )
 							{
@@ -189,7 +195,11 @@ void* inotify_thread(void* arg)
 
 						do
 						{
-							pthread_mutex_lock( &ctx->inotify_mutex );
+							if ( pthread_mutex_lock( &ctx->inotify_mutex ) )
+							{
+								PRINT_ERROR( "inotify_thread - pthread_mutex_lock failure !");
+								return NULL;
+							}
 
 							entry = get_entry_by_wd( ctx->fs_db, event->wd, entry );
 							if ( get_file_info( ctx, event, entry, &fileinfo, 1 ) )
@@ -224,7 +234,11 @@ void* inotify_thread(void* arg)
 
 						do
 						{
-							pthread_mutex_lock( &ctx->inotify_mutex );
+							if ( pthread_mutex_lock( &ctx->inotify_mutex ) )
+							{
+								PRINT_ERROR( "inotify_thread - pthread_mutex_lock failure !");
+								return NULL;
+							}
 
 							entry = get_entry_by_wd( ctx->fs_db, event->wd, entry );
 							if ( get_file_info( ctx, event, entry, &fileinfo, 1 ) )

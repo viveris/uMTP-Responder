@@ -106,14 +106,15 @@ void* msgqueue_thread( void* arg )
 
 				if(store_index >= 0)
 				{
-					pthread_mutex_lock( &ctx->inotify_mutex );
+					if( !pthread_mutex_lock( &ctx->inotify_mutex ) )
+					{
+						mount_store( ctx, store_index, 1 );
 
-					mount_store( ctx, store_index, 1 );
+						handle[0] = ctx->storages[store_index].storage_id;
+						mtp_push_event( ctx, MTP_EVENT_STORE_ADDED, 1, (uint32_t *)&handle );
 
-					handle[0] = ctx->storages[store_index].storage_id;
-					mtp_push_event( ctx, MTP_EVENT_STORE_ADDED, 1, (uint32_t *)&handle );
-
-					pthread_mutex_unlock( &ctx->inotify_mutex );
+						pthread_mutex_unlock( &ctx->inotify_mutex );
+					}
 				}
 				else
 				{
@@ -126,15 +127,16 @@ void* msgqueue_thread( void* arg )
 				store_index = mtp_get_storage_index_by_name(ctx, (char*)&msg_buf.mesg_text + 8);
 				if(store_index >= 0)
 				{
-					pthread_mutex_lock( &ctx->inotify_mutex );
+					if( !pthread_mutex_lock( &ctx->inotify_mutex ) )
+					{
+						umount_store( ctx, store_index, 1 );
 
-					umount_store( ctx, store_index, 1 );
+						handle[0] = ctx->storages[store_index].storage_id;
 
-					handle[0] = ctx->storages[store_index].storage_id;
+						mtp_push_event( ctx, MTP_EVENT_STORE_REMOVED, 1, (uint32_t *)&handle );
 
-					mtp_push_event( ctx, MTP_EVENT_STORE_REMOVED, 1, (uint32_t *)&handle );
-
-					pthread_mutex_unlock( &ctx->inotify_mutex );
+						pthread_mutex_unlock( &ctx->inotify_mutex );
+					}
 				}
 				else
 				{
@@ -152,17 +154,18 @@ void* msgqueue_thread( void* arg )
 						!(ctx->storages[store_index].flags & UMTP_STORAGE_LOCKED)
 					)
 					{
-						pthread_mutex_lock( &ctx->inotify_mutex );
+						if( !pthread_mutex_lock( &ctx->inotify_mutex ) )
+						{
+							umount_store( ctx, store_index, 0 );
 
-						umount_store( ctx, store_index, 0 );
+							ctx->storages[store_index].flags |= UMTP_STORAGE_LOCKED;
 
-						ctx->storages[store_index].flags |= UMTP_STORAGE_LOCKED;
+							handle[0] = ctx->storages[store_index].storage_id;
 
-						handle[0] = ctx->storages[store_index].storage_id;
+							mtp_push_event( ctx, MTP_EVENT_STORE_REMOVED, 1, (uint32_t *)&handle );
 
-						mtp_push_event( ctx, MTP_EVENT_STORE_REMOVED, 1, (uint32_t *)&handle );
-
-						pthread_mutex_unlock( &ctx->inotify_mutex );
+							pthread_mutex_unlock( &ctx->inotify_mutex );
+						}
 					}
 
 					store_index++;
@@ -179,17 +182,18 @@ void* msgqueue_thread( void* arg )
 						(ctx->storages[store_index].flags & UMTP_STORAGE_LOCKED)
 					)
 					{
-						pthread_mutex_lock( &ctx->inotify_mutex );
+						if( !pthread_mutex_lock( &ctx->inotify_mutex ) )
+						{
+							mount_store( ctx, store_index, 0 );
 
-						mount_store( ctx, store_index, 0 );
+							ctx->storages[store_index].flags &= ~UMTP_STORAGE_LOCKED;
 
-						ctx->storages[store_index].flags &= ~UMTP_STORAGE_LOCKED;
+							handle[0] = ctx->storages[store_index].storage_id;
 
-						handle[0] = ctx->storages[store_index].storage_id;
+							mtp_push_event( ctx, MTP_EVENT_STORE_ADDED, 1, (uint32_t *)&handle );
 
-						mtp_push_event( ctx, MTP_EVENT_STORE_ADDED, 1, (uint32_t *)&handle );
-
-						pthread_mutex_unlock( &ctx->inotify_mutex );
+							pthread_mutex_unlock( &ctx->inotify_mutex );
+						}
 					}
 
 					store_index++;

@@ -66,8 +66,11 @@ uint32_t mtp_op_OpenSession(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, in
 	i = 0;
 	while( (i < MAX_STORAGE_NB) && ctx->storages[i].root_path)
 	{
-		pthread_mutex_lock( &ctx->inotify_mutex );
+		if( pthread_mutex_lock( &ctx->inotify_mutex ) )
+			return MTP_RESPONSE_GENERAL_ERROR;
+
 		alloc_root_entry(ctx->fs_db, ctx->storages[i].storage_id);
+
 		pthread_mutex_unlock( &ctx->inotify_mutex );
 
 		i++;

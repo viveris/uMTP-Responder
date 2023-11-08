@@ -49,7 +49,8 @@ uint32_t mtp_op_GetObjectPropDesc(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_h
 	if(!ctx->fs_db)
 		return MTP_RESPONSE_SESSION_NOT_OPEN;
 
-	pthread_mutex_lock( &ctx->inotify_mutex );
+	if( pthread_mutex_lock( &ctx->inotify_mutex ) )
+		return MTP_RESPONSE_GENERAL_ERROR;
 
 	property_id = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER), 4);  // Get param 1 - property id
 	format_id = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER) + 4, 4); // Get param 2 - format

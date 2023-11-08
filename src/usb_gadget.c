@@ -797,11 +797,16 @@ int handle_ffs_ep0(usb_gadget * ctx)
 				ctx->stop = 0;
 
 				// Drop the file system db
-				pthread_mutex_lock( &mtp_context->inotify_mutex );
-				deinit_fs_db(mtp_context->fs_db);
-				mtp_context->fs_db = 0;
-				pthread_mutex_unlock( &mtp_context->inotify_mutex );
-
+				if ( !pthread_mutex_lock( &mtp_context->inotify_mutex ) )
+				{
+					deinit_fs_db(mtp_context->fs_db);
+					mtp_context->fs_db = 0;
+					pthread_mutex_unlock( &mtp_context->inotify_mutex );
+				}
+				else
+				{
+					PRINT_ERROR("handle_ffs_ep0 : Mutex error !");
+				}
 				break;
 			case FUNCTIONFS_SETUP:
 				PRINT_DEBUG("EP0 FFS SETUP");
