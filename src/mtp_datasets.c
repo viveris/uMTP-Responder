@@ -265,8 +265,11 @@ int build_event_dataset(mtp_ctx * ctx, void * buffer, int maxsize, uint32_t even
 		ofs = poke32(buffer, ofs, maxsize, parameters[i]);
 	}
 
-	// Update size
-	poke32(buffer, 0, maxsize, ofs);
+	if( ofs >= 0)
+	{
+		// Update size
+		poke32(buffer, 0, maxsize, ofs);
+	}
 
 	return ofs;
 }
