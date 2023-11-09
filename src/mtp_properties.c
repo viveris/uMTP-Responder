@@ -738,8 +738,13 @@ int build_objectproplist_dataset(mtp_ctx * ctx, void * buffer, int maxsize,fs_en
 	int ofs,ret,numberofelements;
 	char * path;
 	char timestr[32];
-	uint32_t tmp_dword;
+	// tmp_dword : 2 dword to fix the static analysis error with the MTP_TYPE_UINT64 case.
+	// Probably a false positive alert
+	// but some codes was added to check possible second word corruption
+	uint32_t tmp_dword[2];
 	uint32_t tmp_dword_array[4];
+
+	tmp_dword[1] = 0xDEADBEEF;  // Canary
 
 	ret = -1;
 	path = build_full_path(ctx->fs_db, mtp_get_storage_root(ctx, entry->storage_id), entry);
@@ -766,23 +771,23 @@ int build_objectproplist_dataset(mtp_ctx * ctx, void * buffer, int maxsize,fs_en
 	numberofelements += objectproplist_element(ctx, buffer, &ofs, maxsize, MTP_PROPERTY_STORAGE_ID, handle, &entry->storage_id,prop_code);
 
 	if(entry->flags & ENTRY_IS_DIR)
-		tmp_dword = MTP_FORMAT_ASSOCIATION;
+		tmp_dword[0] = MTP_FORMAT_ASSOCIATION;
 	else
-		tmp_dword = MTP_FORMAT_UNDEFINED;
+		tmp_dword[0] = MTP_FORMAT_UNDEFINED;
 
-	numberofelements += objectproplist_element(ctx, buffer, &ofs, maxsize, MTP_PROPERTY_OBJECT_FORMAT, handle, &tmp_dword,prop_code);
+	numberofelements += objectproplist_element(ctx, buffer, &ofs, maxsize, MTP_PROPERTY_OBJECT_FORMAT, handle, &tmp_dword[0],prop_code);
 
 	if(entry->flags & ENTRY_IS_DIR)
-		tmp_dword = MTP_ASSOCIATION_TYPE_GENERIC_FOLDER;
+		tmp_dword[0] = MTP_ASSOCIATION_TYPE_GENERIC_FOLDER;
 	else
-		tmp_dword = 0x0000;
+		tmp_dword[0] = 0x0000;
 
-	numberofelements += objectproplist_element(ctx, buffer, &ofs, maxsize, MTP_PROPERTY_ASSOCIATION_TYPE, handle, &tmp_dword,prop_code);
+	numberofelements += objectproplist_element(ctx, buffer, &ofs, maxsize, MTP_PROPERTY_ASSOCIATION_TYPE, handle, &tmp_dword[0],prop_code);
 	numberofelements += objectproplist_element(ctx, buffer, &ofs, maxsize, MTP_PROPERTY_PARENT_OBJECT, handle, &entry->parent,prop_code);
 	numberofelements += objectproplist_element(ctx, buffer, &ofs, maxsize, MTP_PROPERTY_OBJECT_SIZE, handle, &entry->size,prop_code);
 
-	tmp_dword = 0x0000;
-	numberofelements += objectproplist_element(ctx, buffer, &ofs, maxsize, MTP_PROPERTY_PROTECTION_STATUS, handle, &tmp_dword,prop_code);
+	tmp_dword[0] = 0x0000;
+	numberofelements += objectproplist_element(ctx, buffer, &ofs, maxsize, MTP_PROPERTY_PROTECTION_STATUS, handle, &tmp_dword[0],prop_code);
 
 	numberofelements += objectproplist_element(ctx, buffer, &ofs, maxsize, MTP_PROPERTY_OBJECT_FILE_NAME, handle, entry->name,prop_code);
 	numberofelements += objectproplist_element(ctx, buffer, &ofs, maxsize, MTP_PROPERTY_NAME, handle, entry->name,prop_code);
@@ -810,5 +815,9 @@ int build_objectproplist_dataset(mtp_ctx * ctx, void * buffer, int maxsize,fs_en
 
 	poke32(buffer, 0, maxsize, numberofelements);   // Number of elements
 
+	if( tmp_dword[1] != 0xDEADBEEF )
+	{
+		PRINT_ERROR("build_objectproplist_dataset : second dword modified ! Please report ! (0x%.8X)", tmp_dword[1] );
+	}
 	return ofs;
 }
