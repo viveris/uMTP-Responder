@@ -801,7 +801,10 @@ int handle_ffs_ep0(usb_gadget * ctx)
 				{
 					deinit_fs_db(mtp_context->fs_db);
 					mtp_context->fs_db = 0;
-					pthread_mutex_unlock( &mtp_context->inotify_mutex );
+					if ( pthread_mutex_unlock( &mtp_context->inotify_mutex ) )
+					{
+						PRINT_ERROR("handle_ffs_ep0 : Mutex unlock error !");
+					}
 				}
 				else
 				{

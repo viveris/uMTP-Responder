@@ -111,9 +111,13 @@ void* msgqueue_thread( void* arg )
 						mount_store( ctx, store_index, 1 );
 
 						handle[0] = ctx->storages[store_index].storage_id;
+
 						mtp_push_event( ctx, MTP_EVENT_STORE_ADDED, 1, (uint32_t *)&handle );
 
-						pthread_mutex_unlock( &ctx->inotify_mutex );
+						if( pthread_mutex_unlock( &ctx->inotify_mutex ) )
+						{
+							goto error;
+						}
 					}
 				}
 				else
@@ -135,7 +139,10 @@ void* msgqueue_thread( void* arg )
 
 						mtp_push_event( ctx, MTP_EVENT_STORE_REMOVED, 1, (uint32_t *)&handle );
 
-						pthread_mutex_unlock( &ctx->inotify_mutex );
+						if( pthread_mutex_unlock( &ctx->inotify_mutex ) )
+						{
+							goto error;
+						}
 					}
 				}
 				else
@@ -164,7 +171,10 @@ void* msgqueue_thread( void* arg )
 
 							mtp_push_event( ctx, MTP_EVENT_STORE_REMOVED, 1, (uint32_t *)&handle );
 
-							pthread_mutex_unlock( &ctx->inotify_mutex );
+							if( pthread_mutex_unlock( &ctx->inotify_mutex ) )
+							{
+								goto error;
+							}
 						}
 					}
 
@@ -192,7 +202,10 @@ void* msgqueue_thread( void* arg )
 
 							mtp_push_event( ctx, MTP_EVENT_STORE_ADDED, 1, (uint32_t *)&handle );
 
-							pthread_mutex_unlock( &ctx->inotify_mutex );
+							if( pthread_mutex_unlock( &ctx->inotify_mutex ) )
+							{
+								goto error;
+							}
 						}
 					}
 
@@ -210,6 +223,13 @@ void* msgqueue_thread( void* arg )
 	msgctl(ctx->msgqueue_id, IPC_RMID, NULL);
 
 	PRINT_DEBUG("msgqueue_thread : Leaving msgqueue_thread...");
+
+	return NULL;
+
+error:
+	msgctl(ctx->msgqueue_id, IPC_RMID, NULL);
+
+	PRINT_DEBUG("msgqueue_thread : General Error ! Leaving msgqueue_thread...");
 
 	return NULL;
 }

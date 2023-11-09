@@ -123,6 +123,7 @@ void* inotify_thread(void* arg)
 	for (;;)
 	{
 		memset(inotify_buffer,0,sizeof(inotify_buffer));
+
 		length = read(ctx->inotify_fd, inotify_buffer, sizeof(inotify_buffer));
 
 		if ( length >= 0 )
@@ -185,7 +186,12 @@ void* inotify_thread(void* arg)
 								entry = entry->next;
 							}
 
-							pthread_mutex_unlock( &ctx->inotify_mutex );
+							if ( pthread_mutex_unlock( &ctx->inotify_mutex ) )
+							{
+								PRINT_ERROR( "inotify_thread - pthread_mutex_unlock failure !");
+								return NULL;
+							}
+
 						}while(entry);
 					}
 
@@ -224,7 +230,12 @@ void* inotify_thread(void* arg)
 								entry = entry->next;
 							}
 
-							pthread_mutex_unlock( &ctx->inotify_mutex );
+							if ( pthread_mutex_unlock( &ctx->inotify_mutex ) )
+							{
+								PRINT_ERROR( "inotify_thread - pthread_mutex_unlock failure !");
+								return NULL;
+							}
+
 						}while(entry);
 					}
 
@@ -270,7 +281,12 @@ void* inotify_thread(void* arg)
 								entry = entry->next;
 							}
 
-							pthread_mutex_unlock( &ctx->inotify_mutex );
+							if ( pthread_mutex_unlock( &ctx->inotify_mutex ) )
+							{
+								PRINT_ERROR( "inotify_thread - pthread_mutex_unlock failure !");
+								return NULL;
+							}
+
 						}while(entry);
 					}
 				}

@@ -199,7 +199,10 @@ uint32_t mtp_op_SendObject(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int
 		response_code = MTP_RESPONSE_INVALID_OBJECT_HANDLE;
 	}
 
-	pthread_mutex_unlock( &ctx->inotify_mutex );
+	if( pthread_mutex_unlock( &ctx->inotify_mutex ) )
+	{
+		response_code = MTP_RESPONSE_GENERAL_ERROR;
+	}
 
 	return response_code;
 }
