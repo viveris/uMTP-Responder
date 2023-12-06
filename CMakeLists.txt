@@ -11,6 +11,9 @@ option(SUPER_SPEED "USB super-speed support" OFF)
 option(HIGH_SPEED "USB high-speed support" ON)
 option(FULL_SPEED "USB full-speed support" ON)
 
+set(FILE_BUFFER_SZ "1024" CACHE FILEPATH "size of the file read buffer in kB. (Must be a power of 2)")
+set(USB_TX_BUFFER_SZ "8" CACHE FILEPATH "size of the USB transmit buffer in kB")
+set(USB_RX_BUFFER_SZ "8" CACHE FILEPATH "size of the USB receive buffer in kB")
 
 
 FILE(GLOB SRC src/*.c src/mtp_operations/*.c)
@@ -43,6 +46,13 @@ endif()
 if( FULL_SPEED)
     target_compile_definitions(umtprd PUBLIC CONFIG_USB_FS_SUPPORT=1)
 endif()
+
+math(EXPR FILE_BUFFER_SZ  "${FILE_BUFFER_SZ}*1024")
+math(EXPR USB_TX_BUFFER_SZ  "${USB_TX_BUFFER_SZ}*1024")
+math(EXPR USB_RX_BUFFER_SZ  "${USB_RX_BUFFER_SZ}*1024")
+target_compile_definitions(umtprd PUBLIC CONFIG_READ_FILE_BUFFER_SIZE=${FILE_BUFFER_SZ})
+target_compile_definitions(umtprd PUBLIC CONFIG_MAX_TX_USB_BUFFER_SIZE=${USB_TX_BUFFER_SZ})
+target_compile_definitions(umtprd PUBLIC CONFIG_MAX_RX_USB_BUFFER_SIZE=${USB_RX_BUFFER_SZ})
 
 target_compile_definitions(umtprd PUBLIC DEBUG)
 

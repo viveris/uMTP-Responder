@@ -107,6 +107,9 @@ A few compilation options are available:
 - SUPER_SPEED (default: OFF). Support for USB Super-Speed
 - HIGH_SPEED (default: ON). Support for USB High-Speed
 - FULL_SPEED (default: ON). Support for USB Full-Speed
+- FILE_BUFFER_SZ (default: 1024). The size of the file read buffer in kB.
+- USB_TX_BUFFER_SZ (default: 64). The size of the USB transmit buffer in kB.
+- USB_RX_BUFFER_SZ (default: 64). The size of the USB receive buffer in kB.
 
 
 ## How to set it up ?
