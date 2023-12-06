@@ -48,6 +48,7 @@
 #ifdef CONFIG_USB_NON_BLOCKING_WRITE
 #include <poll.h>
 #endif
+#include <sys/param.h>
 
 #include "fs_handles_db.h"
 #include "mtp.h"
@@ -223,7 +224,12 @@ void fill_ep_descriptor(mtp_ctx * ctx, usb_gadget * usbctx,struct usb_endpoint_d
 	if(flags & EP_BULK_MODE)
 	{
 		desc->bmAttributes = USB_ENDPOINT_XFER_BULK;
-		desc->wMaxPacketSize = ctx->usb_cfg.usb_max_packet_size;
+		if(flags & EP_SS_MODE)
+			desc->wMaxPacketSize = MIN(ctx->usb_cfg.usb_max_packet_size, 1024);
+		else if(flags & EP_HS_MODE)
+			desc->wMaxPacketSize = MIN(ctx->usb_cfg.usb_max_packet_size, 512);
+		else
+			desc->wMaxPacketSize = MIN(ctx->usb_cfg.usb_max_packet_size, 64);
 	}
 	else
 	{

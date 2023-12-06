@@ -30,7 +30,7 @@
 #define UMTPR_CONF_FILE   "/etc/umtprd/umtprd.conf"
 #endif
 
-#define MAX_PACKET_SIZE 512
+#define MAX_PACKET_SIZE	    1024     // 1024 is the max packet size for Super-speed
 
 #define USB_DEV_VENDOR_ID   0x1D6B   // Linux Foundation
 #define USB_DEV_PRODUCT_ID  0x0100   // PTP Gadget
