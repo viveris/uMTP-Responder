@@ -104,6 +104,9 @@ A few compilation options are available:
 - USE_SYSTEMD (default: ON). If systemd is available in the SDK, umtprd will notify systemd when it is ready.
 - USE_SYSLOG (default: ON). Use syslog for the log messages
 - OLD_FUNCTIONFS_DESCRIPTORS (default: OFF). Use it if you kernel version is < 3.15 (old-style FunctionFS descriptors support)
+- SUPER_SPEED (default: OFF). Support for USB Super-Speed
+- HIGH_SPEED (default: ON). Support for USB High-Speed
+- FULL_SPEED (default: ON). Support for USB Full-Speed
 
 
 ## How to set it up ?

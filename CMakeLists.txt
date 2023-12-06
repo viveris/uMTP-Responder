@@ -7,6 +7,10 @@ include(GNUInstallDirs)
 option(OLD_FUNCTIONFS_DESCRIPTORS "build with old-style FunctionFS descriptors support for old 3.15 kernels" OFF)
 option(USE_SYSLOG "syslog support" ON)
 option(USE_SYSTEMD "systemd support (if available)" ON)
+option(SUPER_SPEED "USB super-speed support" OFF)
+option(HIGH_SPEED "USB high-speed support" ON)
+option(FULL_SPEED "USB full-speed support" ON)
+
 
 
 FILE(GLOB SRC src/*.c src/mtp_operations/*.c)
@@ -28,6 +32,16 @@ endif()
 
 if( USE_SYSLOG)
     target_compile_definitions(umtprd PUBLIC USE_SYSLOG)
+endif()
+
+if( SUPER_SPEED)
+    target_compile_definitions(umtprd PUBLIC CONFIG_USB_SS_SUPPORT=1)
+endif()
+if( HIGH_SPEED)
+    target_compile_definitions(umtprd PUBLIC CONFIG_USB_HS_SUPPORT=1)
+endif()
+if( FULL_SPEED)
+    target_compile_definitions(umtprd PUBLIC CONFIG_USB_FS_SUPPORT=1)
 endif()
 
 target_compile_definitions(umtprd PUBLIC DEBUG)
