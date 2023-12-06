@@ -83,47 +83,29 @@ This may work with earlier kernels (v3.x.x and some v2.6.x versions) but without
 
 ## How to build it ?
 
-A simple "make" should be enough if you build uMTPrd directly on the target.
-
-If you are using a cross-compile environment, set the "CC" variable to your GCC cross compiler.
-
-You can also enable the syslog support with the C flag "USE_SYSLOG" and the verbose/debug output with the "DEBUG" C flag.
-
-examples:
-
-On a cross-compile environment :
-
+The project is build using cmake.
+If you are compiling on the target, the compilation steps are:
 ```c
-make CC=armv6j-hardfloat-linux-gnueabi-gcc
+mkdir build
+cd build
+cmake ..
+make -j8
 ```
 
-On a cross-compile environment with both syslog support and debug output options enabled :
-
+If you are using a cross-compile environment, you can use the CMAKE_TOOLCHAIN_FILE variable to specify your toolchain:
 ```c
-make CC=armv6j-hardfloat-linux-gnueabi-gcc USE_SYSLOG=1 DEBUG=1
+mkdir build
+cd build
+cmake -DCMAKE_TOOLCHAIN_FILE=<your_toolchain.cmake> ..
+make -j8
 ```
 
-Note: syslog support and debug output options can be enabled separately.
+A few compilation options are available:
+- DEBUG_PRINT (default: OFF). Enable the debug ouput (on the console if syslog is not enabled)
+- USE_SYSTEMD (default: ON). If systemd is available in the SDK, umtprd will notify systemd when it is ready.
+- USE_SYSLOG (default: ON). Use syslog for the log messages
+- OLD_FUNCTIONFS_DESCRIPTORS (default: OFF). Use it if you kernel version is < 3.15 (old-style FunctionFS descriptors support)
 
-(replace "armv6j-hardfloat-linux-gnueabi-gcc" with your target gcc cross-compiler)
-
-If you want to use it on a Kernel version < 3.15 you need to compile uMTPrd with old-style FunctionFS descriptors support :
-
-```c
-make CC=armv6j-hardfloat-linux-gnueabi-gcc OLD_FUNCTIONFS_DESCRIPTORS=1
-```
-
-To enable the systemd notify event support when the endpoint setup is done :
-
-```c
-make CC=armv6j-hardfloat-linux-gnueabi-gcc SYSTEMD=1
-```
-
-To get the current flags/options available :
-
-```c
-make help
-```
 
 ## How to set it up ?
 
