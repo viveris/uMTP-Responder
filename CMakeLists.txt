@@ -12,8 +12,8 @@ option(HIGH_SPEED "USB high-speed support" ON)
 option(FULL_SPEED "USB full-speed support" ON)
 
 set(FILE_BUFFER_SZ "1024" CACHE FILEPATH "size of the file read buffer in kB. (Must be a power of 2)")
-set(USB_TX_BUFFER_SZ "8" CACHE FILEPATH "size of the USB transmit buffer in kB")
-set(USB_RX_BUFFER_SZ "8" CACHE FILEPATH "size of the USB receive buffer in kB")
+set(USB_TX_BUFFER_SZ "64" CACHE FILEPATH "size of the USB transmit buffer in kB")
+set(USB_RX_BUFFER_SZ "64" CACHE FILEPATH "size of the USB receive buffer in kB")
 
 
 FILE(GLOB SRC src/*.c src/mtp_operations/*.c)
