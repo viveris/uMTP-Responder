@@ -41,8 +41,8 @@ uint32_t mtp_op_GetDeviceInfos(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr,
 {
 	int sz,tmp_sz;
 
-	if(!ctx->fs_db)
-		return MTP_RESPONSE_SESSION_NOT_OPEN;
+	// Note : From the MTP specification this operation can be used without first 
+	// opening an MTP session by sending an OpenSession command !
 
 	sz = build_response(ctx, mtp_packet_hdr->tx_id, MTP_CONTAINER_TYPE_DATA, mtp_packet_hdr->code, ctx->wrbuffer, ctx->usb_wr_buffer_max_size,0,0);
 	if(sz < 0)
