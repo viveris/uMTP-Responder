@@ -223,7 +223,7 @@ void fill_ep_descriptor(mtp_ctx * ctx, usb_gadget * usbctx,struct usb_endpoint_d
 	if(flags & EP_BULK_MODE)
 	{
 		desc->bmAttributes = USB_ENDPOINT_XFER_BULK;
-		desc->wMaxPacketSize = ctx->usb_cfg.usb_max_packet_size;
+		desc->wMaxPacketSize = flags & EP_SS_MODE ? 1024 : 512;
 	}
 	else
 	{
