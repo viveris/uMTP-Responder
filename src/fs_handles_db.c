@@ -34,6 +34,7 @@
 #include <stdio.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <errno.h>
 
 #include "mtp.h"
 #include "mtp_helpers.h"
@@ -139,6 +140,10 @@ int fs_entry_stat(char *path, filefoundinfo* fileinfo)
 		return 1;
 	}
 
+	PRINT_WARN("stat64(%s) error: %s",path, strerror(errno));
+	fileinfo->size = 0;
+	fileinfo->filename[0] = '\0';
+
 	return 0;
 }
 
@@ -151,8 +156,7 @@ DIR * fs_find_first_file(char *folder, filefoundinfo* fileinfo)
 	dir = opendir (folder);
 	if( dir )
 	{
-		d = readdir (dir);
-		if( d )
+		while ((d = readdir (dir)) != NULL)
 		{
 			tmpstr = malloc (strlen(folder) + strlen(d->d_name) + 4 );
 			if( tmpstr )
