@@ -148,6 +148,7 @@ uint32_t mtp_op_SendObject(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int
 
 							ctx->transferring_file_data = 0;
 
+							if (ctx->sync_when_close) fsync(file);
 							close(file);
 
 							if(ctx->usb_cfg.val_umask >= 0)

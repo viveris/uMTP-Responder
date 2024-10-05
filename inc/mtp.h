@@ -135,6 +135,8 @@ typedef struct mtp_ctx_
 
 	int no_inotify;
 
+	int sync_when_close;
+
 	int uid,euid;
 	int gid,egid;
 
