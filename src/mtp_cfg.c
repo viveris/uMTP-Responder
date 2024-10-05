@@ -78,7 +78,9 @@ enum
 	DEFAULT_UID_CMD,
 	DEFAULT_GID_CMD,
 
-	NO_INOTIFY
+	NO_INOTIFY,
+
+	SYNC_WHEN_CLOSE
 
 };
 
@@ -478,6 +480,9 @@ static int get_hex_param(mtp_ctx * context, char * line,int cmd)
 				context->no_inotify = param_value;
 			break;
 
+			case SYNC_WHEN_CLOSE:
+				context->sync_when_close = param_value;
+
 		}
 	}
 
@@ -617,6 +622,8 @@ kw_list kwlist[] =
 
 	{"no_inotify",             get_hex_param,   NO_INOTIFY},
 
+	{"sync_when_close",        get_hex_param,   SYNC_WHEN_CLOSE},
+
 	{ 0, 0, 0 }
 };
 
@@ -702,6 +709,7 @@ int mtp_load_config_file(mtp_ctx * context, const char * conffile)
 	context->default_uid = -1;
 
 	context->no_inotify = 0;
+	context->sync_when_close = 0;
 
 	f = fopen(conffile, "r");
 	if(f)
@@ -786,6 +794,8 @@ int mtp_load_config_file(mtp_ctx * context, const char * conffile)
 	}
 
 	PRINT_MSG("inotify : %s",context->no_inotify?"no":"yes");
+
+	PRINT_MSG("Sync when close : %s",context->sync_when_close?"yes":"no");
 
 	return err;
 }
