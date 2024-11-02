@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include "mtp.h"
@@ -768,6 +769,7 @@ int mtp_load_config_file(mtp_ctx * context, const char * conffile)
 	PRINT_MSG("Show hidden files : %i",context->usb_cfg.show_hidden_files);
 	if(context->usb_cfg.val_umask >= 0)
 	{
+		umask(context->usb_cfg.val_umask);
 		PRINT_MSG("File creation umask : %03o",context->usb_cfg.val_umask);
 	}
 	else
