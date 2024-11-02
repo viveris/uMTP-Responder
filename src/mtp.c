@@ -777,8 +777,6 @@ uint32_t mtp_get_storage_id_by_name(mtp_ctx * ctx, char * name)
 {
 	int i;
 
-	PRINT_DEBUG("mtp_get_storage_id_by_name : %s", name );
-
 	i = 0;
 	while(i < MAX_STORAGE_NB)
 	{
@@ -786,7 +784,8 @@ uint32_t mtp_get_storage_id_by_name(mtp_ctx * ctx, char * name)
 		{
 			if( !strcmp(ctx->storages[i].description, name ) )
 			{
-				PRINT_DEBUG("mtp_get_storage_id_by_name : %s -> %.8X",
+				PRINT_DEBUG("%s : %s -> %.8X",
+					    __func__,
 					    ctx->storages[i].root_path,
 						ctx->storages[i].storage_id);
 
@@ -796,14 +795,14 @@ uint32_t mtp_get_storage_id_by_name(mtp_ctx * ctx, char * name)
 		i++;
 	}
 
+	PRINT_DEBUG("%s : '%s' not found", __func__, name );
+
 	return 0xFFFFFFFF;
 }
 
 int mtp_get_storage_index_by_name(mtp_ctx * ctx, char * name)
 {
 	int i;
-
-	PRINT_DEBUG("mtp_get_storage_index_by_name : %s", name );
 
 	i = 0;
 	while(i < MAX_STORAGE_NB)
@@ -812,7 +811,8 @@ int mtp_get_storage_index_by_name(mtp_ctx * ctx, char * name)
 		{
 			if( !strcmp(ctx->storages[i].description, name ) )
 			{
-				PRINT_DEBUG("mtp_get_storage_index_by_name : %s -> %.8X",
+				PRINT_DEBUG("%s : %s -> %.8X",
+					    __func__,
 					    ctx->storages[i].root_path,
 						i);
 
@@ -822,14 +822,14 @@ int mtp_get_storage_index_by_name(mtp_ctx * ctx, char * name)
 		i++;
 	}
 
+	PRINT_DEBUG("%s : '%s' not found", __func__, name );
+
 	return -1;
 }
 
 int mtp_get_storage_index_by_id(mtp_ctx * ctx, uint32_t storage_id)
 {
 	int i;
-
-	PRINT_DEBUG("mtp_get_storage_index_by_id : 0x%X", storage_id );
 
 	i = 0;
 	while(i < MAX_STORAGE_NB)
@@ -838,7 +838,8 @@ int mtp_get_storage_index_by_id(mtp_ctx * ctx, uint32_t storage_id)
 		{
 			if( ctx->storages[i].storage_id == storage_id )
 			{
-				PRINT_DEBUG("mtp_get_storage_index_by_id : %.8X -> %d",
+				PRINT_DEBUG("%s : %.8X -> %d",
+					    __func__,
 					    storage_id,
 					    i );
 				return i;
@@ -847,14 +848,14 @@ int mtp_get_storage_index_by_id(mtp_ctx * ctx, uint32_t storage_id)
 		i++;
 	}
 
+	PRINT_DEBUG("%s : 0x%X not found", __func__, storage_id );
+
 	return -1;
 }
 
 char * mtp_get_storage_root(mtp_ctx * ctx, uint32_t storage_id)
 {
 	int i;
-
-	PRINT_DEBUG("mtp_get_storage_root : %.8X", storage_id );
 
 	i = 0;
 	while(i < MAX_STORAGE_NB)
@@ -863,7 +864,8 @@ char * mtp_get_storage_root(mtp_ctx * ctx, uint32_t storage_id)
 		{
 			if( ctx->storages[i].storage_id == storage_id )
 			{
-				PRINT_DEBUG("mtp_get_storage_root : %.8X -> %s",
+				PRINT_DEBUG("%s : %.8X -> %s",
+					    __func__,
 					    storage_id,
 					    ctx->storages[i].root_path );
 				return ctx->storages[i].root_path;
@@ -872,14 +874,13 @@ char * mtp_get_storage_root(mtp_ctx * ctx, uint32_t storage_id)
 		i++;
 	}
 
+	PRINT_DEBUG("%s : %.8X not found", __func__, storage_id );
 	return NULL;
 }
 
 char * mtp_get_storage_description(mtp_ctx * ctx, uint32_t storage_id)
 {
 	int i;
-
-	PRINT_DEBUG("mtp_get_storage_description : %.8X", storage_id );
 
 	i = 0;
 	while(i < MAX_STORAGE_NB)
@@ -888,7 +889,8 @@ char * mtp_get_storage_description(mtp_ctx * ctx, uint32_t storage_id)
 		{
 			if( ctx->storages[i].storage_id == storage_id )
 			{
-				PRINT_DEBUG("mtp_get_storage_description : %.8X -> %s",
+				PRINT_DEBUG("%s : %.8X -> %s",
+					    __func__,
 					    storage_id,
 					    ctx->storages[i].description );
 				return ctx->storages[i].description;
@@ -897,14 +899,14 @@ char * mtp_get_storage_description(mtp_ctx * ctx, uint32_t storage_id)
 		i++;
 	}
 
+	PRINT_DEBUG("%s : %.8X not found", __func__, storage_id );
+
 	return NULL;
 }
 
 uint32_t mtp_get_storage_flags(mtp_ctx * ctx, uint32_t storage_id)
 {
 	int i;
-
-	PRINT_DEBUG("mtp_get_storage_flags : %.8X", storage_id );
 
 	i = 0;
 	while(i < MAX_STORAGE_NB)
@@ -913,7 +915,8 @@ uint32_t mtp_get_storage_flags(mtp_ctx * ctx, uint32_t storage_id)
 		{
 			if( ctx->storages[i].storage_id == storage_id )
 			{
-				PRINT_DEBUG("mtp_get_storage_flags : %.8X -> 0x%.8X",
+				PRINT_DEBUG("%s : %.8X -> 0x%.8X",
+					    __func__,
 					    storage_id,
 					    ctx->storages[i].flags );
 				return ctx->storages[i].flags;
@@ -921,6 +924,8 @@ uint32_t mtp_get_storage_flags(mtp_ctx * ctx, uint32_t storage_id)
 		}
 		i++;
 	}
+
+	PRINT_DEBUG("%s : %.8X not found", __func__, storage_id );
 
 	return 0xFFFFFFFF;
 }
