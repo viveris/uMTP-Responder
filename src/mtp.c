@@ -173,7 +173,7 @@ int build_response(mtp_ctx * ctx, uint32_t tx_id, uint16_t type, uint16_t status
 	return ofs;
 }
 
-int parse_incomming_dataset(mtp_ctx * ctx,void * datain,int size,uint32_t * newhandle, uint32_t parent_handle, uint32_t storage_id)
+int parse_incoming_dataset(mtp_ctx * ctx,void * datain,int size,uint32_t * newhandle, uint32_t parent_handle, uint32_t storage_id)
 {
 	MTP_PACKET_HEADER * tmp_hdr;
 	unsigned char *dataset_ptr;
@@ -204,13 +204,13 @@ int parse_incomming_dataset(mtp_ctx * ctx,void * datain,int size,uint32_t * newh
 	storage_flags = mtp_get_storage_flags(ctx, storage_id);
 	if( storage_flags == 0xFFFFFFFF )
 	{
-		PRINT_DEBUG("parse_incomming_dataset : Storage 0x%.8x is Invalid !",storage_id);
+		PRINT_DEBUG("%s : Storage 0x%.8x is Invalid !", __func__, storage_id);
 		return MTP_RESPONSE_INVALID_STORAGE_ID;
 	}
 
 	if( (storage_flags & UMTP_STORAGE_READONLY) )
 	{
-		PRINT_DEBUG("parse_incomming_dataset : Storage 0x%.8x is Read only !", storage_id);
+		PRINT_DEBUG("%s : Storage 0x%.8x is Read only !", __func__, storage_id);
 		return MTP_RESPONSE_STORE_READ_ONLY;
 	}
 

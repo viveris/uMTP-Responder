@@ -61,7 +61,7 @@ uint32_t mtp_op_SendObjectInfo(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr,
 
 	new_handle = 0xFFFFFFFF;
 
-	response_code = parse_incomming_dataset(ctx,ctx->rdbuffer2,sz,&new_handle,parent_handle,storageid);
+	response_code = parse_incoming_dataset(ctx,ctx->rdbuffer2,sz,&new_handle,parent_handle,storageid);
 	if( response_code == MTP_RESPONSE_OK )
 	{
 		PRINT_DEBUG("MTP_OPERATION_SEND_OBJECT_INFO : Response - storageid: 0x%.8X, parent_handle: 0x%.8X, new_handle: 0x%.8X ",storageid,parent_handle,new_handle);

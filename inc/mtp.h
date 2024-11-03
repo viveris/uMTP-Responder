@@ -171,7 +171,7 @@ void mtp_deinit_responder(mtp_ctx * ctx);
 
 int build_response(mtp_ctx * ctx, uint32_t tx_id, uint16_t type, uint16_t status, void * buffer, int maxsize, void * datain,int size);
 int check_and_send_USB_ZLP(mtp_ctx * ctx , int size);
-int parse_incomming_dataset(mtp_ctx * ctx,void * datain,int size,uint32_t * newhandle, uint32_t parent_handle, uint32_t storage_id);
+int parse_incoming_dataset(mtp_ctx * ctx,void * datain,int size,uint32_t * newhandle, uint32_t parent_handle, uint32_t storage_id);
 
 #define APP_VERSION "v1.6.8"
 
