@@ -164,7 +164,7 @@ mtp_size send_file_data( mtp_ctx * ctx, fs_entry * entry,mtp_offset offset, mtp_
 
 		if( ctx->cancel_req )
 		{
-			PRINT_DEBUG("send_file_data : Cancelled ! Aborded...");
+			PRINT_DEBUG("send_file_data : Cancelled ! Aborted...");
 
 			// Force a ZLP
 			check_and_send_USB_ZLP(ctx , ctx->max_packet_size );
@@ -174,7 +174,7 @@ mtp_size send_file_data( mtp_ctx * ctx, fs_entry * entry,mtp_offset offset, mtp_
 		}
 		else
 		{
-			PRINT_DEBUG("send_file_data : Full transfert done !");
+			PRINT_DEBUG("send_file_data : Full transfer done !");
 
 			check_and_send_USB_ZLP(ctx , sizeof(MTP_PACKET_HEADER) + actualsize );
 		}
