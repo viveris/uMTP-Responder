@@ -223,7 +223,7 @@ void fill_ep_descriptor(mtp_ctx * ctx, usb_gadget * usbctx,struct usb_endpoint_d
 	if(flags & EP_BULK_MODE)
 	{
 		desc->bmAttributes = USB_ENDPOINT_XFER_BULK;
-		desc->wMaxPacketSize = ctx->usb_cfg.usb_max_packet_size;
+		desc->wMaxPacketSize = flags & EP_SS_MODE ? 1024 : 512;
 	}
 	else
 	{
@@ -238,10 +238,10 @@ void fill_ep_descriptor(mtp_ctx * ctx, usb_gadget * usbctx,struct usb_endpoint_d
 		ep_cfg_descriptor * ss_descriptor;
 
 		ss_descriptor = (ep_cfg_descriptor *)desc;
+		memset(&ss_descriptor->ep_desc_comp,0,sizeof(struct usb_ss_ep_comp_descriptor));
 
 		ss_descriptor->ep_desc_comp.bLength = sizeof(struct usb_ss_ep_comp_descriptor);
 		ss_descriptor->ep_desc_comp.bDescriptorType = USB_DT_SS_ENDPOINT_COMP;
-		ss_descriptor->ep_desc_comp.bMaxBurst = 15;
 	}
 #endif
 
