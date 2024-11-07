@@ -498,8 +498,6 @@ static void handle_setup_request(usb_gadget * ctx, struct usb_ctrlrequest* setup
 		case MTP_REQ_CANCEL:
 			PRINT_DEBUG("MTP_REQ_CANCEL !");
 
-			status = read (ctx->usb_device, &status, 0);
-
 			mtp_context->cancel_req = 1;
 
 			cnt = 0;
