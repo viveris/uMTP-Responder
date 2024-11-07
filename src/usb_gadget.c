@@ -521,7 +521,7 @@ static void handle_setup_request(usb_gadget * ctx, struct usb_ctrlrequest* setup
 			while( mtp_context->cancel_req )
 			{
 				// Still Waiting the end of the current transfer...
-				if( cnt > 500 )
+				if( cnt > 2500 ) // wait 2.5s max for cancel_req from the io_thread
 				{
 					// Still blocked... Killing the link
 					PRINT_DEBUG("MTP_REQ_CANCEL : Stalled ... Killing the link...");
