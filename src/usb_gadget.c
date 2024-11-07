@@ -113,7 +113,7 @@ int write_usb(usb_gadget * ctx, int channel, unsigned char * buffer, int size)
 				{
 					ret = write (ctx->ep_handles[channel], buffer, size);
 				}
-			}while( ret < 0 && ( (errno == EAGAIN) || (errno == EAGAIN) ) && !mtp_context->cancel_req );
+			}while( ret < 0 && ( (errno == EAGAIN) || (errno == EWOULDBLOCK) ) && !mtp_context->cancel_req );
 			fcntl(ctx->ep_handles[channel], F_SETFL, fcntl(ctx->ep_handles[channel], F_GETFL) & ~O_NONBLOCK);
 #else
 
