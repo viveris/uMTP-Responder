@@ -59,12 +59,12 @@ typedef struct mesg_buffer_ {
 	char mesg_text[MAX_MSG_SIZE];
 } queue_msg_buf;
 
-void *msgqueue_gotsig(int sig, siginfo_t *info, void *ucontext)
+static void *msgqueue_gotsig(int sig, siginfo_t *info, void *ucontext)
 {
 	return NULL;
 }
 
-void* msgqueue_thread( void* arg )
+static void* msgqueue_thread( void* arg )
 {
 	mtp_ctx * ctx;
 	queue_msg_buf msg_buf;
@@ -234,7 +234,7 @@ error:
 	return NULL;
 }
 
-int get_current_exec_path( char * exec_path, int maxsize )
+static int get_current_exec_path( char * exec_path, int maxsize )
 {
 	pid_t pid;
 	char path[PATH_MAX];
