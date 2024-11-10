@@ -1,5 +1,5 @@
 CFLAGS += -I./inc -Wall
-LDFLAGS += -lpthread
+LDFLAGS += -lpthread -lrt
 
 sources := $(wildcard src/*.c)
 objects := $(sources:src/%.c=obj/%.o)
