@@ -1,4 +1,5 @@
-CFLAGS += -I./inc -lpthread -Wall
+CFLAGS += -I./inc -Wall
+LDFLAGS += -lpthread
 
 sources := $(wildcard src/*.c)
 objects := $(sources:src/%.c=obj/%.o)
@@ -29,7 +30,7 @@ endif
 all: umtprd
 
 umtprd: $(objects) $(ops_objects)
-	${CC} -o $@    $^ $(LDFLAGS) -lpthread
+	${CC} -o $@    $^ $(LDFLAGS)
 
 $(objects): obj/%.o: src/%.c | output_dir
 	${CC} -o $@ $^ -c $(CPPFLAGS) $(CFLAGS)

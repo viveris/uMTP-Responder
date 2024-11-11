@@ -88,12 +88,12 @@ static int get_file_info(mtp_ctx * ctx, const struct inotify_event *event, fs_en
 	return 0;
 }
 
-void *inotify_gotsig(int sig, siginfo_t *info, void *ucontext)
+static void *inotify_gotsig(int sig, siginfo_t *info, void *ucontext)
 {
 	return NULL;
 }
 
-void* inotify_thread(void* arg)
+static void* inotify_thread(void* arg)
 {
 	mtp_ctx * ctx;
 	int i, length;
