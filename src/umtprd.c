@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <string.h>
+#include <sys/prctl.h>
 
 #ifdef SYSTEMD_NOTIFY
 #include <systemd/sd-login.h>
@@ -53,6 +54,8 @@ void* io_thread(void* arg)
 {
 	usb_gadget * ctx;
 	int ret;
+
+	prctl(PR_SET_NAME, (unsigned long) __func__);
 
 	ctx = (usb_gadget *)arg;
 
