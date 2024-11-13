@@ -33,6 +33,7 @@
 #include <unistd.h>
 #include <signal.h>
 
+#include <sys/prctl.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/stat.h>
@@ -71,6 +72,8 @@ static void* msgqueue_thread( void* arg )
 	uint32_t handle[3];
 	int store_index;
 	struct sigaction sa;
+
+	prctl(PR_SET_NAME, (unsigned long) __func__);
 
 	ctx = (mtp_ctx *)arg;
 
