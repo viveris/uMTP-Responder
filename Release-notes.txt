@@ -3,7 +3,7 @@
 * Lightweight USB Media Transfer Protocol (MTP)
 * responder
 *
-* Copyright (c) 2018 - 2024 Viveris Technologies
+* Copyright (c) 2018 - 2025 Viveris Technologies
 *
 * https://github.com/viveris/uMTP-Responder
 *
