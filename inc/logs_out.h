@@ -63,42 +63,42 @@ void timestamp(char * timestr, int maxsize);
 
 #else // Stdout usage
 
-#define PRINT_MSG(fmt, args...)   {                                 \
+#define PRINT_MSG(fmt, args...)   do {                              \
                                     char timestr[32];               \
                                     timestamp((char*)&timestr, sizeof(timestr)); \
                                     fprintf(stdout,                 \
                                             "[uMTPrd - %s - Info] " fmt "\n",(char*)&timestr, \
                                             ## args);               \
                                     fflush(stdout);                 \
-                                  }
+                                  } while (0)
 
-#define PRINT_ERROR(fmt, args...) {                                 \
+#define PRINT_ERROR(fmt, args...) do {                              \
                                     char timestr[32];               \
                                     timestamp((char*)&timestr, sizeof(timestr)); \
                                     fprintf(stderr,                 \
                                             "[uMTPrd - %s - Error] " fmt "\n",(char*)&timestr, \
                                             ## args);               \
                                     fflush(stderr);                 \
-                                  }
+                                  } while (0)
 
-#define PRINT_WARN(fmt, args...)  {                                 \
+#define PRINT_WARN(fmt, args...)  do {                              \
                                     char timestr[32];               \
                                     timestamp((char*)&timestr, sizeof(timestr)); \
                                     fprintf(stdout,                 \
                                             "[uMTPrd - %s - Warning] " fmt "\n",(char*)&timestr, \
                                             ## args);               \
                                     fflush(stdout);                 \
-                                  }
+                                  } while (0)
 
 #ifdef DEBUG
-#define PRINT_DEBUG(fmt, args...) {                                 \
+#define PRINT_DEBUG(fmt, args...) do {                              \
                                     char timestr[32];               \
                                     timestamp((char*)&timestr, sizeof(timestr)); \
                                     fprintf(stdout,                 \
                                             "[uMTPrd - %s - Debug] " fmt "\n",(char*)&timestr, \
                                             ## args);               \
                                     fflush(stdout);                 \
-                                  }
+                                  } while (0)
 #else
 
 #define PRINT_DEBUG(fmt, args...)

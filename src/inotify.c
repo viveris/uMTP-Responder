@@ -30,6 +30,7 @@
 #include <pthread.h>
 #include <string.h>
 #include <sys/inotify.h>
+#include <sys/prctl.h>
 #include <unistd.h>
 #include <signal.h>
 
@@ -108,6 +109,8 @@ static void* inotify_thread(void* arg)
 	char inotify_buffer[INOTIFY_RD_BUF_SIZE] __attribute__ ((aligned(__alignof__(struct inotify_event))));
 	const struct inotify_event *event;
 	struct sigaction sa;
+
+	prctl(PR_SET_NAME, (unsigned long) __func__);
 
 	ctx = (mtp_ctx *)arg;
 

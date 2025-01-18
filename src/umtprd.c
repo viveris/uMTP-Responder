@@ -30,6 +30,8 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <string.h>
+#include <sys/prctl.h>
+#include <sys/file.h>
 
 #ifdef SYSTEMD_NOTIFY
 #include <systemd/sd-login.h>
@@ -53,6 +55,8 @@ void* io_thread(void* arg)
 {
 	usb_gadget * ctx;
 	int ret;
+
+	prctl(PR_SET_NAME, (unsigned long) __func__);
 
 	ctx = (usb_gadget *)arg;
 
@@ -136,32 +140,79 @@ int main(int argc, char *argv[])
 {
 	const char *conffile = UMTPR_CONF_FILE;
 	int retcode;
+	mqd_t fd = -1;
+	int already_running = 0;
 
 	PRINT_MSG("uMTP Responder");
-	PRINT_MSG("Version: %s compiled the %s@%s", APP_VERSION,
+	PRINT_MSG("Version: %s compiled %s@%s", APP_VERSION,
 		  __DATE__, __TIME__);
 
 	PRINT_MSG("(c) 2018 - 2025 Viveris Technologies");
 
-	if(argc>1)
+	fd = get_message_queue();
+	if (fd < 0)
 	{
-		if(argv[1])
+		exit(1);
+	}
+	retcode = flock(fd, LOCK_EX | LOCK_NB);
+	if (retcode)
+	{
+		// lock failed, umtprd is already running
+		already_running = 1;
+	}
+
+	if (argc <= 1 && already_running)
+	{
+		PRINT_MSG("Already running");
+		return 0;
+	}
+
+	while(argc > 1)
+	{
+		if(!strncmp(argv[1], PARAMETER_IPCCMD, sizeof(PARAMETER_IPCCMD) - 1))
 		{
-			if(!strncmp(argv[1],PARAMETER_IPCCMD,sizeof(PARAMETER_IPCCMD)-1))
+			char *cmd = &argv[1][sizeof(PARAMETER_IPCCMD) - 1];
+			PRINT_MSG("Sending command : %s", cmd);
+			retcode = send_message_queue(cmd);
+			if (retcode)
 			{
-				PRINT_MSG("Sending command : %s",&argv[1][sizeof(PARAMETER_IPCCMD)-1]);
-				retcode = send_message_queue( &argv[1][sizeof(PARAMETER_IPCCMD)-1] );
+				PRINT_ERROR("Error (%d) sending '%s'", retcode, cmd);
 				exit(retcode);
 			}
-
-			if(!strcmp(argv[1],PARAMETER_CONF) && argc > 2)
-				conffile = argv[2];
+			argc--;
+			argv++;
+		}
+		else if(!strcmp(argv[1], PARAMETER_CONF))
+		{
+			if (already_running)
+			{
+				PRINT_ERROR("Can't set config file when %s is already running", argv[0]);
+				exit(1);
+			}
+			if (argc < 3)
+			{
+				PRINT_ERROR("%s option requires file", PARAMETER_CONF);
+				exit(1);
+			}
+			PRINT_MSG("Using config file %s", argv[2]);
+			conffile = argv[2];
+			argc -= 2;
+			argv += 2;
+		}
+		else
+		{
+			PRINT_ERROR("Unknown command line option: %s", argv[1]);
+			exit(1);
 		}
 	}
 
-	retcode = main_thread(conffile);
-	if( retcode )
-		PRINT_ERROR("Error : Couldn't run the main thread... (%d)", retcode);
+	if (!already_running)
+	{
+		PRINT_DEBUG("starting main thread");
+		retcode = main_thread(conffile);
+		if( retcode )
+			PRINT_ERROR("Error : Couldn't run the main thread... (%d)", retcode);
+	};
 
 	return -retcode;
 }
