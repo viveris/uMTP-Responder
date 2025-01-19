@@ -722,10 +722,10 @@ uint32_t mtp_add_storage(mtp_ctx * ctx, char * path, char * description, int uid
 
 				ctx->storages[i].storage_id = 0xFFFF0000 + (i + 1);
 				PRINT_DEBUG("mtp_add_storage : Storage %.8X mapped to %s (%s) (Flags: 0x%.8X)",
-					    ctx->storages[i].storage_id,
-					    ctx->storages[i].root_path,
-					    ctx->storages[i].description,
-					    ctx->storages[i].flags);
+						ctx->storages[i].storage_id,
+						ctx->storages[i].root_path,
+						ctx->storages[i].description,
+						ctx->storages[i].flags);
 
 				return ctx->storages[i].storage_id;
 			}
@@ -785,8 +785,8 @@ uint32_t mtp_get_storage_id_by_name(mtp_ctx * ctx, char * name)
 			if( !strcmp(ctx->storages[i].description, name ) )
 			{
 				PRINT_DEBUG("%s : %s -> %.8X",
-					    __func__,
-					    ctx->storages[i].root_path,
+						__func__,
+						ctx->storages[i].root_path,
 						ctx->storages[i].storage_id);
 
 				return ctx->storages[i].storage_id;
@@ -812,8 +812,8 @@ int mtp_get_storage_index_by_name(mtp_ctx * ctx, char * name)
 			if( !strcmp(ctx->storages[i].description, name ) )
 			{
 				PRINT_DEBUG("%s : %s -> %.8X",
-					    __func__,
-					    ctx->storages[i].root_path,
+						__func__,
+						ctx->storages[i].root_path,
 						i);
 
 				return i;
@@ -839,9 +839,9 @@ int mtp_get_storage_index_by_id(mtp_ctx * ctx, uint32_t storage_id)
 			if( ctx->storages[i].storage_id == storage_id )
 			{
 				PRINT_DEBUG("%s : %.8X -> %d",
-					    __func__,
-					    storage_id,
-					    i );
+						__func__,
+						storage_id,
+						i );
 				return i;
 			}
 		}
@@ -865,9 +865,9 @@ char * mtp_get_storage_root(mtp_ctx * ctx, uint32_t storage_id)
 			if( ctx->storages[i].storage_id == storage_id )
 			{
 				PRINT_DEBUG("%s : %.8X -> %s",
-					    __func__,
-					    storage_id,
-					    ctx->storages[i].root_path );
+						__func__,
+						storage_id,
+						ctx->storages[i].root_path );
 				return ctx->storages[i].root_path;
 			}
 		}
@@ -890,9 +890,9 @@ char * mtp_get_storage_description(mtp_ctx * ctx, uint32_t storage_id)
 			if( ctx->storages[i].storage_id == storage_id )
 			{
 				PRINT_DEBUG("%s : %.8X -> %s",
-					    __func__,
-					    storage_id,
-					    ctx->storages[i].description );
+						__func__,
+						storage_id,
+						ctx->storages[i].description );
 				return ctx->storages[i].description;
 			}
 		}
@@ -916,9 +916,9 @@ uint32_t mtp_get_storage_flags(mtp_ctx * ctx, uint32_t storage_id)
 			if( ctx->storages[i].storage_id == storage_id )
 			{
 				PRINT_DEBUG("%s : %.8X -> 0x%.8X",
-					    __func__,
-					    storage_id,
-					    ctx->storages[i].flags );
+						__func__,
+						storage_id,
+						ctx->storages[i].flags );
 				return ctx->storages[i].flags;
 			}
 		}

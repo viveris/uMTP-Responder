@@ -221,7 +221,7 @@ int unicode2charstring(char * str, uint16_t * unicodestr, int maxstrsize)
 		byte_access += 2;
 
 		if(!chunksize)
-		{	// Error -> default character
+		{   // Error -> default character
 			tmpstr[0] = '?';
 			tmpstr[1] = 0;
 			chunksize = 1;
