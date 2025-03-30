@@ -47,8 +47,9 @@ uint32_t mtp_op_SendObject(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int
 	uint32_t response_code;
 	fs_entry * entry;
 	unsigned char * tmp_ptr;
-	char * full_path;
 	int file;
+	int flags;
+	mode_t mode;
 	int sz;
 
 	if(!ctx->fs_db)
@@ -83,23 +84,21 @@ uint32_t mtp_op_SendObject(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int
 						return response_code;
 					}
 
-					full_path = build_full_path(ctx->fs_db, mtp_get_storage_root(ctx, entry->storage_id), entry);
-					if(full_path)
+					if( mtp_packet_hdr->code == MTP_OPERATION_SEND_PARTIAL_OBJECT )
 					{
-						file = -1;
+						flags = O_RDWR | O_LARGEFILE;
+						mode = 0;
+					}
+					else
+					{
+						flags = O_CREAT | O_WRONLY | O_TRUNC | O_LARGEFILE;
+						mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
+					}
 
-						if(!set_storage_giduid(ctx, entry->storage_id))
-						{
-							if( mtp_packet_hdr->code == MTP_OPERATION_SEND_PARTIAL_OBJECT )
-								file = open(full_path,O_RDWR | O_LARGEFILE);
-							else
-								file = open(full_path,
-										O_CREAT | O_WRONLY | O_TRUNC | O_LARGEFILE,
-										S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
-						}
+					file = entry_open(ctx->fs_db, entry, flags, mode);
 
-						restore_giduid(ctx);
-
+					if( file != -1 )
+					{
 						if( file != -1 )
 						{
 							ctx->transferring_file_data = 1;
@@ -150,14 +149,11 @@ uint32_t mtp_op_SendObject(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int
 
 							ctx->transferring_file_data = 0;
 
-							if (ctx->sync_when_close) fsync(file);
-							close(file);
+							entry_close(ctx->fs_db, entry);
 
 							if(ctx->cancel_req)
 							{
 								ctx->cancel_req = 0;
-
-								free( full_path );
 
 								pthread_mutex_unlock( &ctx->inotify_mutex );
 
@@ -166,8 +162,6 @@ uint32_t mtp_op_SendObject(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int
 
 							response_code = MTP_RESPONSE_OK;
 						}
-
-						free( full_path );
 					}
 				}
 				else
