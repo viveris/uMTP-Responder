@@ -99,17 +99,40 @@ uint32_t mtp_op_SendObject(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int
 
 					if( file != -1 )
 					{
-						if( file != -1 )
+						ctx->transferring_file_data = 1;
+
+						lseek64(file, ctx->SendObjInfoOffset, SEEK_SET);
+
+						sz = *size - sizeof(MTP_PACKET_HEADER);
+						tmp_ptr = ((unsigned char*)mtp_packet_hdr) ;
+						tmp_ptr += sizeof(MTP_PACKET_HEADER);
+
+						if(sz > 0)
 						{
-							ctx->transferring_file_data = 1;
+							if( write(file, tmp_ptr, sz) != sz)
+							{
+								// TODO : Handle this error case properly
+							}
 
-							lseek64(file, ctx->SendObjInfoOffset, SEEK_SET);
+							ctx->SendObjInfoSize -= sz;
+						}
 
-							sz = *size - sizeof(MTP_PACKET_HEADER);
-							tmp_ptr = ((unsigned char*)mtp_packet_hdr) ;
-							tmp_ptr += sizeof(MTP_PACKET_HEADER);
+						tmp_ptr = ctx->rdbuffer2;
+						if( sz == ( ctx->usb_rd_buffer_max_size - sizeof(MTP_PACKET_HEADER) ) )
+						{
+							sz = ctx->usb_rd_buffer_max_size;
+						}
 
-							if(sz > 0)
+						if( mtp_packet_hdr->code == MTP_OPERATION_SEND_PARTIAL_OBJECT && ctx->SendObjInfoSize )
+						{
+							sz = ctx->usb_rd_buffer_max_size;
+						}
+
+						while( ( sz == ctx->usb_rd_buffer_max_size ) && ( !ctx->cancel_req ) && ( sz >= 0 ) )
+						{
+							sz = read_usb(ctx->usb_ctx, ctx->rdbuffer2, ctx->usb_rd_buffer_max_size);
+
+							if( sz >= 0 )
 							{
 								if( write(file, tmp_ptr, sz) != sz)
 								{
@@ -118,50 +141,24 @@ uint32_t mtp_op_SendObject(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int
 
 								ctx->SendObjInfoSize -= sz;
 							}
+						};
 
-							tmp_ptr = ctx->rdbuffer2;
-							if( sz == ( ctx->usb_rd_buffer_max_size - sizeof(MTP_PACKET_HEADER) ) )
-							{
-								sz = ctx->usb_rd_buffer_max_size;
-							}
+						entry->size = lseek64(file, 0, SEEK_END);
 
-							if( mtp_packet_hdr->code == MTP_OPERATION_SEND_PARTIAL_OBJECT && ctx->SendObjInfoSize )
-							{
-								sz = ctx->usb_rd_buffer_max_size;
-							}
+						ctx->transferring_file_data = 0;
 
-							while( ( sz == ctx->usb_rd_buffer_max_size ) && ( !ctx->cancel_req ) && ( sz >= 0 ) )
-							{
-								sz = read_usb(ctx->usb_ctx, ctx->rdbuffer2, ctx->usb_rd_buffer_max_size);
+						entry_close(ctx->fs_db, entry);
 
-								if( sz >= 0 )
-								{
-									if( write(file, tmp_ptr, sz) != sz)
-									{
-										// TODO : Handle this error case properly
-									}
+						if(ctx->cancel_req)
+						{
+							ctx->cancel_req = 0;
 
-									ctx->SendObjInfoSize -= sz;
-								}
-							};
+							pthread_mutex_unlock( &ctx->inotify_mutex );
 
-							entry->size = lseek64(file, 0, SEEK_END);
-
-							ctx->transferring_file_data = 0;
-
-							entry_close(ctx->fs_db, entry);
-
-							if(ctx->cancel_req)
-							{
-								ctx->cancel_req = 0;
-
-								pthread_mutex_unlock( &ctx->inotify_mutex );
-
-								return MTP_RESPONSE_NO_RESPONSE;
-							}
-
-							response_code = MTP_RESPONSE_OK;
+							return MTP_RESPONSE_NO_RESPONSE;
 						}
+
+						response_code = MTP_RESPONSE_OK;
 					}
 				}
 				else
