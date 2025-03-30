@@ -624,6 +624,9 @@ int entry_open(fs_handles_db * db, fs_entry * entry, int flags, mode_t mode)
 {
 	char * full_path;
 
+	if (entry->file_descriptor > 0)
+		return entry->file_descriptor;
+
 	full_path = build_full_path(db,mtp_get_storage_root(db->mtp_ctx, entry->storage_id), entry);
 	if( full_path )
 	{

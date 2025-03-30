@@ -147,7 +147,8 @@ uint32_t mtp_op_SendObject(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int
 
 						ctx->transferring_file_data = 0;
 
-						entry_close(ctx->fs_db, entry);
+						if( mtp_packet_hdr->code != MTP_OPERATION_SEND_PARTIAL_OBJECT )
+							entry_close(ctx->fs_db, entry);
 
 						if(ctx->cancel_req)
 						{
