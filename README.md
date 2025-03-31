@@ -83,6 +83,8 @@ This may work with earlier kernels (v3.x.x and some v2.6.x versions) but without
 
 ## How to build it ?
 
+### Makefile
+
 A simple "make" should be enough if you build uMTPrd directly on the target.
 
 If you are using a cross-compile environment, set the "CC" variable to your GCC cross compiler.
@@ -123,6 +125,20 @@ To get the current flags/options available :
 
 ```c
 make help
+```
+
+### Meson
+
+Have meson configure the build setup :
+
+```c
+meson setup --buildtype debug ./ ./build/ -Dsystemd=true -Dusb_ss_support=true
+```
+
+And build :
+
+```c
+meson compile -v -j 8
 ```
 
 ## How to set it up ?
