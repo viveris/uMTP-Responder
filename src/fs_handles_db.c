@@ -261,6 +261,8 @@ void deinit_fs_db(fs_handles_db * fsh)
 				fsh->entry_list->watch_descriptor = -1;
 			}
 
+			entry_close(fsh, fsh->entry_list);
+
 			if( fsh->entry_list->name )
 				free( fsh->entry_list->name );
 
