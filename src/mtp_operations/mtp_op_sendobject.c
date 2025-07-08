@@ -47,8 +47,9 @@ uint32_t mtp_op_SendObject(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int
 	uint32_t response_code;
 	fs_entry * entry;
 	unsigned char * tmp_ptr;
-	char * full_path;
 	int file;
+	int flags;
+	mode_t mode;
 	int sz;
 
 	if(!ctx->fs_db)
@@ -83,34 +84,55 @@ uint32_t mtp_op_SendObject(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int
 						return response_code;
 					}
 
-					full_path = build_full_path(ctx->fs_db, mtp_get_storage_root(ctx, entry->storage_id), entry);
-					if(full_path)
+					if( mtp_packet_hdr->code == MTP_OPERATION_SEND_PARTIAL_OBJECT )
 					{
-						file = -1;
+						flags = O_RDWR | O_LARGEFILE;
+						mode = 0;
+					}
+					else
+					{
+						flags = O_CREAT | O_WRONLY | O_TRUNC | O_LARGEFILE;
+						mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
+					}
 
-						if(!set_storage_giduid(ctx, entry->storage_id))
+					file = entry_open(ctx->fs_db, entry, flags, mode);
+
+					if( file != -1 )
+					{
+						ctx->transferring_file_data = 1;
+
+						lseek64(file, ctx->SendObjInfoOffset, SEEK_SET);
+
+						sz = *size - sizeof(MTP_PACKET_HEADER);
+						tmp_ptr = ((unsigned char*)mtp_packet_hdr) ;
+						tmp_ptr += sizeof(MTP_PACKET_HEADER);
+
+						if(sz > 0)
 						{
-							if( mtp_packet_hdr->code == MTP_OPERATION_SEND_PARTIAL_OBJECT )
-								file = open(full_path,O_RDWR | O_LARGEFILE);
-							else
-								file = open(full_path,
-										O_CREAT | O_WRONLY | O_TRUNC | O_LARGEFILE,
-										S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+							if( write(file, tmp_ptr, sz) != sz)
+							{
+								// TODO : Handle this error case properly
+							}
+
+							ctx->SendObjInfoSize -= sz;
 						}
 
-						restore_giduid(ctx);
-
-						if( file != -1 )
+						tmp_ptr = ctx->rdbuffer2;
+						if( sz == ( ctx->usb_rd_buffer_max_size - sizeof(MTP_PACKET_HEADER) ) )
 						{
-							ctx->transferring_file_data = 1;
+							sz = ctx->usb_rd_buffer_max_size;
+						}
 
-							lseek64(file, ctx->SendObjInfoOffset, SEEK_SET);
+						if( mtp_packet_hdr->code == MTP_OPERATION_SEND_PARTIAL_OBJECT && ctx->SendObjInfoSize )
+						{
+							sz = ctx->usb_rd_buffer_max_size;
+						}
 
-							sz = *size - sizeof(MTP_PACKET_HEADER);
-							tmp_ptr = ((unsigned char*)mtp_packet_hdr) ;
-							tmp_ptr += sizeof(MTP_PACKET_HEADER);
+						while( ( sz == ctx->usb_rd_buffer_max_size ) && ( !ctx->cancel_req ) && ( sz >= 0 ) )
+						{
+							sz = read_usb(ctx->usb_ctx, ctx->rdbuffer2, ctx->usb_rd_buffer_max_size);
 
-							if(sz > 0)
+							if( sz >= 0 )
 							{
 								if( write(file, tmp_ptr, sz) != sz)
 								{
@@ -119,55 +141,25 @@ uint32_t mtp_op_SendObject(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, int
 
 								ctx->SendObjInfoSize -= sz;
 							}
+						};
 
-							tmp_ptr = ctx->rdbuffer2;
-							if( sz == ( ctx->usb_rd_buffer_max_size - sizeof(MTP_PACKET_HEADER) ) )
-							{
-								sz = ctx->usb_rd_buffer_max_size;
-							}
+						entry->size = lseek64(file, 0, SEEK_END);
 
-							if( mtp_packet_hdr->code == MTP_OPERATION_SEND_PARTIAL_OBJECT && ctx->SendObjInfoSize )
-							{
-								sz = ctx->usb_rd_buffer_max_size;
-							}
+						ctx->transferring_file_data = 0;
 
-							while( ( sz == ctx->usb_rd_buffer_max_size ) && ( !ctx->cancel_req ) && ( sz >= 0 ) )
-							{
-								sz = read_usb(ctx->usb_ctx, ctx->rdbuffer2, ctx->usb_rd_buffer_max_size);
+						if( mtp_packet_hdr->code != MTP_OPERATION_SEND_PARTIAL_OBJECT )
+							entry_close(ctx->fs_db, entry);
 
-								if( sz >= 0 )
-								{
-									if( write(file, tmp_ptr, sz) != sz)
-									{
-										// TODO : Handle this error case properly
-									}
+						if(ctx->cancel_req)
+						{
+							ctx->cancel_req = 0;
 
-									ctx->SendObjInfoSize -= sz;
-								}
-							};
+							pthread_mutex_unlock( &ctx->inotify_mutex );
 
-							entry->size = lseek64(file, 0, SEEK_END);
-
-							ctx->transferring_file_data = 0;
-
-							if (ctx->sync_when_close) fsync(file);
-							close(file);
-
-							if(ctx->cancel_req)
-							{
-								ctx->cancel_req = 0;
-
-								free( full_path );
-
-								pthread_mutex_unlock( &ctx->inotify_mutex );
-
-								return MTP_RESPONSE_NO_RESPONSE;
-							}
-
-							response_code = MTP_RESPONSE_OK;
+							return MTP_RESPONSE_NO_RESPONSE;
 						}
 
-						free( full_path );
+						response_code = MTP_RESPONSE_OK;
 					}
 				}
 				else

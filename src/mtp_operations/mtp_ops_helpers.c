@@ -25,6 +25,7 @@
 
 #include "buildconf.h"
 
+#include <fcntl.h>
 #include <inttypes.h>
 #include <pthread.h>
 #include <stdlib.h>
@@ -83,7 +84,7 @@ mtp_size send_file_data( mtp_ctx * ctx, fs_entry * entry,mtp_offset offset, mtp_
 
 	PRINT_DEBUG("send_file_data : Offset 0x%"SIZEHEX" - Maxsize 0x%"SIZEHEX" - Size 0x%"SIZEHEX" - ActualSize 0x%"SIZEHEX, offset,maxsize,entry->size,actualsize);
 
-	file = entry_open(ctx->fs_db, entry);
+	file = entry_open(ctx->fs_db, entry, O_RDONLY | O_LARGEFILE, 0);
 	if( file != -1 )
 	{
 		ctx->transferring_file_data = 1;
@@ -99,10 +100,10 @@ mtp_size send_file_data( mtp_ctx * ctx, fs_entry * entry,mtp_offset offset, mtp_
 			// Is the target page loaded ?
 			if( buf_index != ((offset + j) & ~((mtp_offset)(ctx->read_file_buffer_size-1))) )
 			{
-				bytes_read = entry_read(ctx->fs_db, file, ctx->read_file_buffer, ((offset + j) & ~((mtp_offset)(ctx->read_file_buffer_size-1))) , (mtp_size)ctx->read_file_buffer_size);
+				bytes_read = entry_read(ctx->fs_db, entry, ctx->read_file_buffer, ((offset + j) & ~((mtp_offset)(ctx->read_file_buffer_size-1))) , (mtp_size)ctx->read_file_buffer_size);
 				if( bytes_read < 0 )
 				{
-					entry_close( file );
+					entry_close( ctx->fs_db, entry );
 					return -1;
 				}
 
@@ -135,10 +136,10 @@ mtp_size send_file_data( mtp_ctx * ctx, fs_entry * entry,mtp_offset offset, mtp_
 				memcpy(&ctx->wrbuffer[ofs], &ctx->read_file_buffer[io_buffer_index], first_part_size  );
 
 				buf_index += (mtp_offset)ctx->read_file_buffer_size;
-				bytes_read = entry_read(ctx->fs_db, file, ctx->read_file_buffer, buf_index , ctx->read_file_buffer_size);
+				bytes_read = entry_read(ctx->fs_db, entry, ctx->read_file_buffer, buf_index , ctx->read_file_buffer_size);
 				if( bytes_read < 0 )
 				{
-					entry_close( file );
+					entry_close( ctx->fs_db, entry );
 					return -1;
 				}
 
@@ -160,7 +161,7 @@ mtp_size send_file_data( mtp_ctx * ctx, fs_entry * entry,mtp_offset offset, mtp_
 
 		ctx->transferring_file_data = 0;
 
-		entry_close( file );
+		entry_close( ctx->fs_db, entry );
 
 		if( ctx->cancel_req )
 		{

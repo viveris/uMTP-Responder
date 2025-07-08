@@ -26,6 +26,8 @@
 #ifndef _INC_FS_HANDLES_DB_H_
 #define _INC_FS_HANDLES_DB_H_
 
+#include <sys/types.h>
+
 typedef struct fs_entry fs_entry;
 
 typedef int64_t mtp_size;
@@ -43,6 +45,7 @@ struct fs_entry
     mtp_size size;
     uint32_t date;
 
+    int file_descriptor;
     int watch_descriptor;
 
     fs_entry * next;
@@ -106,9 +109,9 @@ fs_entry * add_entry(fs_handles_db * db, filefoundinfo *fileinfo, uint32_t paren
 fs_entry * search_entry(fs_handles_db * db, filefoundinfo *fileinfo, uint32_t parent, uint32_t storage_id);
 fs_entry * alloc_root_entry(fs_handles_db * db, uint32_t storage_id);
 
-int entry_open(fs_handles_db * db, fs_entry * entry);
-int entry_read(fs_handles_db * db, int file, unsigned char * buffer_out, mtp_offset offset, mtp_size size);
-void entry_close(int file);
+int entry_open(fs_handles_db * db, fs_entry * entry, int flags, mode_t mode);
+int entry_read(fs_handles_db * db, fs_entry * entry, unsigned char * buffer_out, mtp_offset offset, mtp_size size);
+void entry_close(fs_handles_db * db, fs_entry * entry);
 
 char * build_full_path(fs_handles_db * db,char * root_path,fs_entry * entry);
 

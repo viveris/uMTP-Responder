@@ -264,6 +264,9 @@ void deinit_fs_db(fs_handles_db * fsh)
                 free(node->entries);
             }
         }
+      
+        entry_close(fsh, fsh->entry_list);
+      
 
         // Free pool memory
         fs_entry_pool_block *current = fsh->pool_head;
@@ -311,6 +314,8 @@ fs_entry * alloc_entry(fs_handles_db * db, filefoundinfo *fileinfo, uint32_t par
     entry->name = strdup(fileinfo->filename);
 
     entry->size = fileinfo->size;
+
+    entry->file_descriptor = -1;
 
     entry->watch_descriptor = -1;
 
@@ -611,43 +616,41 @@ char * build_full_path(fs_handles_db * db,char * root_path,fs_entry * entry)
 	return full_path;
 }
 
-int entry_open(fs_handles_db * db, fs_entry * entry)
+int entry_open(fs_handles_db * db, fs_entry * entry, int flags, mode_t mode)
 {
-	int file;
 	char * full_path;
 
-	file = -1;
+	if (entry->file_descriptor > 0)
+		return entry->file_descriptor;
 
 	full_path = build_full_path(db,mtp_get_storage_root(db->mtp_ctx, entry->storage_id), entry);
 	if( full_path )
 	{
-		file = -1;
-
 		if(!set_storage_giduid(db->mtp_ctx, entry->storage_id))
 		{
-			file = open(full_path,O_RDONLY | O_LARGEFILE);
+			entry->file_descriptor = open(full_path, flags, mode);
 		}
 
 		restore_giduid(db->mtp_ctx);
 
-		if( file == -1 )
+		if( entry->file_descriptor == -1 )
 			PRINT_DEBUG("entry_open : Can't open %s !",full_path);
 
 		free(full_path);
 	}
 
-	return file;
+	return entry->file_descriptor;
 }
 
-int entry_read(fs_handles_db * db, int file, unsigned char * buffer_out, mtp_offset offset, mtp_size size)
+int entry_read(fs_handles_db * db, fs_entry * entry, unsigned char * buffer_out, mtp_offset offset, mtp_size size)
 {
 	int totalread;
 
-	if( file != -1 )
+	if( entry->file_descriptor != -1 )
 	{
-		lseek64(file, offset, SEEK_SET);
+		lseek64(entry->file_descriptor, offset, SEEK_SET);
 
-		totalread = read( file, buffer_out, size );
+		totalread = read( entry->file_descriptor, buffer_out, size );
 
 		return totalread;
 	}
@@ -655,10 +658,16 @@ int entry_read(fs_handles_db * db, int file, unsigned char * buffer_out, mtp_off
 	return 0;
 }
 
-void entry_close(int file)
+void entry_close(fs_handles_db * db, fs_entry * entry)
 {
-	if( file != -1 )
-		close(file);
+	if( entry->file_descriptor != -1 )
+	{
+		if (((mtp_ctx *)db->mtp_ctx)->sync_when_close)
+			fsync(entry->file_descriptor);
+
+		close(entry->file_descriptor);
+	}
+	entry->file_descriptor = -1;
 }
 
 fs_entry * get_entry_by_wd( fs_handles_db * db, int watch_descriptor, fs_entry * entry_list )
