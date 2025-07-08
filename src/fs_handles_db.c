@@ -245,133 +245,137 @@ fs_handles_db * init_fs_db(void * mtp_ctx)
 
 void deinit_fs_db(fs_handles_db * fsh)
 {
-    if (fsh)
-    {
-        for (int i = 0; i < HASH_TABLE_SIZE; i++)
-        {
+	if (fsh)
+	{
+		for (int i = 0; i < HASH_TABLE_SIZE; i++)
+		{
+			hash_node *node = &fsh->hash_table_by_name[i];
+			if (node->entries)
+			{
+				for (uint32_t j = 0; j < node->size; j++)
+				{
+					if (node->entries[j]->watch_descriptor != -1)
+					{
+						inotify_handler_rmwatch(fsh->mtp_ctx, node->entries[j]->watch_descriptor);
+					}
 
-            hash_node *node = &fsh->hash_table_by_name[i];
-            if (node->entries)
-            {
-                for (uint32_t j = 0; j < node->size; j++)
-                {
-                    if (node->entries[j]->watch_descriptor != -1)
-                    {
-                        inotify_handler_rmwatch(fsh->mtp_ctx, node->entries[j]->watch_descriptor);
-                    }
+				}
+				free(node->entries);
+			}
+		}
 
-                }
-                free(node->entries);
-            }
-        }
-      
-        entry_close(fsh, fsh->entry_list);
-      
+		entry_close(fsh, fsh->entry_list);
 
-        // Free pool memory
-        fs_entry_pool_block *current = fsh->pool_head;
-        while (current) {
-            fs_entry_pool_block *next = current->next;
-            for (int i = 0; i < POOL_BLOCK_SIZE; i++) {
-                if (current->entries[i].name) {
-                    free(current->entries[i].name);
-                }
-            }
-            free(current);
-            current = next;
-        }
+		// Free pool memory
+		fs_entry_pool_block *current = fsh->pool_head;
+		while (current)
+		{
+			fs_entry_pool_block *next = current->next;
+			for (int i = 0; i < POOL_BLOCK_SIZE; i++)
+			{
+				if (current->entries[i].name)
+				{
+					free(current->entries[i].name);
+				}
+			}
+			free(current);
+			current = next;
+		}
 
-        free(fsh);
-    }
+		free(fsh);
+	}
 }
 
 fs_entry * search_entry(fs_handles_db * db, filefoundinfo *fileinfo, uint32_t parent, uint32_t storage_id)
 {
-
 	if( !db )
 		return NULL;
+
 	return find_entry(db, fileinfo->filename, parent, storage_id);
 }
 
 fs_entry * alloc_entry(fs_handles_db * db, filefoundinfo *fileinfo, uint32_t parent, uint32_t storage_id)
 {
-    fs_entry * entry;
+	fs_entry * entry;
 
-    if (db->pool_free_count == 0) {
-        if (!allocate_pool_block(db)) {
-            return NULL;
-        }
-    }
+	if (db->pool_free_count == 0)
+	{
+		if (!allocate_pool_block(db))
+		{
+			return NULL;
+		}
+	}
 
-    entry = &db->pool_head->entries[--db->pool_free_count];
-    memset(entry, 0, sizeof(fs_entry));
+	entry = &db->pool_head->entries[--db->pool_free_count];
+	memset(entry, 0, sizeof(fs_entry));
 
-    entry->handle = db->next_handle;
-    db->next_handle++;
-    entry->parent = parent;
-    entry->storage_id = storage_id;
+	entry->handle = db->next_handle;
+	db->next_handle++;
+	entry->parent = parent;
+	entry->storage_id = storage_id;
 
-    entry->name = strdup(fileinfo->filename);
+	entry->name = strdup(fileinfo->filename);
 
-    entry->size = fileinfo->size;
+	entry->size = fileinfo->size;
 
-    entry->file_descriptor = -1;
+	entry->watch_descriptor = -1;
 
-    entry->watch_descriptor = -1;
+	if (fileinfo->isdirectory)
+		entry->flags = ENTRY_IS_DIR;
+	else
+		entry->flags = 0x00000000;
 
-    if (fileinfo->isdirectory)
-        entry->flags = ENTRY_IS_DIR;
-    else
-        entry->flags = 0x00000000;
+	// Add entry to hash table
+	insert_entry(db, entry);
 
-    // Add entry to hash table
-    insert_entry(db, entry);
+	// Maintain backward compatibility with list linkage
+	entry->next = db->entry_list;
+	db->entry_list = entry;
 
-    // Maintain backward compatibility with list linkage
-    entry->next = db->entry_list;
-    db->entry_list = entry;
-
-    return entry;
+	return entry;
 }
 
 fs_entry * alloc_root_entry(fs_handles_db * db, uint32_t storage_id)
 {
-    fs_entry * entry;
+	fs_entry * entry;
 
-    if (!db)
-        return NULL;
+	if (!db)
+		return NULL;
 
-    if (db->pool_free_count == 0) {
-        if (!allocate_pool_block(db)) {
-            return NULL;
-        }
-    }
+	if (db->pool_free_count == 0)
+	{
+		if (!allocate_pool_block(db))
+		{
+			return NULL;
+		}
+	}
 
-    entry = &db->pool_head->entries[--db->pool_free_count];
-    memset(entry, 0, sizeof(fs_entry));
+	entry = &db->pool_head->entries[--db->pool_free_count];
+	memset(entry, 0, sizeof(fs_entry));
 
-    entry->handle = 0x00000000;
-    entry->parent = 0x00000000;
-    entry->storage_id = storage_id;
+	entry->handle = 0x00000000;
+	entry->parent = 0x00000000;
+	entry->storage_id = storage_id;
 
-    entry->name = strdup("/");
-    if (!entry->name)
-    {
-        free(entry);
-        return NULL;
-    }
+	entry->name = strdup("/");
+	if (!entry->name)
+	{
+		free(entry);
+		return NULL;
+	}
 
-    entry->size = 1;
-    entry->watch_descriptor = -1;
-    entry->flags = ENTRY_IS_DIR;
+	entry->size = 1;
+	entry->watch_descriptor = -1;
+	entry->flags = ENTRY_IS_DIR;
 
-    // Add root entry to hash table
-    insert_entry(db, entry);
+	// Add root entry to hash table
+	insert_entry(db, entry);
 
-    // Maintain backward compatibility with list linkage
-    entry->next = db->entry_list;
-    db->entry_list = entry;
-    return entry;
+	// Maintain backward compatibility with list linkage
+	entry->next = db->entry_list;
+	db->entry_list = entry;
+
+	return entry;
 }
 
 fs_entry * add_entry(fs_handles_db * db, filefoundinfo *fileinfo, uint32_t parent, uint32_t storage_id)
@@ -499,11 +503,11 @@ fs_entry * get_next_child_handle(fs_handles_db * db)
 
 fs_entry * get_entry_by_handle(fs_handles_db * db, uint32_t handle)
 {
-    uint32_t index = hash_function_handle(handle) % HASH_TABLE_SIZE;
-    hash_node *node = &db->hash_table_by_handle[index];
+	uint32_t index = hash_function_handle(handle) % HASH_TABLE_SIZE;
+	hash_node *node = &db->hash_table_by_handle[index];
 
-	for (uint32_t i = 0; i < node->size; i++) {
-
+	for (uint32_t i = 0; i < node->size; i++)
+	{
 		if( !(  node->entries[i]->flags & ENTRY_IS_DELETED ) && (  node->entries[i]->handle == handle ) )
 		{
 			if( mtp_get_storage_root(db->mtp_ctx,  node->entries[i]->storage_id) )
