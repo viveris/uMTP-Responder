@@ -35,42 +35,61 @@ typedef int64_t mtp_offset;
 
 struct fs_entry
 {
-	uint32_t handle;
-	uint32_t parent;
-	uint32_t storage_id;
-	char * name;
-	uint32_t flags;
-	mtp_size size;
-	uint32_t date;
+    uint32_t handle;
+    uint32_t parent;
+    uint32_t storage_id;
+    char * name;
+    uint32_t flags;
+    mtp_size size;
+    uint32_t date;
 
-	int watch_descriptor;
+    int watch_descriptor;
 
-	fs_entry * next;
+    fs_entry * next;
 };
 
 #define ENTRY_IS_DIR 0x00000001
 #define ENTRY_IS_DELETED 0x00000002
 
 #define _DEF_FS_HANDLES_ 1
+#define HASH_TABLE_SIZE 1024  // Configurable table size
 
-typedef struct fs_handles_db_
-{
-	fs_entry * entry_list;
-	uint32_t next_handle;
+typedef struct hash_node {
+    fs_entry **entries;
+    uint32_t size;
+    uint32_t capacity;
+} hash_node;
 
-	fs_entry * search_entry;
-	uint32_t handle_search;
-	uint32_t storage_search;
+#define POOL_BLOCK_SIZE 1024
 
-	void * mtp_ctx;
-}fs_handles_db;
+typedef struct fs_entry_pool_block {
+    fs_entry entries[POOL_BLOCK_SIZE];
+    struct fs_entry_pool_block *next;
+} fs_entry_pool_block;
+
+typedef struct fs_handles_db_ {
+    fs_entry * entry_list;
+    hash_node hash_table_by_name[HASH_TABLE_SIZE]; // Hash table by file name for performance improvement
+    hash_node hash_table_by_handle[HASH_TABLE_SIZE]; // Hash table by file handle for performance improvement
+
+    uint32_t next_handle;
+
+    fs_entry *search_entry;
+    uint32_t handle_search;
+    uint32_t storage_search;
+
+    void *mtp_ctx;
+
+    fs_entry_pool_block *pool_head; // Memory pool for fs_entry allocation to improve memory handling performance
+    uint32_t pool_free_count;
+} fs_handles_db;
 
 
 typedef struct filefoundinfo_
 {
-	int isdirectory;
-	char filename[FS_HANDLE_MAX_FILENAME_SIZE + 1];
-	mtp_size size;
+    int isdirectory;
+    char filename[FS_HANDLE_MAX_FILENAME_SIZE + 1];
+    mtp_size size;
 }filefoundinfo;
 
 
