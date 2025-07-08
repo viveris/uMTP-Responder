@@ -96,7 +96,8 @@ fs_entry *find_entry(fs_handles_db *db, const char *name, uint32_t parent, uint3
     for (uint32_t i = 0; i < node->size; i++) {
         if (strcmp(node->entries[i]->name, name) == 0 &&
             node->entries[i]->parent == parent &&
-            node->entries[i]->storage_id == storage_id) {
+            node->entries[i]->storage_id == storage_id &&
+             ((node->entries[i]->flags & ENTRY_IS_DELETED) == 0)) {
             return node->entries[i];
         }
     }
