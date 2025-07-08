@@ -42,6 +42,7 @@
 #include "fs_handles_db.h"
 #include "inotify.h"
 #include "logs_out.h"
+#include "hash_utils.h"
 
 int fs_remove_tree( char *folder )
 {
@@ -225,6 +226,113 @@ int fs_find_close(DIR* dir)
 	return 0;
 }
 
+#define INITIAL_NODE_CAPACITY 4
+#define NODE_GROWTH_FACTOR 2
+
+static int init_hash_node(hash_node *node)
+{
+    node->entries = malloc(INITIAL_NODE_CAPACITY * sizeof(fs_entry*));
+    if (!node->entries) return 0;
+
+    node->capacity = INITIAL_NODE_CAPACITY;
+    node->size = 0;
+    return 1;
+}
+
+static int expand_hash_node(hash_node *node)
+{
+    uint32_t new_capacity = node->capacity * NODE_GROWTH_FACTOR;
+    fs_entry **new_entries = realloc(node->entries, new_capacity * sizeof(fs_entry*));
+    if (!new_entries) return 0;
+
+    node->entries = new_entries;
+    node->capacity = new_capacity;
+    return 1;
+}
+
+uint32_t hash_function_name(const char *name) {
+    uint32_t hash = 5381;
+    int c;
+
+    while ((c = *name++))
+        hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+
+    return hash % HASH_TABLE_SIZE;
+}
+
+uint32_t hash_function_handle(uint32_t handle) {
+    uint32_t hash = handle;
+    
+    return hash % HASH_TABLE_SIZE;
+}
+
+static int allocate_pool_block(fs_handles_db *db)
+{
+    fs_entry_pool_block *new_block = malloc(sizeof(fs_entry_pool_block));
+    if (!new_block) {
+        return 0;
+    }
+
+    memset(new_block, 0, sizeof(fs_entry_pool_block));
+    new_block->next = db->pool_head;
+    db->pool_head = new_block;
+    db->pool_free_count += POOL_BLOCK_SIZE;
+
+    return 1;
+}
+
+void insert_entry_generic(hash_node *node, fs_entry* entry) {
+	if (node->entries == NULL || node->capacity == 0)
+    {
+        if (!init_hash_node(node))
+        {
+            PRINT_ERROR("Failed to initialize hash node");
+            return;
+        }
+    }
+
+    if (node->size >= node->capacity)
+    {
+        if (!expand_hash_node(node))
+        {
+            PRINT_ERROR("Failed to expand hash node");
+            return;
+        }
+    }
+
+    node->entries[node->size++] = entry;
+}
+
+void insert_entry(fs_handles_db *db, fs_entry *entry)
+{
+    uint32_t index_name = hash_function_name(entry->name) % HASH_TABLE_SIZE;
+	uint32_t index_handle = hash_function_handle(entry->handle) % HASH_TABLE_SIZE;
+
+    hash_node *node_name = &db->hash_table_by_name[index_name];
+	hash_node *node_handle = &db->hash_table_by_handle[index_handle];
+
+	insert_entry_generic(node_handle, entry);
+	insert_entry_generic(node_name, entry);
+}
+
+
+fs_entry *find_entry(fs_handles_db *db, const char *name, uint32_t parent, uint32_t storage_id)
+{
+
+    uint32_t index = hash_function_name(name) % HASH_TABLE_SIZE;
+    hash_node *node = &db->hash_table_by_name[index];
+
+	for (uint32_t i = 0; i < node->size; i++) {
+        if (strcmp(node->entries[i]->name, name) == 0 &&
+            node->entries[i]->parent == parent &&
+            node->entries[i]->storage_id == storage_id) {
+            return node->entries[i];
+        }
+    }
+
+    return NULL;
+}
+
 fs_handles_db * init_fs_db(void * mtp_ctx)
 {
 	fs_handles_db * db;
@@ -244,135 +352,129 @@ fs_handles_db * init_fs_db(void * mtp_ctx)
 
 void deinit_fs_db(fs_handles_db * fsh)
 {
-	fs_entry * next_entry;
+    if (fsh)
+    {
+        for (int i = 0; i < HASH_TABLE_SIZE; i++)
+        {
 
-	PRINT_DEBUG("deinit_fs_db called");
+            hash_node *node = &fsh->hash_table_by_name[i];
+            if (node->entries)
+            {
+                for (uint32_t j = 0; j < node->size; j++)
+                {
+                    if (node->entries[j]->watch_descriptor != -1)
+                    {
+                        inotify_handler_rmwatch(fsh->mtp_ctx, node->entries[j]->watch_descriptor);
+                    }
 
-	if( fsh )
-	{
-		while( fsh->entry_list )
-		{
-			next_entry = fsh->entry_list->next;
+                }
+                free(node->entries);
+            }
+        }
 
-			if( fsh->entry_list->watch_descriptor != -1 )
-			{
-				// Disable the inotify watch point
-				inotify_handler_rmwatch( fsh->mtp_ctx, fsh->entry_list->watch_descriptor );
-				fsh->entry_list->watch_descriptor = -1;
-			}
+        // Free pool memory
+        fs_entry_pool_block *current = fsh->pool_head;
+        while (current) {
+            fs_entry_pool_block *next = current->next;
+            for (int i = 0; i < POOL_BLOCK_SIZE; i++) {
+                if (current->entries[i].name) {
+                    free(current->entries[i].name);
+                }
+            }
+            free(current);
+            current = next;
+        }
 
-			if( fsh->entry_list->name )
-				free( fsh->entry_list->name );
-
-			free( fsh->entry_list );
-
-			fsh->entry_list = next_entry;
-		}
-
-		free(fsh);
-	}
-
-	return;
+        free(fsh);
+    }
 }
 
 fs_entry * search_entry(fs_handles_db * db, filefoundinfo *fileinfo, uint32_t parent, uint32_t storage_id)
 {
-	fs_entry * entry_list;
 
 	if( !db )
 		return NULL;
-
-	entry_list = db->entry_list;
-
-	while( entry_list )
-	{
-		if( !( entry_list->flags & ENTRY_IS_DELETED ) && ( entry_list->parent == parent ) && ( entry_list->storage_id == storage_id ) && entry_list->name )
-		{
-			if( !strcmp(entry_list->name,fileinfo->filename) )
-			{
-				return entry_list;
-			}
-		}
-
-		entry_list = entry_list->next;
-	}
-
-	return NULL;
+	return find_entry(db, fileinfo->filename, parent, storage_id);
 }
 
 fs_entry * alloc_entry(fs_handles_db * db, filefoundinfo *fileinfo, uint32_t parent, uint32_t storage_id)
 {
-	fs_entry * entry;
+    fs_entry * entry;
 
-	entry = malloc(sizeof(fs_entry));
-	if( entry )
-	{
-		memset(entry,0,sizeof(fs_entry));
+    if (db->pool_free_count == 0) {
+        if (!allocate_pool_block(db)) {
+            return NULL;
+        }
+    }
 
-		entry->handle = db->next_handle;
-		db->next_handle++;
-		entry->parent = parent;
-		entry->storage_id = storage_id;
+    entry = &db->pool_head->entries[--db->pool_free_count];
+    memset(entry, 0, sizeof(fs_entry));
 
-		entry->name = malloc(strlen(fileinfo->filename)+1);
-		if( entry->name )
-		{
-			strcpy(entry->name,fileinfo->filename);
-		}
+    entry->handle = db->next_handle;
+    db->next_handle++;
+    entry->parent = parent;
+    entry->storage_id = storage_id;
 
-		entry->size = fileinfo->size;
+    entry->name = strdup(fileinfo->filename);
 
-		entry->watch_descriptor = -1;
+    entry->size = fileinfo->size;
 
-		if( fileinfo->isdirectory )
-			entry->flags = ENTRY_IS_DIR;
-		else
-			entry->flags = 0x00000000;
+    entry->watch_descriptor = -1;
 
-		entry->next = db->entry_list;
+    if (fileinfo->isdirectory)
+        entry->flags = ENTRY_IS_DIR;
+    else
+        entry->flags = 0x00000000;
 
-		db->entry_list = entry;
-	}
+    // Add entry to hash table
+    insert_entry(db, entry);
 
-	return entry;
+    // Maintain backward compatibility with list linkage
+    entry->next = db->entry_list;
+    db->entry_list = entry;
+
+    return entry;
 }
 
 fs_entry * alloc_root_entry(fs_handles_db * db, uint32_t storage_id)
 {
-	fs_entry * entry;
+    fs_entry * entry;
 
-	if( !db )
-		return NULL;
+    if (!db)
+        return NULL;
 
-	entry = malloc(sizeof(fs_entry));
-	if( entry )
-	{
-		memset(entry,0,sizeof(fs_entry));
+    if (db->pool_free_count == 0) {
+        if (!allocate_pool_block(db)) {
+            return NULL;
+        }
+    }
 
-		entry->handle = 0x00000000;
-		entry->parent = 0x00000000;
-		entry->storage_id = storage_id;
+    entry = &db->pool_head->entries[--db->pool_free_count];
+    memset(entry, 0, sizeof(fs_entry));
 
-		entry->name = malloc(strlen("/")+1);
-		if( entry->name )
-		{
-			strcpy(entry->name,"/");
-		}
+    entry->handle = 0x00000000;
+    entry->parent = 0x00000000;
+    entry->storage_id = storage_id;
 
-		entry->size = 1;
+    entry->name = strdup("/");
+    if (!entry->name)
+    {
+        free(entry);
+        return NULL;
+    }
 
-		entry->watch_descriptor = -1;
+    entry->size = 1;
+    entry->watch_descriptor = -1;
+    entry->flags = ENTRY_IS_DIR;
 
-		entry->flags = ENTRY_IS_DIR;
+    // Add root entry to hash table
+    insert_entry(db, entry);
 
-		entry->next = db->entry_list;
-
-		db->entry_list = entry;
-	}
-
-	return entry;
+    // Maintain backward compatibility with list linkage
+    entry->next = db->entry_list;
+    db->entry_list = entry;
+    return entry;
 }
-
 
 fs_entry * add_entry(fs_handles_db * db, filefoundinfo *fileinfo, uint32_t parent, uint32_t storage_id)
 {
@@ -499,24 +601,21 @@ fs_entry * get_next_child_handle(fs_handles_db * db)
 
 fs_entry * get_entry_by_handle(fs_handles_db * db, uint32_t handle)
 {
-	fs_entry * entry_list;
+    uint32_t index = hash_function_handle(handle) % HASH_TABLE_SIZE;
+    hash_node *node = &db->hash_table_by_handle[index];
 
-	entry_list = db->entry_list;
+	for (uint32_t i = 0; i < node->size; i++) {
 
-	while( entry_list )
-	{
-		if( !( entry_list->flags & ENTRY_IS_DELETED ) && ( entry_list->handle == handle ) )
+		if( !(  node->entries[i]->flags & ENTRY_IS_DELETED ) && (  node->entries[i]->handle == handle ) )
 		{
-			if( mtp_get_storage_root(db->mtp_ctx, entry_list->storage_id) )
+			if( mtp_get_storage_root(db->mtp_ctx,  node->entries[i]->storage_id) )
 			{
-				return entry_list;
+				return  node->entries[i];
 			}
 		}
-
-		entry_list = entry_list->next;
 	}
 
-	return 0;
+	return NULL;
 }
 
 fs_entry * get_entry_by_handle_and_storageid(fs_handles_db * db, uint32_t handle, uint32_t storage_id)
