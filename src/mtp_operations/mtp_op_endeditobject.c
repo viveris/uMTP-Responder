@@ -52,6 +52,8 @@ uint32_t mtp_op_EndEditObject(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, 
 
 	check_handle_access( ctx, NULL, handle, 1, &response_code);
 
+	entry_close(ctx->fs_db, get_entry_by_handle(ctx->fs_db, handle));
+
 	pthread_mutex_unlock( &ctx->inotify_mutex );
 
 	return response_code;
