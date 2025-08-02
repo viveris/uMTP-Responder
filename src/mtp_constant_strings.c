@@ -31,8 +31,6 @@
 #include "mtp.h"
 #include "mtp_constant.h"
 
-const char DevInfos_MTP_Extensions[] = "microsoft.com: 1.0; android.com: 1.0;";
-
 typedef struct _opcodestring
 {
 	const char * str;
