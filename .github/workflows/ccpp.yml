@@ -12,6 +12,7 @@ jobs:
         make
         make clean
         make DEBUG=1
+        sudo apt-get update
         sudo apt-get install libsystemd-dev
         make clean
         make SYSTEMD=1
