@@ -47,6 +47,7 @@ mtp_size send_file_data( mtp_ctx * ctx, fs_entry * entry,mtp_offset offset, mtp_
 	mtp_size j;
 	int ofs;
 	mtp_size blocksize;
+	mtp_size ContainerLength;
 	int file,bytes_read;
 	mtp_offset buf_index;
 	int io_buffer_index;
@@ -78,7 +79,12 @@ mtp_size send_file_data( mtp_ctx * ctx, fs_entry * entry,mtp_offset offset, mtp_
 			actualsize = maxsize;
 	}
 
-	poke32(ctx->wrbuffer, 0, ctx->usb_wr_buffer_max_size, sizeof(MTP_PACKET_HEADER) + actualsize);
+	if( (sizeof(MTP_PACKET_HEADER) + actualsize) >= (mtp_size)(0x100000000) )
+		ContainerLength = 0xFFFFFFFF;
+	else
+		ContainerLength = sizeof(MTP_PACKET_HEADER) + actualsize;
+
+	poke32(ctx->wrbuffer, 0, ctx->usb_wr_buffer_max_size, ContainerLength);
 
 	ofs = sizeof(MTP_PACKET_HEADER);
 
