@@ -208,7 +208,11 @@ int build_objectinfo_dataset(mtp_ctx * ctx, void * buffer, int maxsize,fs_entry 
 
 	entry->size = entrystat.st_size;
 
-	ofs = poke32(buffer, ofs, maxsize, entry->size);                                             // Object Compressed Size
+	if( entry->size >= (mtp_size)(0x100000000) )
+		ofs = poke32(buffer, ofs, maxsize, 0xFFFFFFFF);                                          // Object Compressed Size
+	else
+		ofs = poke32(buffer, ofs, maxsize, entry->size);                                         // Object Compressed Size
+
 	ofs = poke16(buffer, ofs, maxsize, 0x0000);                                                  // Thumb Format (NR)
 	ofs = poke32(buffer, ofs, maxsize, 0x00000000);                                              // Thumb Compressed Size (NR)
 	ofs = poke32(buffer, ofs, maxsize, 0x00000000);                                              // Thumb Pix Width (NR)
