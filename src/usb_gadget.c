@@ -394,7 +394,7 @@ init_eps_error:
 
 static void handle_setup_request(usb_gadget * ctx, struct usb_ctrlrequest* setup)
 {
-	int status,cnt;
+	int status;
 	uint8_t buffer[512];
 	mtp_device_status dstatus;
 
@@ -505,43 +505,19 @@ static void handle_setup_request(usb_gadget * ctx, struct usb_ctrlrequest* setup
 		case MTP_REQ_CANCEL:
 			PRINT_DEBUG("MTP_REQ_CANCEL !");
 
-			mtp_context->cancel_req = 1;
-
-			cnt = 0;
-			while( mtp_context->cancel_req )
+			if( !pthread_mutex_lock( &mtp_context->cancel_mutex ) )
 			{
-				// Wait the end of the current transfer
-				if( cnt > 250 )
+				if(mtp_context->transferring_file_data)
 				{
-					// Timeout... Unblock pending usb read/write.
-					PRINT_DEBUG("MTP_REQ_CANCEL : Forcing read/write exit...");
+					mtp_context->cancel_req = 2;
 					pthread_kill(ctx->thread, SIGUSR1);
-					usleep(500);
-					break;
 				}
 				else
-					usleep(1000);
+					mtp_context->cancel_req = 0;
 
-				cnt++;
+				pthread_mutex_unlock( &mtp_context->cancel_mutex );
 			}
 
-			while( mtp_context->cancel_req )
-			{
-				// Still Waiting the end of the current transfer...
-				if( cnt > 2500 ) // wait 2.5s max for cancel_req from the io_thread
-				{
-					// Still blocked... Killing the link
-					PRINT_DEBUG("MTP_REQ_CANCEL : Stalled ... Killing the link...");
-					usleep(500);
-
-					ctx->stop = 1;
-					break;
-				}
-				else
-					usleep(1000);
-
-				cnt++;
-			}
 
 			PRINT_DEBUG("MTP_REQ_CANCEL done !");
 
@@ -558,10 +534,32 @@ static void handle_setup_request(usb_gadget * ctx, struct usb_ctrlrequest* setup
 		break;
 
 		case MTP_REQ_GET_DEVICE_STATUS:
-			PRINT_DEBUG("MTP_REQ_GET_DEVICE_STATUS !");
 
 			dstatus.wLength = sizeof(mtp_device_status);
-			dstatus.wCode = MTP_RESPONSE_OK;
+
+			if( mtp_context->cancel_req != 2 )
+			{
+				PRINT_DEBUG("MTP_REQ_GET_DEVICE_STATUS ! : MTP_RESPONSE_OK");
+
+				dstatus.wCode = MTP_RESPONSE_OK;
+				if(!mtp_context->transferring_file_data)
+					mtp_context->cancel_req = 0;
+
+			}
+			else
+			{
+				PRINT_DEBUG("MTP_REQ_GET_DEVICE_STATUS ! : MTP_RESPONSE_DEVICE_BUSY");
+
+				if( !pthread_mutex_lock( &mtp_context->cancel_mutex ) )
+				{
+					if ( mtp_context->cancel_req == 2 )
+						mtp_context->cancel_req = 1;
+
+					pthread_mutex_unlock( &mtp_context->cancel_mutex );
+				}
+
+				dstatus.wCode = MTP_RESPONSE_DEVICE_BUSY;
+			}
 
 			if ( write (ctx->usb_device, (void*)&dstatus, sizeof(mtp_device_status) ) < 0 )
 			{
@@ -570,6 +568,10 @@ static void handle_setup_request(usb_gadget * ctx, struct usb_ctrlrequest* setup
 			}
 
 			return;
+		break;
+
+		default:
+			PRINT_DEBUG("Unsupported setup request : bRequest = 0x%X",setup->bRequest);
 		break;
 	}
 
@@ -678,7 +680,18 @@ int handle_ep0(usb_gadget * ctx)
 					if(mtp_context->transferring_file_data)
 					{
 						// Cancel the ongoing file transfer
-						mtp_context->cancel_req = 1;
+						if( !pthread_mutex_lock( &mtp_context->cancel_mutex ) )
+						{
+							if(mtp_context->transferring_file_data)
+							{
+								mtp_context->cancel_req = 2;
+								pthread_kill(ctx->thread, SIGUSR1);
+							}
+							else
+								mtp_context->cancel_req = 0;
+
+							pthread_mutex_unlock( &mtp_context->cancel_mutex );
+						}
 
 						cnt = 0;
 						while( mtp_context->cancel_req )
@@ -831,6 +844,9 @@ int handle_ffs_ep0(usb_gadget * ctx)
 				break;
 			case FUNCTIONFS_RESUME:
 				PRINT_DEBUG("EP0 FFS RESUME");
+				break;
+			default:
+				PRINT_DEBUG("Unsupported FunctionFS event : event.type = 0x%X",event.type);
 				break;
 			}
 		}

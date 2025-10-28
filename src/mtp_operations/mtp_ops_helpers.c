@@ -159,7 +159,12 @@ mtp_size send_file_data( mtp_ctx * ctx, fs_entry * entry,mtp_offset offset, mtp_
 
 			PRINT_DEBUG("---> 0x%"SIZEHEX" (0x%X)",j,ofs);
 
-			write_usb(ctx->usb_ctx, EP_DESCRIPTOR_IN, usb_buffer_ptr, ofs);
+			if( !ctx->cancel_req )
+			{
+
+				write_usb(ctx->usb_ctx, EP_DESCRIPTOR_IN, usb_buffer_ptr, ofs);
+
+			}
 
 			ofs = 0;
 
@@ -169,23 +174,27 @@ mtp_size send_file_data( mtp_ctx * ctx, fs_entry * entry,mtp_offset offset, mtp_
 
 		entry_close( ctx->fs_db, entry );
 
-		if( ctx->cancel_req )
-		{
-			PRINT_DEBUG("send_file_data : Cancelled ! Aborted...");
+		if( !pthread_mutex_lock( &ctx->cancel_mutex ) )
+		{	
+			if( ctx->cancel_req )
+			{
+				PRINT_DEBUG("send_file_data : Cancelled ! Aborted...");
 
-			// Force a ZLP
-			check_and_send_USB_ZLP(ctx , ctx->max_packet_size );
+				// Force a ZLP
+				//check_and_send_USB_ZLP(ctx , ctx->max_packet_size );
 
-			actualsize = -2;
-			ctx->cancel_req = 0;
+				actualsize = -2;
+				ctx->cancel_req = 0;
+			}
+			else
+			{
+				PRINT_DEBUG("send_file_data : Full transfer done !");
+
+				check_and_send_USB_ZLP(ctx , sizeof(MTP_PACKET_HEADER) + actualsize );
+			}
+
+			pthread_mutex_unlock( &ctx->cancel_mutex );
 		}
-		else
-		{
-			PRINT_DEBUG("send_file_data : Full transfer done !");
-
-			check_and_send_USB_ZLP(ctx , sizeof(MTP_PACKET_HEADER) + actualsize );
-		}
-
 	}
 	else
 		actualsize = -1;

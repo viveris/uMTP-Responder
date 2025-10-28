@@ -146,6 +146,10 @@ typedef struct mtp_ctx_
 
 	volatile int cancel_req;
 	volatile int transferring_file_data;
+
+	pthread_mutexattr_t cancel_mutex_attr;
+	pthread_mutex_t cancel_mutex;
+
 }mtp_ctx;
 
 mtp_ctx * mtp_init_responder();

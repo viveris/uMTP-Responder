@@ -85,6 +85,8 @@ mtp_ctx * mtp_init_responder()
 		ctx->default_uid = -1;
 		ctx->default_gid = -1;
 
+		ctx->cancel_req = 0;
+
 		ctx->SetObjectPropValue_Handle = 0xFFFFFFFF;
 
 		if( pthread_mutexattr_init( &ctx->inotify_mutex_attr ) )
@@ -98,6 +100,16 @@ mtp_ctx * mtp_init_responder()
 
 		inotify_handler_init( ctx );
 		msgqueue_handler_init( ctx );
+
+		// Cancel request mutex
+		if( pthread_mutexattr_init( &ctx->cancel_mutex_attr ) )
+			goto init_error;
+
+		if( pthread_mutexattr_settype( &ctx->cancel_mutex_attr, PTHREAD_MUTEX_NORMAL ) )
+			goto init_error;
+
+		if( pthread_mutex_init (&ctx->cancel_mutex, &ctx->cancel_mutex_attr ) )
+			goto init_error;
 
 		PRINT_DEBUG("init_mtp_responder : Ok !");
 
