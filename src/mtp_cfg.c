@@ -617,6 +617,7 @@ kw_list kwlist[] =
 	{"serial",                 get_str_param,   SERIAL_STRING_CMD},
 	{"firmware_version",       get_str_param,   VERSION_STRING_CMD},
 	{"interface",              get_str_param,   INTERFACE_STRING_CMD},
+	{"mtp_extensions",         get_str_param,   MTP_EXTENSIONS_STRING_CMD},
 
 	{"wait",                   get_hex_param,   WAIT_CONNECTION},
 	{"loop_on_disconnect",     get_hex_param,   LOOP_ON_DISCONNECT},
