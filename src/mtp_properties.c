@@ -468,6 +468,8 @@ int setObjectPropValue(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, uint32_
 		{
 			case MTP_PROPERTY_OBJECT_FILE_NAME:
 				entry = get_entry_by_handle(ctx->fs_db, handle);
+				if(!entry)
+					return MTP_RESPONSE_GENERAL_ERROR;
 
 				if( check_handle_access( ctx, entry, 0x00000000, 1, &response_code) )
 					return response_code;
