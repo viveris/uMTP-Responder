@@ -671,6 +671,9 @@ int entry_read(fs_handles_db * db, fs_entry * entry, unsigned char * buffer_out,
 
 void entry_close(fs_handles_db * db, fs_entry * entry)
 {
+	if(!entry || !db)
+		return;
+
 	if( entry->file_descriptor != -1 )
 	{
 		if (((mtp_ctx *)db->mtp_ctx)->sync_when_close)
