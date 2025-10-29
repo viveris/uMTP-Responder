@@ -52,6 +52,12 @@ int expand_hash_node(hash_node *node)
 {
 	uint32_t new_capacity = node->capacity * NODE_GROWTH_FACTOR;
 
+	// Integer overflow allocation size check.
+	if( node->capacity >= (0x80000000 / sizeof(fs_entry*) ) )
+		return 0;
+
+	new_capacity = node->capacity * NODE_GROWTH_FACTOR;
+
 	fs_entry **new_entries = realloc(node->entries, new_capacity * sizeof(fs_entry*));
 
 	if (!new_entries)
