@@ -315,6 +315,14 @@ fs_entry * alloc_entry(fs_handles_db * db, filefoundinfo *fileinfo, uint32_t par
 	entry->storage_id = storage_id;
 
 	entry->name = strdup(fileinfo->filename);
+	if( !entry->name )
+	{
+		memset(entry, 0, sizeof(fs_entry));
+		db->pool_free_count++;
+		db->next_handle--;
+
+		return NULL;
+	}
 
 	entry->size = fileinfo->size;
 
@@ -360,7 +368,6 @@ fs_entry * alloc_root_entry(fs_handles_db * db, uint32_t storage_id)
 	entry->name = strdup("/");
 	if (!entry->name)
 	{
-		free(entry);
 		return NULL;
 	}
 
