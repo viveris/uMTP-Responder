@@ -620,8 +620,11 @@ char * build_full_path(fs_handles_db * db,char * root_path,fs_entry * entry)
 			memcpy(&full_path[0],root_path,strlen(root_path));
 		}
 
+#ifdef DEBUG
 		if(entry->name)
 			PRINT_DEBUG("build_full_path : %s -> %s",entry->name, full_path);
+#endif
+
 	}
 
 	return full_path;
@@ -644,8 +647,10 @@ int entry_open(fs_handles_db * db, fs_entry * entry, int flags, mode_t mode)
 
 		restore_giduid(db->mtp_ctx);
 
+#ifdef DEBUG
 		if( entry->file_descriptor == -1 )
 			PRINT_DEBUG("entry_open : Can't open %s !",full_path);
+#endif
 
 		free(full_path);
 	}

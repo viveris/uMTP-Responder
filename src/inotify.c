@@ -132,8 +132,10 @@ static void* inotify_thread(void* arg)
 
 		if ( length >= 0 )
 		{
+#ifdef DEBUG
 			if(!length)
 				PRINT_DEBUG( "inotify_thread : Null sized packet ?");
+#endif
 
 			i = 0;
 			while ( i < length && i < INOTIFY_RD_BUF_SIZE )
