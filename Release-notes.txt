@@ -10,6 +10,103 @@
 * Release notes
 =================================================
 
+Noteworthy changes in release v1.8.1 (2025-Oct-29)
+=================================================
+
+* Command line argument handling reworked
+
+    Make it possible to specify multiple -cmd: parameters at once, and
+    to specify them when starting umtprd, e.g. instead of doing
+
+        umtrpd &
+        umtprd '-cmd:addstorage:/home Home rw'
+        umtprd '-cmd:addstorage:/data Data ro'
+
+    you can now do:
+
+        umtprd '-cmd:addstorage:/home Home rw' '-cmd:addstorage:/data Data ro'
+
+    Also make it so the order of parameters doesn't matter, i.e. specifying
+    "-conf" before "-cmd:" will work as one might expect.
+
+* Switch to POSIX message queue
+
+    Simplify the code by switching to a POSIX message queue.
+
+* Fix default permissions and umask handling
+
+    On linux files are usually created with permissions set to 666+umask,
+    and folders with 777+umask.
+
+    The previous codebase used to create files with 600 and folders with 700
+    *unless* a umask override was set in the configuration, then both
+    files and folders would end up with 777+umask.
+
+    This new version addresses this by setting the umask override on process
+    level; Creating files with permissions set to 666 and folders set to
+    777 - with either the overridden or the system default umask applied.
+
+    Please see in umtprd.conf for the umask configuration details.
+
+* Default USB entries path changed.
+
+    Default USB entries path changed from "/dev/ffs-umtp/epx" to "/dev/ffs-mtp/epx"
+
+    The built-in default config used /dev/ffs-umtp/ as the path to the endpoints,
+    whereas both the sample umtprd.conf file and the umtprd-ffs.sh file used /dev/ffs-mtp/.
+    Change the built-in default config to also use /dev/ffs-mtp, so that
+    the startup script can be used out of the box without having to put
+    the config file in /etc.
+
+* Cancel wait time between threads increased to 2.5s
+
+    Fix some cancellation issues on some machines/targets
+
+* Fix dangling symlinks handling
+
+    Dangling symlinks don't stop the file listing anymore.
+
+* New configuration option : "sync_when_close"
+
+    Set this option to 0x1 to request all file data to be flushed from the RAM buffer to the
+    internal storage after transfer is completed, this prevents data loss in the case where
+    user un-plugged a non-battery-powered device too soon when there are still buffered data
+    stayed in the RAM
+
+* MTP_REQ_CANCEL fix - Fix video playback on Windows 10
+
+    Blocking read removed.
+
+    Doing a blocking read (even with count=0) when handling a cancel request
+    from the host ends up blocking both the read in the request handler as
+    well as a write in the thread that's being cancelled, blocking both threads
+    indefinitely.
+
+* USB : Fix max packet size handing
+
+    The wMaxPacketSize is defined by the USB spec: FS/HS: 512 bytes, SS: 1024 bytes
+
+    Since the SS require FS/HS descriptors we can't just use a single value
+    here. Drop the config value usage and set it according the spec instead.
+
+* USB : Fix SuperSpeed companion params
+
+    The SuperSpeed companion descriptor was not set to zero which can lead
+    into bogus params send to the host. Also set bMaxBurst to zero to be
+    compatible with more USB3.0 controller HW out-of-the box.
+
+* Fix >=4GiB files transfer support on Windows systems.
+
+* Output logs optimized/reduced.
+
+* Optimization : fs_handles_db enhanced with hash-table for faster file lookup.
+
+* Optimization : sendobject: avoid multiple open-write-close operations.
+
+* Configuration file : option to set the MTP_Extensions string added.
+
+* Cancellation logic changed/fixed.
+
 Noteworthy changes in release v1.6.8 (2024-Jul-8)
 =================================================
 
