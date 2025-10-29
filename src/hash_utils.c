@@ -50,7 +50,7 @@ int init_hash_node(hash_node *node)
 
 int expand_hash_node(hash_node *node)
 {
-	uint32_t new_capacity = node->capacity * NODE_GROWTH_FACTOR;
+	uint32_t new_capacity;
 
 	// Integer overflow allocation size check.
 	if( node->capacity >= (0x80000000 / sizeof(fs_entry*) ) )
