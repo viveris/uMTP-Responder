@@ -101,7 +101,9 @@ static void* msgqueue_thread( void* arg )
 		}
 		else if (numreceived <= MAX_MSG_SIZE)
 		{
-			message[numreceived] = 0; // ensure zero termination
+			message[numreceived] = 0;
+			message[sizeof(message) - 1] = 0; // ensure zero termination
+
 			PRINT_DEBUG("%s : New message received : %s", __func__, message);
 
 			if (!strncmp(message,"addstorage:", 11))
