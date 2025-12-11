@@ -20,7 +20,7 @@
 /**
  * @file   mtp_op_opensession.c
  * @brief  open session operation.
- * @author Jean-François DEL NERO <Jean-Francois.DELNERO@viveris.fr>
+ * @author Jean-Franï¿½ois DEL NERO <Jean-Francois.DELNERO@viveris.fr>
  */
 
 #include "buildconf.h"
@@ -50,7 +50,7 @@ uint32_t mtp_op_OpenSession(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, in
 	if(ctx->fs_db)
 	{
 		ret_params[0] = ctx->session_id;
-		*ret_params_size = 1;
+		*ret_params_size = sizeof(uint32_t);
 		return MTP_RESPONSE_SESSION_ALREADY_OPEN;
 	}
 
