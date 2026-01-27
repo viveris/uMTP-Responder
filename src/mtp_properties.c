@@ -20,7 +20,7 @@
 /**
  * @file   mtp_properties.c
  * @brief  MTP properties datasets helpers
- * @author Jean-François DEL NERO <Jean-Francois.DELNERO@viveris.fr>
+ * @author Jean-Franï¿½ois DEL NERO <Jean-Francois.DELNERO@viveris.fr>
  */
 
 #include "buildconf.h"
@@ -490,6 +490,9 @@ int setObjectPropValue(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, uint32_
 
 				old_filename = entry->name;
 
+				// Remove the entry from hash tables before changing the name
+				remove_entry_from_hashtable(ctx->fs_db, entry);
+
 				entry->name = malloc(strlen(tmpstr)+1);
 				if( entry->name )
 				{
@@ -511,7 +514,6 @@ int setObjectPropValue(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, uint32_
 
 						entry->name = old_filename;
 					}
-
 					free(path);
 					return MTP_RESPONSE_GENERAL_ERROR;
 				}
@@ -535,11 +537,13 @@ int setObjectPropValue(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, uint32_
 
 						entry->name = old_filename;
 					}
-
 					free(path);
 					free(path2);
 					return MTP_RESPONSE_GENERAL_ERROR;
 				}
+
+				// Add the entry back to hash tables with new name
+				insert_entry(ctx->fs_db, entry);
 
 				free(path);
 				free(path2);
