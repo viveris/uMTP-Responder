@@ -56,6 +56,8 @@
 // minimum message size for POSIX queues on Linux
 #define MAX_MSG_SIZE 128
 
+#define MQ_PATH "/umtprd"
+
 static struct mq_attr qattrs = {
   0,  // flags
   20, // max number of messages on the queue
@@ -255,7 +257,7 @@ mqd_t get_message_queue(int create) {
 		flags |= O_CREAT;
 	}
 
-	mqd_t qid = mq_open("/umtprd", flags, 0600, &qattrs);
+	mqd_t qid = mq_open(MQ_PATH, flags, 0600, &qattrs);
 	if (qid < 0)
 	{
 		PRINT_ERROR("%s : mq_open error %d (%s)", __func__, errno, strerror(errno));
@@ -323,6 +325,7 @@ int msgqueue_handler_deinit( mtp_ctx * ctx )
 			pthread_kill( ctx->msgqueue_thread, SIGUSR1);
 			pthread_join( ctx->msgqueue_thread, &ret);
 			mq_close(ctx->msgqueue_id);
+			mq_unlink(MQ_PATH);
 		}
 
 		return 1;
