@@ -624,7 +624,17 @@ int handle_ep0(usb_gadget * ctx)
 		if(ctx->wait_connection && ret == 0 )
 			continue;
 
-		if( ret <= 0 )
+		if( ret < 0 )
+		{
+			if( shutdown_requested )
+			{
+				ctx->stop = 1;
+				goto end;
+			}
+			continue;
+		}
+
+		if( ret == 0 )
 			return ret;
 
 		timeout.tv_sec = 0;
@@ -759,7 +769,17 @@ int handle_ffs_ep0(usb_gadget * ctx)
 		if(ctx->wait_connection && ret == 0 )
 			continue;
 
-		if( ret <= 0 )
+		if( ret < 0 )
+		{
+			if( shutdown_requested )
+			{
+				ctx->stop = 1;
+				goto end;
+			}
+			continue;
+		}
+
+		if( ret == 0 )
 			return ret;
 
 		timeout.tv_sec = 0;
