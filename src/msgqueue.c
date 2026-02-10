@@ -99,7 +99,10 @@ static void* msgqueue_thread( void* arg )
 		ssize_t numreceived = mq_receive(ctx->msgqueue_id, message, MAX_MSG_SIZE + 1, NULL);
 		if (numreceived < 0)
 		{
+			if (shutdown_requested)
+				break;
 			PRINT_ERROR("error receiving: %s", strerror(errno));
+			continue;
 		}
 		else if (numreceived <= MAX_MSG_SIZE)
 		{
@@ -236,7 +239,7 @@ static void* msgqueue_thread( void* arg )
 			PRINT_DEBUG("received message of size %zd", numreceived);
 		}
 
-	} while(1);
+	} while(!shutdown_requested);
 
 	PRINT_DEBUG("%s : Leaving thread", __func__);
 

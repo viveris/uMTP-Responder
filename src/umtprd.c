@@ -32,6 +32,7 @@
 #include <string.h>
 #include <sys/prctl.h>
 #include <sys/file.h>
+#include <signal.h>
 
 #ifdef SYSTEMD_NOTIFY
 #include <systemd/sd-login.h>
@@ -50,6 +51,14 @@
 #include "default_cfg.h"
 
 mtp_ctx * mtp_context;
+
+volatile sig_atomic_t shutdown_requested = 0;
+
+static void shutdown_signal_handler(int sig)
+{
+	PRINT_MSG("Received shutdown signal %d, initiating graceful shutdown", sig);
+	shutdown_requested = 1;
+}
 
 void* io_thread(void* arg)
 {
@@ -126,7 +135,7 @@ static int main_thread(const char *conffile)
 			deinit_fs_db(mtp_context->fs_db);
 			mtp_context->fs_db = 0;
 		}
-	}while(loop_continue);
+	}while(loop_continue && !shutdown_requested);
 
 	mtp_deinit_responder(mtp_context);
 
@@ -218,6 +227,14 @@ int main(int argc, char *argv[])
 
 	if (!cmd_sent && !already_running)
 	{
+		struct sigaction sa;
+		memset(&sa, 0, sizeof(sa));
+		sa.sa_handler = shutdown_signal_handler;
+		sigemptyset(&sa.sa_mask);
+		sa.sa_flags = 0;
+		sigaction(SIGTERM, &sa, NULL);
+		sigaction(SIGINT, &sa, NULL);
+
 		PRINT_DEBUG("starting main thread");
 		retcode = main_thread(conffile);
 		if( retcode )

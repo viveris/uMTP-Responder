@@ -26,6 +26,10 @@
 #ifndef _INC_MTP_H_
 #define _INC_MTP_H_
 
+#include <signal.h>
+
+extern volatile sig_atomic_t shutdown_requested;
+
 #define MAX_STORAGE_NB 16
 #define MAX_CFG_STRING_SIZE 512
 

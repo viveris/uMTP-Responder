@@ -322,6 +322,8 @@ static void* inotify_thread(void* arg)
 		}
 		else
 		{
+			if (shutdown_requested)
+				break;
 			PRINT_DEBUG( "inotify_thread : read error %d",length );
 			return NULL;
 		}
