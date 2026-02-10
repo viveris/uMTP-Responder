@@ -246,8 +246,16 @@ error:
 	return NULL;
 }
 
-mqd_t get_message_queue() {
-	mqd_t qid = mq_open("/umtprd", O_RDWR | O_CREAT, 0600, &qattrs);
+mqd_t get_message_queue(int create) {
+
+	int flags = O_RDWR;
+
+	if (create)
+	{
+		flags |= O_CREAT;
+	}
+
+	mqd_t qid = mq_open("/umtprd", flags, 0600, &qattrs);
 	if (qid < 0)
 	{
 		PRINT_ERROR("%s : mq_open error %d (%s)", __func__, errno, strerror(errno));
@@ -263,7 +271,7 @@ int send_message_queue(char * message )
 {
 	mqd_t msgqueue_id;
 
-	msgqueue_id = get_message_queue();
+	msgqueue_id = get_message_queue(0);
 	if (msgqueue_id != -1)
 	{
 		if (mq_send(msgqueue_id, message, strlen(message) + 1, 0) == 0 )
@@ -285,7 +293,7 @@ int msgqueue_handler_init(mtp_ctx * ctx )
 
 	if( ctx )
 	{
-		ctx->msgqueue_id = get_message_queue();
+		ctx->msgqueue_id = get_message_queue(1);
 		if(ctx->msgqueue_id != -1)
 		{
 			ret = pthread_create(&ctx->msgqueue_thread, NULL, msgqueue_thread, ctx);
