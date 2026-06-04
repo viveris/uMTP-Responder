@@ -30,6 +30,8 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <limits.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <sys/stat.h>
@@ -721,7 +723,6 @@ void mtp_set_usb_handle(mtp_ctx * ctx, void * handle, uint32_t max_packet_size)
 uint32_t mtp_add_storage(mtp_ctx * ctx, char * path, char * description, int uid, int gid, uint32_t flags)
 {
 	int i;
-	int root_path_len;
 	int description_len;
 
 	PRINT_DEBUG("mtp_add_storage : %s", path );
@@ -734,19 +735,15 @@ uint32_t mtp_add_storage(mtp_ctx * ctx, char * path, char * description, int uid
 	{
 		if( !ctx->storages[i].root_path )
 		{
-			root_path_len = strlen(path);
 			description_len = strlen(description);
 
-			ctx->storages[i].root_path = malloc(root_path_len + 1);
+			ctx->storages[i].root_path = realpath( path, NULL);
 			ctx->storages[i].description = malloc(description_len + 1);
 
 			if(ctx->storages[i].root_path && ctx->storages[i].description)
 			{
 				ctx->storages[i].uid = uid;
 				ctx->storages[i].gid = gid;
-
-				strncpy( ctx->storages[i].root_path, path, root_path_len + 1);
-				ctx->storages[i].root_path[root_path_len] = 0;
 
 				strncpy( ctx->storages[i].description, description, description_len + 1);
 				ctx->storages[i].description[description_len] = 0;

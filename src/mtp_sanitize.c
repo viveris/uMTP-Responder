@@ -25,6 +25,8 @@
 
 #include "buildconf.h"
 
+#include <limits.h>
+#include <stdlib.h>
 #include <string.h>
 
 /**
@@ -224,6 +226,30 @@ int sanitize_name(char *str, int max_len)
 	/* ---- Step 5: reject empty result ------------------------------- */
 	if (wi == 0)
 		return -1;
+
+	return 1;
+}
+
+int check_realpath(char *rootpath, char *pathtocheck)
+{
+	int i;
+	char * realp;
+
+	realp = realpath( pathtocheck, NULL);
+	if(!realp)
+		return 0;
+
+	i = 0;
+	while( rootpath[i] )
+	{
+		if( rootpath[i] != realp[i] )
+		{
+			free(realp);
+			return 0;
+		}
+	}
+
+	free(realp);
 
 	return 1;
 }

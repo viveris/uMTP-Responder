@@ -32,3 +32,5 @@
  */
  
 int sanitize_name(char *str, int max_len);
+
+int check_realpath(char *rootpath, char *pathtocheck);
