@@ -199,6 +199,7 @@ int parse_incoming_dataset(mtp_ctx * ctx,void * datain,int size,uint32_t * newha
 	uint16_t unicode_str[256+1];
 	char * parent_folder;
 	char * tmp_path;
+	int tmp_path_len;
 	uint32_t storage_flags;
 	int i,ret_code,ret;
 	fs_entry * entry;
@@ -271,19 +272,20 @@ int parse_incoming_dataset(mtp_ctx * ctx,void * datain,int size,uint32_t * newha
 					if(entry->flags & ENTRY_IS_DIR)
 					{
 						tmp_path = NULL;
+						tmp_path_len = 0;
 
 						parent_folder = build_full_path(ctx->fs_db, mtp_get_storage_root(ctx, entry->storage_id), entry);
 
 						if(parent_folder)
 						{
 							PRINT_DEBUG("MTP_OPERATION_SEND_OBJECT_INFO : Parent folder %s",parent_folder);
-
-							tmp_path = malloc(strlen(parent_folder) + 1 + strlen(tmp_str) + 1);
+							tmp_path_len = strlen(parent_folder) + 1 + strlen(tmp_str) + 1;
+							tmp_path = malloc(tmp_path_len);
 						}
 
 						if(tmp_path)
 						{
-							sprintf(tmp_path,"%s/%s",parent_folder,tmp_str);
+							snprintf(tmp_path,tmp_path_len,"%s/%s",parent_folder,tmp_str);
 							PRINT_DEBUG("MTP_OPERATION_SEND_OBJECT_INFO : Creating %s ...",tmp_path);
 
 							ret = -1;
@@ -367,17 +369,19 @@ int parse_incoming_dataset(mtp_ctx * ctx,void * datain,int size,uint32_t * newha
 						parent_folder = build_full_path(ctx->fs_db, mtp_get_storage_root(ctx, entry->storage_id), entry);
 
 						tmp_path = NULL;
+						tmp_path_len = 0;
 						entry = NULL;
 
 						if(parent_folder)
 						{
 							PRINT_DEBUG("MTP_OPERATION_SEND_OBJECT_INFO : Parent folder %s",parent_folder);
-							tmp_path = malloc(strlen(parent_folder) + 1 + strlen(tmp_str) + 1);
+							tmp_path_len = strlen(parent_folder) + 1 + strlen(tmp_str) + 1;
+							tmp_path = malloc(tmp_path_len);
 						}
 
 						if( tmp_path )
 						{
-							sprintf(tmp_path,"%s/%s",parent_folder,tmp_str);
+							snprintf(tmp_path, tmp_path_len, "%s/%s",parent_folder,tmp_str);
 							PRINT_DEBUG("MTP_OPERATION_SEND_OBJECT_INFO : Creating %s ...",tmp_path);
 
 							tmp_file_entry.isdirectory = 0;

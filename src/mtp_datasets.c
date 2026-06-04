@@ -162,7 +162,7 @@ int build_storageinfo_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uint32_t 
 
 		ofs = poke_string(buffer, ofs, maxsize, storage_description);                            // Storage Description
 
-		sprintf(volumeident,"UMTPRD_%.8X",storageid);
+		snprintf(volumeident,sizeof(volumeident),"UMTPRD_%.8X",storageid);
 		ofs = poke_string(buffer, ofs, maxsize, volumeident);                                    // Volume Identifier
 	}
 	else
