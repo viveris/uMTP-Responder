@@ -41,6 +41,7 @@
 #include "mtp_properties.h"
 
 #include "fs_handles_db.h"
+#include "mtp_sanitize.h"
 #include "usb_gadget_fct.h"
 
 #include "logs_out.h"
@@ -487,6 +488,12 @@ int setObjectPropValue(mtp_ctx * ctx,MTP_PACKET_HEADER * mtp_packet_hdr, uint32_
 
 				unicode2charstring(tmpstr, (uint16_t *) ((char*)(mtp_packet_hdr) + sizeof(MTP_PACKET_HEADER) + 1), sizeof(tmpstr));
 				tmpstr[ sizeof(tmpstr) - 1 ] = 0;
+
+				if (sanitize_name(tmpstr, sizeof(tmpstr) ) != 1 )
+				{
+					PRINT_ERROR("setObjectPropValue : Malformed object name !");
+					return MTP_RESPONSE_INVALID_DATASET;
+				}
 
 				old_filename = entry->name;
 

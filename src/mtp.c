@@ -46,6 +46,7 @@
 #include "usb_gadget_fct.h"
 #include "mtp_support_def.h"
 #include "fs_handles_db.h"
+#include "mtp_sanitize.h"
 
 #include "inotify.h"
 #include "msgqueue.h"
@@ -252,7 +253,15 @@ int parse_incoming_dataset(mtp_ctx * ctx,void * datain,int size,uint32_t * newha
 				{
 					unicode_str[i] = peek(dataset_ptr,0x35 + (i*2), 2);
 				}
+
 				unicode2charstring(tmp_str, unicode_str, sizeof(tmp_str));
+
+				if (sanitize_name(tmp_str, sizeof(tmp_str) ) != 1 )
+				{
+					PRINT_ERROR("MTP_OPERATION_SEND_OBJECT_INFO : Malformed object name !");
+					ret_code = MTP_RESPONSE_INVALID_DATASET;
+					return ret_code;
+				}
 
 				PRINT_DEBUG("MTP_OPERATION_SEND_OBJECT_INFO : 0x%x objectformat Size %d, Parent 0x%.8x, type: %x, strlen %d str:%s",objectformat,objectsize,parent_handle,type,string_len,tmp_str);
 
@@ -338,7 +347,15 @@ int parse_incoming_dataset(mtp_ctx * ctx,void * datain,int size,uint32_t * newha
 				{
 					unicode_str[i] = peek(dataset_ptr,0x35 + (i*2), 2);
 				}
+
 				unicode2charstring(tmp_str, unicode_str, sizeof(tmp_str));
+
+				if (sanitize_name(tmp_str, sizeof(tmp_str) ) != 1 )
+				{
+					PRINT_ERROR("MTP_OPERATION_SEND_OBJECT_INFO : Malformed object name !");
+					ret_code = MTP_RESPONSE_INVALID_DATASET;
+					return ret_code;
+				}
 
 				PRINT_DEBUG("MTP_OPERATION_SEND_OBJECT_INFO : 0x%x objectformat Size %d, Parent 0x%.8x, type: %x, strlen %d str:%s",objectformat,objectsize,parent_handle,type,string_len,tmp_str);
 
@@ -887,6 +904,7 @@ char * mtp_get_storage_root(mtp_ctx * ctx, uint32_t storage_id)
 	}
 
 	PRINT_DEBUG("%s : %.8X not found", __func__, storage_id );
+
 	return NULL;
 }
 
