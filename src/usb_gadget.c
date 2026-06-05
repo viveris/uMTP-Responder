@@ -116,6 +116,8 @@ int write_usb(usb_gadget * ctx, int channel, unsigned char * buffer, int size)
 			}while( ret < 0 && ( (errno == EAGAIN) || (errno == EWOULDBLOCK) ) && !mtp_context->cancel_req );
 			fcntl(ctx->ep_handles[channel], F_SETFL, fcntl(ctx->ep_handles[channel], F_GETFL) & ~O_NONBLOCK);
 #else
+			if (!is_usb_up(ctx))
+				return -1;
 
 			ret = write (ctx->ep_handles[channel], buffer, size);
 
@@ -828,6 +830,17 @@ int handle_ffs_ep0(usb_gadget * ctx)
 				ctx->stop = 1;
 				if( !ctx->thread_not_started )
 				{
+					if(mtp_context->transferring_file_data)
+					{
+						if(!pthread_mutex_lock(&mtp_context->cancel_mutex))
+						{
+							mtp_context->cancel_req = 2;
+							pthread_kill(ctx->thread, SIGUSR1);
+							pthread_mutex_unlock(&mtp_context->cancel_mutex);
+						}
+						usleep(1000);
+					}
+
 					pthread_join(ctx->thread, NULL);
 					ctx->thread_not_started = 1;
 				}
