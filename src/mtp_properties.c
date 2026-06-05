@@ -462,11 +462,18 @@ static char * getObjectPropFilename(MTP_PACKET_HEADER * mtp_packet_hdr)
 
 	stringlen = peek(mtp_packet_hdr, sizeof(MTP_PACKET_HEADER), 1);
 
-	if( stringlen > FS_HANDLE_MAX_FILENAME_SIZE + 1)
-		stringlen = FS_HANDLE_MAX_FILENAME_SIZE + 1;
+	if( stringlen > FS_HANDLE_MAX_FILENAME_SIZE)
+		stringlen = FS_HANDLE_MAX_FILENAME_SIZE;
 
 	unicode2charstring(filename, (uint16_t *) ((char*)(mtp_packet_hdr) + sizeof(MTP_PACKET_HEADER) + 1), FS_HANDLE_MAX_FILENAME_SIZE + 1);
 	filename[ FS_HANDLE_MAX_FILENAME_SIZE ] = 0;
+
+	if (sanitize_name(filename, FS_HANDLE_MAX_FILENAME_SIZE + 1 ) != 1 )
+	{
+		PRINT_ERROR("getObjectPropFilename : Malformed object name !");
+		free(filename);
+		return NULL;
+	}
 
 	return filename;
 }
