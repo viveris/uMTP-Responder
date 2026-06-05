@@ -38,6 +38,7 @@
 
 #include "mtp.h"
 #include "mtp_helpers.h"
+#include "mtp_sanitize.h"
 
 #include "fs_handles_db.h"
 #include "inotify.h"
@@ -553,13 +554,22 @@ char * build_full_path(fs_handles_db * db,char * root_path,fs_entry * entry)
 	char *retpath;
 	int full_path_offset;
 	int root_path_len;
+	int last_entry_len;
 
 	full_path = NULL;
 
 	if( !entry )
+	{
+		PRINT_ERROR("build_full_path : NULL entry !");
 		return full_path;
+	}
 
 	curentry = entry;
+
+	last_entry_len = 0;
+	if(curentry->name)
+		last_entry_len = strlen(curentry->name);
+
 	totallen = 0;
 	do
 	{
@@ -586,65 +596,120 @@ char * build_full_path(fs_handles_db * db,char * root_path,fs_entry * entry)
 	}
 
 	full_path = malloc(totallen+1);
+	if( !full_path )
+	{
+		PRINT_ERROR("build_full_path : Path allocation error !");
+		return NULL;
+	}
 
 	retpath = full_path;
-	if( full_path )
+
+	memset(full_path,0,totallen+1);
+	full_path_offset = totallen;
+	curentry = entry;
+
+	do
 	{
-		memset(full_path,0,totallen+1);
-		full_path_offset = totallen;
-		curentry = entry;
+		if(curentry->name)
+			namelen = strlen(curentry->name);
+		else
+			namelen = 0;
 
-		do
+		full_path_offset -= namelen;
+
+		if( namelen )
+			memcpy(&full_path[full_path_offset],curentry->name,namelen);
+
+		full_path_offset--;
+
+		full_path[full_path_offset] = '/';
+
+		if(curentry->parent && curentry->parent!=0xFFFFFFFF)
 		{
-			if(curentry->name)
-				namelen = strlen(curentry->name);
-			else
-				namelen = 0;
+			curentry = get_entry_by_handle(db, curentry->parent);
+		}
+		else
+		{
+			curentry = NULL;
+		}
+	}while(curentry);
 
-			full_path_offset -= namelen;
+	if(root_path)
+	{
+		memcpy(&full_path[0],root_path,root_path_len);
+		retpath = realpath( full_path, NULL);
 
-			if( namelen )
-				memcpy(&full_path[full_path_offset],curentry->name,namelen);
-
-			full_path_offset--;
-
-			full_path[full_path_offset] = '/';
-
-			if(curentry->parent && curentry->parent!=0xFFFFFFFF)
+		if( !retpath )
+		{
+			if( errno == ENOENT)
 			{
-				curentry = get_entry_by_handle(db, curentry->parent);
+				// The final object probably doesn't exist yet...
+				// Check the parent entry and concatenate the sanitized object name...
+				int idx=strlen(full_path) - last_entry_len;
+				if(idx>=0)
+				{
+					// Remove the non existant object
+					full_path[idx] = 0;
+
+					// And check the parent folder...
+					char *realparentpath = realpath( full_path, NULL);
+					if(realparentpath)
+					{
+						char * tmpstr;
+						int len = strlen(realparentpath)+1+last_entry_len+1;
+
+						tmpstr = malloc(len);
+						if(tmpstr)
+						{
+							memset(tmpstr,0,len);
+							strcpy(tmpstr,realparentpath);
+							strcat(tmpstr,"/");
+							idx = strlen(tmpstr);
+							strcat(tmpstr,entry->name);
+
+							if ( sanitize_name(&tmpstr[idx], last_entry_len) == 1 )
+							{
+								retpath = tmpstr;
+							}
+							else
+							{
+								free(tmpstr);
+							}
+						}
+
+						free(realparentpath);
+					}
+				}
 			}
 			else
 			{
-				curentry = NULL;
-			}
-		}while(curentry);
-
-		if(root_path)
-		{
-			memcpy(&full_path[0],root_path,root_path_len);
-			retpath = realpath( full_path, NULL);
-			free(full_path);
-
-			if( strncmp(root_path, retpath, root_path_len ) )
-			{
-				// Different Storage root path ! System path traversal attempt ?
-				PRINT_ERROR("build_full_path : Storage root folder mismatch !");
-#ifdef DEBUG
-				PRINT_DEBUG("build_full_path : Storage root folder mismatch ! : Storage root = %s Suspicious path = %s",root_path, retpath);
-#endif
-				free(retpath);
+				PRINT_ERROR("build_full_path : Null retpath ! [%s] (Src path : %s)" , strerror(errno) , full_path);
 				retpath = NULL;
-			}
+				free(full_path);
 
+				return NULL;
+			}
 		}
 
+		free(full_path);
+
+		if( strncmp(root_path, retpath, root_path_len ) )
+		{
+			// Different Storage root path ! System path traversal attempt ?
+			PRINT_ERROR("build_full_path : Storage root folder mismatch !");
 #ifdef DEBUG
-		if(entry->name)
-			PRINT_DEBUG("build_full_path : %s -> %s",entry->name, full_path);
+			PRINT_DEBUG("build_full_path : Storage root folder mismatch ! : Storage root = %s Suspicious path = %s",root_path, retpath);
 #endif
+			free(retpath);
+			retpath = NULL;
+		}
 
 	}
+
+#ifdef DEBUG
+	if(entry->name)
+		PRINT_DEBUG("build_full_path : %s -> %s",entry->name, retpath);
+#endif
 
 	return retpath;
 }
