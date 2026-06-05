@@ -157,3 +157,31 @@ fs_entry *find_entry(fs_handles_db *db, const char *name, uint32_t parent, uint3
 
 	return NULL;
 }
+
+void remove_entry_generic(hash_node *node, fs_entry *entry_to_remove)
+{
+	for (int i = 0; i < node->size; i++) {
+		if (node->entries[i] == entry_to_remove) {
+			// Move remaining entries forward to fill the gap
+			for (int j = i; j < node->size - 1; j++) {
+				node->entries[j] = node->entries[j + 1];
+			}
+			node->size--;
+			break;
+		}
+	}
+}
+
+void remove_entry(fs_handles_db *db, fs_entry *entry_to_remove)
+{
+	// Remove from name hash table
+	uint32_t index_name = hash_function_name(entry_to_remove->name) % HASH_TABLE_SIZE;
+	hash_node *node_name = &db->hash_table_by_name[index_name];
+
+	// Remove from handle hash table
+	uint32_t index_handle = hash_function_handle(entry_to_remove->handle) % HASH_TABLE_SIZE;
+	hash_node *node_handle = &db->hash_table_by_handle[index_handle];
+
+	remove_entry_generic(node_name, entry_to_remove);
+	remove_entry_generic(node_handle, entry_to_remove);
+}
