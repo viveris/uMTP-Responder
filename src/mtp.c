@@ -30,6 +30,8 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <limits.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <sys/stat.h>
@@ -46,6 +48,7 @@
 #include "usb_gadget_fct.h"
 #include "mtp_support_def.h"
 #include "fs_handles_db.h"
+#include "mtp_sanitize.h"
 
 #include "inotify.h"
 #include "msgqueue.h"
@@ -198,6 +201,7 @@ int parse_incoming_dataset(mtp_ctx * ctx,void * datain,int size,uint32_t * newha
 	uint16_t unicode_str[256+1];
 	char * parent_folder;
 	char * tmp_path;
+	int tmp_path_len;
 	uint32_t storage_flags;
 	int i,ret_code,ret;
 	fs_entry * entry;
@@ -252,7 +256,15 @@ int parse_incoming_dataset(mtp_ctx * ctx,void * datain,int size,uint32_t * newha
 				{
 					unicode_str[i] = peek(dataset_ptr,0x35 + (i*2), 2);
 				}
+
 				unicode2charstring(tmp_str, unicode_str, sizeof(tmp_str));
+
+				if (sanitize_name(tmp_str, sizeof(tmp_str) ) != 1 )
+				{
+					PRINT_ERROR("MTP_OPERATION_SEND_OBJECT_INFO : Malformed object name !");
+					ret_code = MTP_RESPONSE_INVALID_DATASET;
+					return ret_code;
+				}
 
 				PRINT_DEBUG("MTP_OPERATION_SEND_OBJECT_INFO : 0x%x objectformat Size %d, Parent 0x%.8x, type: %x, strlen %d str:%s",objectformat,objectsize,parent_handle,type,string_len,tmp_str);
 
@@ -262,19 +274,20 @@ int parse_incoming_dataset(mtp_ctx * ctx,void * datain,int size,uint32_t * newha
 					if(entry->flags & ENTRY_IS_DIR)
 					{
 						tmp_path = NULL;
+						tmp_path_len = 0;
 
 						parent_folder = build_full_path(ctx->fs_db, mtp_get_storage_root(ctx, entry->storage_id), entry);
 
 						if(parent_folder)
 						{
 							PRINT_DEBUG("MTP_OPERATION_SEND_OBJECT_INFO : Parent folder %s",parent_folder);
-
-							tmp_path = malloc(strlen(parent_folder) + 1 + strlen(tmp_str) + 1);
+							tmp_path_len = strlen(parent_folder) + 1 + strlen(tmp_str) + 1;
+							tmp_path = malloc(tmp_path_len);
 						}
 
 						if(tmp_path)
 						{
-							sprintf(tmp_path,"%s/%s",parent_folder,tmp_str);
+							snprintf(tmp_path,tmp_path_len,"%s/%s",parent_folder,tmp_str);
 							PRINT_DEBUG("MTP_OPERATION_SEND_OBJECT_INFO : Creating %s ...",tmp_path);
 
 							ret = -1;
@@ -338,7 +351,15 @@ int parse_incoming_dataset(mtp_ctx * ctx,void * datain,int size,uint32_t * newha
 				{
 					unicode_str[i] = peek(dataset_ptr,0x35 + (i*2), 2);
 				}
+
 				unicode2charstring(tmp_str, unicode_str, sizeof(tmp_str));
+
+				if (sanitize_name(tmp_str, sizeof(tmp_str) ) != 1 )
+				{
+					PRINT_ERROR("MTP_OPERATION_SEND_OBJECT_INFO : Malformed object name !");
+					ret_code = MTP_RESPONSE_INVALID_DATASET;
+					return ret_code;
+				}
 
 				PRINT_DEBUG("MTP_OPERATION_SEND_OBJECT_INFO : 0x%x objectformat Size %d, Parent 0x%.8x, type: %x, strlen %d str:%s",objectformat,objectsize,parent_handle,type,string_len,tmp_str);
 
@@ -350,17 +371,19 @@ int parse_incoming_dataset(mtp_ctx * ctx,void * datain,int size,uint32_t * newha
 						parent_folder = build_full_path(ctx->fs_db, mtp_get_storage_root(ctx, entry->storage_id), entry);
 
 						tmp_path = NULL;
+						tmp_path_len = 0;
 						entry = NULL;
 
 						if(parent_folder)
 						{
 							PRINT_DEBUG("MTP_OPERATION_SEND_OBJECT_INFO : Parent folder %s",parent_folder);
-							tmp_path = malloc(strlen(parent_folder) + 1 + strlen(tmp_str) + 1);
+							tmp_path_len = strlen(parent_folder) + 1 + strlen(tmp_str) + 1;
+							tmp_path = malloc(tmp_path_len);
 						}
 
 						if( tmp_path )
 						{
-							sprintf(tmp_path,"%s/%s",parent_folder,tmp_str);
+							snprintf(tmp_path, tmp_path_len, "%s/%s",parent_folder,tmp_str);
 							PRINT_DEBUG("MTP_OPERATION_SEND_OBJECT_INFO : Creating %s ...",tmp_path);
 
 							tmp_file_entry.isdirectory = 0;
@@ -700,7 +723,6 @@ void mtp_set_usb_handle(mtp_ctx * ctx, void * handle, uint32_t max_packet_size)
 uint32_t mtp_add_storage(mtp_ctx * ctx, char * path, char * description, int uid, int gid, uint32_t flags)
 {
 	int i;
-	int root_path_len;
 	int description_len;
 
 	PRINT_DEBUG("mtp_add_storage : %s", path );
@@ -713,19 +735,15 @@ uint32_t mtp_add_storage(mtp_ctx * ctx, char * path, char * description, int uid
 	{
 		if( !ctx->storages[i].root_path )
 		{
-			root_path_len = strlen(path);
 			description_len = strlen(description);
 
-			ctx->storages[i].root_path = malloc(root_path_len + 1);
+			ctx->storages[i].root_path = realpath( path, NULL);
 			ctx->storages[i].description = malloc(description_len + 1);
 
 			if(ctx->storages[i].root_path && ctx->storages[i].description)
 			{
 				ctx->storages[i].uid = uid;
 				ctx->storages[i].gid = gid;
-
-				strncpy( ctx->storages[i].root_path, path, root_path_len + 1);
-				ctx->storages[i].root_path[root_path_len] = 0;
 
 				strncpy( ctx->storages[i].description, description, description_len + 1);
 				ctx->storages[i].description[description_len] = 0;
@@ -887,6 +905,7 @@ char * mtp_get_storage_root(mtp_ctx * ctx, uint32_t storage_id)
 	}
 
 	PRINT_DEBUG("%s : %.8X not found", __func__, storage_id );
+
 	return NULL;
 }
 

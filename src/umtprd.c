@@ -32,6 +32,7 @@
 #include <string.h>
 #include <sys/prctl.h>
 #include <sys/file.h>
+#include <signal.h>
 
 #ifdef SYSTEMD_NOTIFY
 #include <systemd/sd-login.h>
@@ -50,6 +51,14 @@
 #include "default_cfg.h"
 
 mtp_ctx * mtp_context;
+
+volatile sig_atomic_t shutdown_requested = 0;
+
+static void shutdown_signal_handler(int sig)
+{
+	PRINT_MSG("Received shutdown signal %d, initiating graceful shutdown", sig);
+	shutdown_requested = 1;
+}
 
 void* io_thread(void* arg)
 {
@@ -126,7 +135,7 @@ static int main_thread(const char *conffile)
 			deinit_fs_db(mtp_context->fs_db);
 			mtp_context->fs_db = 0;
 		}
-	}while(loop_continue);
+	}while(loop_continue && !shutdown_requested);
 
 	mtp_deinit_responder(mtp_context);
 
@@ -136,30 +145,39 @@ static int main_thread(const char *conffile)
 #define PARAMETER_IPCCMD "-cmd:"
 #define PARAMETER_CONF "-conf"
 
+int check_running()
+{
+	mqd_t fd = get_message_queue(0);
+	if (fd < 0)
+	{
+		// No queue: not running
+		return 0;
+	}
+
+	int ret = flock(fd, LOCK_EX | LOCK_NB);
+	if (ret != 0)
+	{
+		// Lock fails: daemon is running.
+		mq_close(fd);
+		return 1;
+	}
+
+	// Lock acquired: not running.
+	return 0;
+}
+
 int main(int argc, char *argv[])
 {
 	const char *conffile = UMTPR_CONF_FILE;
-	int retcode;
-	mqd_t fd = -1;
-	int already_running = 0;
+	int retcode = 0;
+	int already_running = check_running();
+	int cmd_sent = 0;
 
 	PRINT_MSG("uMTP Responder");
 	PRINT_MSG("Version: %s compiled %s@%s", APP_VERSION,
 		  __DATE__, __TIME__);
 
 	PRINT_MSG("(c) 2018 - 2025 Viveris Technologies");
-
-	fd = get_message_queue();
-	if (fd < 0)
-	{
-		exit(1);
-	}
-	retcode = flock(fd, LOCK_EX | LOCK_NB);
-	if (retcode)
-	{
-		// lock failed, umtprd is already running
-		already_running = 1;
-	}
 
 	if (argc <= 1 && already_running)
 	{
@@ -179,6 +197,7 @@ int main(int argc, char *argv[])
 				PRINT_ERROR("Error (%d) sending '%s'", retcode, cmd);
 				exit(retcode);
 			}
+			cmd_sent = 1;
 			argc--;
 			argv++;
 		}
@@ -206,8 +225,16 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if (!already_running)
+	if (!cmd_sent && !already_running)
 	{
+		struct sigaction sa;
+		memset(&sa, 0, sizeof(sa));
+		sa.sa_handler = shutdown_signal_handler;
+		sigemptyset(&sa.sa_mask);
+		sa.sa_flags = 0;
+		sigaction(SIGTERM, &sa, NULL);
+		sigaction(SIGINT, &sa, NULL);
+
 		PRINT_DEBUG("starting main thread");
 		retcode = main_thread(conffile);
 		if( retcode )

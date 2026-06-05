@@ -20,7 +20,7 @@
 /**
  * @file   mtp_properties.c
  * @brief  MTP properties datasets helpers
- * @author Jean-François DEL NERO <Jean-Francois.DELNERO@viveris.fr>
+ * @author Jean-FranÃ§ois DEL NERO <Jean-Francois.DELNERO@viveris.fr>
  */
 
 #include "buildconf.h"
@@ -42,6 +42,7 @@
 
 #include "fs_handles_db.h"
 #include "hash_utils.h"
+#include "mtp_sanitize.h"
 #include "usb_gadget_fct.h"
 
 #include "logs_out.h"

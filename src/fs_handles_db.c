@@ -549,8 +549,10 @@ char * build_full_path(fs_handles_db * db,char * root_path,fs_entry * entry)
 {
 	int totallen,namelen;
 	fs_entry * curentry;
-	char * full_path;
+	char *full_path;
+	char *retpath;
 	int full_path_offset;
+	int root_path_len;
 
 	full_path = NULL;
 
@@ -579,10 +581,13 @@ char * build_full_path(fs_handles_db * db,char * root_path,fs_entry * entry)
 
 	if(root_path)
 	{
-		totallen += strlen(root_path);
+		root_path_len = strlen(root_path);
+		totallen += root_path_len;
 	}
 
 	full_path = malloc(totallen+1);
+
+	retpath = full_path;
 	if( full_path )
 	{
 		memset(full_path,0,totallen+1);
@@ -617,7 +622,21 @@ char * build_full_path(fs_handles_db * db,char * root_path,fs_entry * entry)
 
 		if(root_path)
 		{
-			memcpy(&full_path[0],root_path,strlen(root_path));
+			memcpy(&full_path[0],root_path,root_path_len);
+			retpath = realpath( full_path, NULL);
+			free(full_path);
+
+			if( strncmp(root_path, retpath, root_path_len ) )
+			{
+				// Different Storage root path ! System path traversal attempt ?
+				PRINT_ERROR("build_full_path : Storage root folder mismatch !");
+#ifdef DEBUG
+				PRINT_DEBUG("build_full_path : Storage root folder mismatch ! : Storage root = %s Suspicious path = %s",root_path, retpath);
+#endif
+				free(retpath);
+				retpath = NULL;
+			}
+
 		}
 
 #ifdef DEBUG
@@ -627,7 +646,7 @@ char * build_full_path(fs_handles_db * db,char * root_path,fs_entry * entry)
 
 	}
 
-	return full_path;
+	return retpath;
 }
 
 int entry_open(fs_handles_db * db, fs_entry * entry, int flags, mode_t mode)

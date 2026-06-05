@@ -56,6 +56,8 @@
 // minimum message size for POSIX queues on Linux
 #define MAX_MSG_SIZE 128
 
+#define MQ_PATH "/umtprd"
+
 static struct mq_attr qattrs = {
   0,  // flags
   20, // max number of messages on the queue
@@ -97,7 +99,10 @@ static void* msgqueue_thread( void* arg )
 		ssize_t numreceived = mq_receive(ctx->msgqueue_id, message, MAX_MSG_SIZE + 1, NULL);
 		if (numreceived < 0)
 		{
+			if (shutdown_requested)
+				break;
 			PRINT_ERROR("error receiving: %s", strerror(errno));
+			continue;
 		}
 		else if (numreceived <= MAX_MSG_SIZE)
 		{
@@ -234,7 +239,7 @@ static void* msgqueue_thread( void* arg )
 			PRINT_DEBUG("received message of size %zd", numreceived);
 		}
 
-	} while(1);
+	} while(!shutdown_requested);
 
 	PRINT_DEBUG("%s : Leaving thread", __func__);
 
@@ -246,8 +251,16 @@ error:
 	return NULL;
 }
 
-mqd_t get_message_queue() {
-	mqd_t qid = mq_open("/umtprd", O_RDWR | O_CREAT, 0600, &qattrs);
+mqd_t get_message_queue(int create) {
+
+	int flags = O_RDWR;
+
+	if (create)
+	{
+		flags |= O_CREAT;
+	}
+
+	mqd_t qid = mq_open(MQ_PATH, flags, 0600, &qattrs);
 	if (qid < 0)
 	{
 		PRINT_ERROR("%s : mq_open error %d (%s)", __func__, errno, strerror(errno));
@@ -263,7 +276,7 @@ int send_message_queue(char * message )
 {
 	mqd_t msgqueue_id;
 
-	msgqueue_id = get_message_queue();
+	msgqueue_id = get_message_queue(0);
 	if (msgqueue_id != -1)
 	{
 		if (mq_send(msgqueue_id, message, strlen(message) + 1, 0) == 0 )
@@ -285,7 +298,7 @@ int msgqueue_handler_init(mtp_ctx * ctx )
 
 	if( ctx )
 	{
-		ctx->msgqueue_id = get_message_queue();
+		ctx->msgqueue_id = get_message_queue(1);
 		if(ctx->msgqueue_id != -1)
 		{
 			ret = pthread_create(&ctx->msgqueue_thread, NULL, msgqueue_thread, ctx);
@@ -315,6 +328,7 @@ int msgqueue_handler_deinit( mtp_ctx * ctx )
 			pthread_kill( ctx->msgqueue_thread, SIGUSR1);
 			pthread_join( ctx->msgqueue_thread, &ret);
 			mq_close(ctx->msgqueue_id);
+			mq_unlink(MQ_PATH);
 		}
 
 		return 1;
