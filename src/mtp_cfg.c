@@ -73,6 +73,7 @@ enum
 	INTERFACE_STRING_CMD,
 
 	BATTERY_CAPACITY_CMD,
+	PERCEIVED_DEVICE_TYPE_CMD,
 
 	WAIT_CONNECTION,
 	LOOP_ON_DISCONNECT,
@@ -486,6 +487,11 @@ static int get_hex_param(mtp_ctx * context, char * line,int cmd)
 
 			case SYNC_WHEN_CLOSE:
 				context->sync_when_close = param_value;
+			break;
+
+			case PERCEIVED_DEVICE_TYPE_CMD:
+				context->usb_cfg.perceived_device_type = param_value;
+			break;
 
 		}
 	}
@@ -626,6 +632,7 @@ kw_list kwlist[] =
 	{"mtp_extensions",         get_str_param,   MTP_EXTENSIONS_STRING_CMD},
 
 	{"battery_capacity",       get_str_param,   BATTERY_CAPACITY_CMD},
+	{"perceived_device_type",  get_hex_param,   PERCEIVED_DEVICE_TYPE_CMD},
 
 	{"wait",                   get_hex_param,   WAIT_CONNECTION},
 	{"loop_on_disconnect",     get_hex_param,   LOOP_ON_DISCONNECT},
@@ -765,6 +772,8 @@ int mtp_load_config_file(mtp_ctx * context, const char * conffile)
 	PRINT_MSG("Interface string : %s",context->usb_cfg.usb_string_interface);
 	if(context->usb_cfg.battery_capacity[0])
 		PRINT_MSG("Battery capacity file : %s",context->usb_cfg.battery_capacity);
+	if(context->usb_cfg.perceived_device_type)
+		PRINT_MSG("Perceived device type : 0x%X",context->usb_cfg.perceived_device_type);
 
 	PRINT_MSG("USB Vendor ID : 0x%.4X",context->usb_cfg.usb_vendor_id);
 	PRINT_MSG("USB Product ID : 0x%.4X",context->usb_cfg.usb_product_id);

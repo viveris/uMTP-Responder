@@ -281,6 +281,7 @@ const profile_property dev_properties[]=
 	//{MTP_DEVICE_PROPERTY_IMAGE_SIZE,                       MTP_TYPE_UINT32,    0x00,   0x00000000           , 0x000000000 , 0x00 },
 	{MTP_DEVICE_PROPERTY_BATTERY_LEVEL,                    MTP_TYPE_UINT8,     0x00,   0x00000000           , 0x000000000 , 0x01 },
 	{MTP_DEVICE_PROPERTY_DEVICE_FRIENDLY_NAME,             MTP_TYPE_STR,       0x00,   0x00000000           , 0x000000000 , 0x00 },
+	{MTP_DEVICE_PROPERTY_PERCEIVED_DEVICE_TYPE,            MTP_TYPE_UINT32,    0x00,   0x00000000           , 0x000000000 , 0x00 },
 
 	{0xFFFF,                                               MTP_TYPE_UINT32,    0x00,   0x00000000           , 0x000000000 , 0x00 }
 };
@@ -291,6 +292,10 @@ int is_device_property_supported(mtp_ctx * ctx, uint32_t prop_code)
 	{
 		case MTP_DEVICE_PROPERTY_BATTERY_LEVEL:
 			return ctx->usb_cfg.battery_capacity[0] != 0;
+		break;
+
+		case MTP_DEVICE_PROPERTY_PERCEIVED_DEVICE_TYPE:
+			return ctx->usb_cfg.perceived_device_type != 0;
 		break;
 
 		default:
@@ -441,8 +446,11 @@ int build_device_properties_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uin
 			break;
 
 			case MTP_TYPE_UINT32:
-				ofs = poke32(buffer, ofs, maxsize, dev_properties[i].default_value);
-				ofs = poke32(buffer, ofs, maxsize, dev_properties[i].default_value);
+				ofs = poke32(buffer, ofs, maxsize, dev_properties[i].default_value);   // Factory default value
+				if( property_id == MTP_DEVICE_PROPERTY_PERCEIVED_DEVICE_TYPE )
+					ofs = poke32(buffer, ofs, maxsize, ctx->usb_cfg.perceived_device_type); // Current value
+				else
+					ofs = poke32(buffer, ofs, maxsize, dev_properties[i].default_value);
 			break;
 
 			case MTP_TYPE_UINT64:
@@ -730,6 +738,13 @@ int build_DevicePropValue_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uint3
 				return 0;
 
 			ofs = poke08(buffer, ofs, maxsize, get_battery_level(ctx));
+		break;
+
+		case MTP_DEVICE_PROPERTY_PERCEIVED_DEVICE_TYPE:
+			if( !is_device_property_supported(ctx, prop_code) )
+				return 0;
+
+			ofs = poke32(buffer, ofs, maxsize, ctx->usb_cfg.perceived_device_type);
 		break;
 
 		case MTP_DEVICE_PROPERTY_DEVICE_FRIENDLY_NAME:
