@@ -408,7 +408,7 @@ int build_device_properties_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uin
 			break;
 		}
 
-		ofs = poke32(buffer, ofs, maxsize, dev_properties[i].group_code);           // Group code
+		// A device property description has no group code, unlike an object property one.
 		ofs = poke08(buffer, ofs, maxsize, dev_properties[i].form_flag);            // Form flag
 	}
 
