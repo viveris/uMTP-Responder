@@ -72,6 +72,8 @@ enum
 	MTP_EXTENSIONS_STRING_CMD,
 	INTERFACE_STRING_CMD,
 
+	BATTERY_CAPACITY_CMD,
+
 	WAIT_CONNECTION,
 	LOOP_ON_DISCONNECT,
 
@@ -541,6 +543,10 @@ static int get_str_param(mtp_ctx * context, char * line,int cmd)
 			case INTERFACE_STRING_CMD:
 				strncpy(context->usb_cfg.usb_string_interface,tmp_txt,MAX_CFG_STRING_SIZE);
 			break;
+
+			case BATTERY_CAPACITY_CMD:
+				strncpy(context->usb_cfg.battery_capacity,tmp_txt,MAX_CFG_STRING_SIZE);
+			break;
 		}
 	}
 
@@ -618,6 +624,8 @@ kw_list kwlist[] =
 	{"firmware_version",       get_str_param,   VERSION_STRING_CMD},
 	{"interface",              get_str_param,   INTERFACE_STRING_CMD},
 	{"mtp_extensions",         get_str_param,   MTP_EXTENSIONS_STRING_CMD},
+
+	{"battery_capacity",       get_str_param,   BATTERY_CAPACITY_CMD},
 
 	{"wait",                   get_hex_param,   WAIT_CONNECTION},
 	{"loop_on_disconnect",     get_hex_param,   LOOP_ON_DISCONNECT},
@@ -755,6 +763,8 @@ int mtp_load_config_file(mtp_ctx * context, const char * conffile)
 	PRINT_MSG("Firmware Version string : %s", context->usb_cfg.usb_string_version);
 	PRINT_MSG("MTP Exstensions string : %s", context->usb_cfg.usb_string_mtp_extensions);
 	PRINT_MSG("Interface string : %s",context->usb_cfg.usb_string_interface);
+	if(context->usb_cfg.battery_capacity[0])
+		PRINT_MSG("Battery capacity file : %s",context->usb_cfg.battery_capacity);
 
 	PRINT_MSG("USB Vendor ID : 0x%.4X",context->usb_cfg.usb_vendor_id);
 	PRINT_MSG("USB Product ID : 0x%.4X",context->usb_cfg.usb_product_id);

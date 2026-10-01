@@ -66,15 +66,17 @@ int build_deviceinfo_dataset(mtp_ctx * ctx, void * buffer, int maxsize)
 
 	// Supported device properties
 	elements_cnt = 0;
-	while( dev_properties[elements_cnt].prop_code != 0xFFFF )
+	for( i = 0; dev_properties[i].prop_code != 0xFFFF ; i++ )
 	{
-		elements_cnt++;
+		if( is_device_property_supported(ctx, dev_properties[i].prop_code) )
+			elements_cnt++;
 	}
 
 	ofs = poke32(buffer, ofs, maxsize, elements_cnt);
-	for( i = 0; i < elements_cnt ; i++ )
+	for( i = 0; dev_properties[i].prop_code != 0xFFFF ; i++ )
 	{
-		ofs = poke16(buffer, ofs, maxsize, dev_properties[i].prop_code);
+		if( is_device_property_supported(ctx, dev_properties[i].prop_code) )
+			ofs = poke16(buffer, ofs, maxsize, dev_properties[i].prop_code);
 	}
 
 
