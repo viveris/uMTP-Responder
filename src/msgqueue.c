@@ -60,7 +60,7 @@
 
 static struct mq_attr qattrs = {
   0,  // flags
-  20, // max number of messages on the queue
+  10, // max number of messages on the queue (default fs.mqueue.msg_max, the limit without CAP_SYS_RESOURCE)
   MAX_MSG_SIZE,
   0   // number of messages currently on the queue
 };
