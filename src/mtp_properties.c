@@ -279,11 +279,59 @@ const profile_property dev_properties[]=
 {   // prop_code                                           data_type         getset    default value          group code
 	//{MTP_DEVICE_PROPERTY_SYNCHRONIZATION_PARTNER,          MTP_TYPE_UINT32,    0x00,   0x00000000           , 0x000000000 , 0x00 },
 	//{MTP_DEVICE_PROPERTY_IMAGE_SIZE,                       MTP_TYPE_UINT32,    0x00,   0x00000000           , 0x000000000 , 0x00 },
-	{MTP_DEVICE_PROPERTY_BATTERY_LEVEL,                    MTP_TYPE_UINT16,    0x00,   0x00000000           , 0x000000000 , 0x00 },
+	{MTP_DEVICE_PROPERTY_BATTERY_LEVEL,                    MTP_TYPE_UINT8,     0x00,   0x00000000           , 0x000000000 , 0x01 },
 	{MTP_DEVICE_PROPERTY_DEVICE_FRIENDLY_NAME,             MTP_TYPE_STR,       0x00,   0x00000000           , 0x000000000 , 0x00 },
+	{MTP_DEVICE_PROPERTY_PERCEIVED_DEVICE_TYPE,            MTP_TYPE_UINT32,    0x00,   0x00000000           , 0x000000000 , 0x00 },
 
 	{0xFFFF,                                               MTP_TYPE_UINT32,    0x00,   0x00000000           , 0x000000000 , 0x00 }
 };
+
+int is_device_property_supported(mtp_ctx * ctx, uint32_t prop_code)
+{
+	switch(prop_code)
+	{
+		case MTP_DEVICE_PROPERTY_BATTERY_LEVEL:
+			return ctx->usb_cfg.battery_capacity[0] != 0;
+		break;
+
+		case MTP_DEVICE_PROPERTY_PERCEIVED_DEVICE_TYPE:
+			return ctx->usb_cfg.perceived_device_type != 0;
+		break;
+
+		default:
+			return 1;
+		break;
+	}
+}
+
+static uint8_t get_battery_level(mtp_ctx * ctx)
+{
+	FILE * f;
+	int level;
+
+	level = 0;
+
+	f = fopen(ctx->usb_cfg.battery_capacity, "r");
+	if( f )
+	{
+		if( fscanf(f, "%d", &level) != 1 )
+			level = 0;
+
+		fclose(f);
+	}
+	else
+	{
+		PRINT_ERROR("get_battery_level : Can't open %s", ctx->usb_cfg.battery_capacity);
+	}
+
+	if( level < 0 )
+		level = 0;
+
+	if( level > 100 )
+		level = 100;
+
+	return level;
+}
 
 int build_properties_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uint32_t property_id,uint32_t format_id)
 {
@@ -371,7 +419,7 @@ int build_device_properties_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uin
 		i++;
 	}
 
-	if( dev_properties[i].prop_code == property_id )
+	if( dev_properties[i].prop_code == property_id && is_device_property_supported(ctx, property_id) )
 	{
 		ofs = poke16(buffer, ofs, maxsize, dev_properties[i].prop_code);            // PropertyCode
 		ofs = poke16(buffer, ofs, maxsize, dev_properties[i].data_type);            // DataType
@@ -380,9 +428,16 @@ int build_device_properties_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uin
 		switch(dev_properties[i].data_type)
 		{
 			case MTP_TYPE_STR:
+				ofs = poke08(buffer, ofs, maxsize, dev_properties[i].default_value);
+				ofs = poke08(buffer, ofs, maxsize, dev_properties[i].default_value);
+			break;
+
 			case MTP_TYPE_UINT8:
-				ofs = poke08(buffer, ofs, maxsize, dev_properties[i].default_value);
-				ofs = poke08(buffer, ofs, maxsize, dev_properties[i].default_value);
+				ofs = poke08(buffer, ofs, maxsize, dev_properties[i].default_value);   // Factory default value
+				if( property_id == MTP_DEVICE_PROPERTY_BATTERY_LEVEL )
+					ofs = poke08(buffer, ofs, maxsize, get_battery_level(ctx));      // Current value
+				else
+					ofs = poke08(buffer, ofs, maxsize, dev_properties[i].default_value);
 			break;
 
 			case MTP_TYPE_UINT16:
@@ -391,8 +446,11 @@ int build_device_properties_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uin
 			break;
 
 			case MTP_TYPE_UINT32:
-				ofs = poke32(buffer, ofs, maxsize, dev_properties[i].default_value);
-				ofs = poke32(buffer, ofs, maxsize, dev_properties[i].default_value);
+				ofs = poke32(buffer, ofs, maxsize, dev_properties[i].default_value);   // Factory default value
+				if( property_id == MTP_DEVICE_PROPERTY_PERCEIVED_DEVICE_TYPE )
+					ofs = poke32(buffer, ofs, maxsize, ctx->usb_cfg.perceived_device_type); // Current value
+				else
+					ofs = poke32(buffer, ofs, maxsize, dev_properties[i].default_value);
 			break;
 
 			case MTP_TYPE_UINT64:
@@ -408,8 +466,15 @@ int build_device_properties_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uin
 			break;
 		}
 
-		ofs = poke32(buffer, ofs, maxsize, dev_properties[i].group_code);           // Group code
+		// A device property description has no group code, unlike an object property one.
 		ofs = poke08(buffer, ofs, maxsize, dev_properties[i].form_flag);            // Form flag
+
+		if( property_id == MTP_DEVICE_PROPERTY_BATTERY_LEVEL )
+		{
+			ofs = poke08(buffer, ofs, maxsize, 0);                                     // Minimum value
+			ofs = poke08(buffer, ofs, maxsize, 100);                                   // Maximum value
+			ofs = poke08(buffer, ofs, maxsize, 1);                                     // Step size
+		}
 	}
 
 	return ofs;
@@ -669,7 +734,17 @@ int build_DevicePropValue_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uint3
 	switch(prop_code)
 	{
 		case MTP_DEVICE_PROPERTY_BATTERY_LEVEL:
-			ofs = poke16(buffer, ofs, maxsize, 0x8000);
+			if( !is_device_property_supported(ctx, prop_code) )
+				return 0;
+
+			ofs = poke08(buffer, ofs, maxsize, get_battery_level(ctx));
+		break;
+
+		case MTP_DEVICE_PROPERTY_PERCEIVED_DEVICE_TYPE:
+			if( !is_device_property_supported(ctx, prop_code) )
+				return 0;
+
+			ofs = poke32(buffer, ofs, maxsize, ctx->usb_cfg.perceived_device_type);
 		break;
 
 		case MTP_DEVICE_PROPERTY_DEVICE_FRIENDLY_NAME:
