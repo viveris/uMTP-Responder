@@ -175,7 +175,7 @@ mtp_size send_file_data( mtp_ctx * ctx, fs_entry * entry,mtp_offset offset, mtp_
 		entry_close( ctx->fs_db, entry );
 
 		if( !pthread_mutex_lock( &ctx->cancel_mutex ) )
-		{	
+		{
 			if( ctx->cancel_req )
 			{
 				PRINT_DEBUG("send_file_data : Cancelled ! Aborted...");
@@ -202,10 +202,77 @@ mtp_size send_file_data( mtp_ctx * ctx, fs_entry * entry,mtp_offset offset, mtp_
 	return actualsize;
 }
 
+int delete_db_tree(mtp_ctx * ctx, fs_entry * entry, int depth)
+{
+	int fcnt,tmp_fcnt;
+	fs_entry * entry_tmp;
+	char * path;
+
+	fcnt = 0;
+
+	init_search_handle(ctx->fs_db, entry->handle, entry->storage_id);
+
+	entry_tmp = get_next_child_handle(ctx->fs_db);
+	while(entry_tmp)
+	{
+		if(!(entry_tmp->flags & ENTRY_IS_DELETED))
+		{
+			if(entry_tmp->flags & ENTRY_IS_DIR)
+			{
+				// enter the subdir
+				if( depth < 64 )
+					tmp_fcnt = delete_db_tree( ctx, entry_tmp, depth + 1 );
+				else
+					tmp_fcnt = 1;
+
+				if( !tmp_fcnt )
+				{
+					// try to remove the folder and all subdirs and files (unregistered files and folders included)
+					path = build_full_path(ctx->fs_db, mtp_get_storage_root(ctx, entry_tmp->storage_id), entry_tmp);
+					if (path)
+					{
+						if( fs_remove_tree( path ) )
+							fcnt++;
+						else
+							entry_tmp->flags |= ENTRY_IS_DELETED;
+
+						free(path);
+					}
+					else
+						fcnt++;
+				}
+
+				fcnt += tmp_fcnt;
+			}
+			else
+			{
+				// File
+				path = build_full_path(ctx->fs_db, mtp_get_storage_root(ctx, entry_tmp->storage_id), entry_tmp);
+				if (path)
+				{
+					if( remove(path) )
+						fcnt++;
+					else
+						entry_tmp->flags |= ENTRY_IS_DELETED;
+
+					free(path);
+				}
+				else
+					fcnt++;
+			}
+		}
+
+		entry_tmp = get_next_child_handle(ctx->fs_db);
+	}
+
+	return fcnt;
+}
+
 int delete_tree(mtp_ctx * ctx,uint32_t handle)
 {
-	int ret;
+	int ret,cnt;
 	fs_entry * entry;
+
 	char * path;
 	ret = -1;
 
@@ -213,24 +280,33 @@ int delete_tree(mtp_ctx * ctx,uint32_t handle)
 	if(entry)
 	{
 		path = build_full_path(ctx->fs_db, mtp_get_storage_root(ctx, entry->storage_id), entry);
-
 		if (path)
 		{
 			if(entry->flags & ENTRY_IS_DIR)
 			{
-				ret = fs_remove_tree( path );
-
-				if(!ret)
+				// Remove all childs in the database
+				cnt = delete_db_tree(ctx, entry, 0);
+				if(!cnt)
 				{
-					entry->flags |= ENTRY_IS_DELETED;
-					if( entry->watch_descriptor != -1 )
+					ret = fs_remove_tree( path );
+					if( !ret )
 					{
-						inotify_handler_rmwatch( ctx, entry->watch_descriptor );
-						entry->watch_descriptor = -1;
+						entry->flags |= ENTRY_IS_DELETED;
+						if( entry->watch_descriptor != -1 )
+						{
+							inotify_handler_rmwatch( ctx, entry->watch_descriptor );
+							entry->watch_descriptor = -1;
+						}
+					}
+					else
+					{
+						ret = -1;
 					}
 				}
 				else
-					scan_and_add_folder(ctx->fs_db, path, handle, entry->storage_id); // partially deleted ? update/sync the db.
+				{
+					ret = -1;
+				}
 			}
 			else
 			{
