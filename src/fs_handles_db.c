@@ -693,6 +693,12 @@ char * build_full_path(fs_handles_db * db,char * root_path,fs_entry * entry)
 
 		free(full_path);
 
+		if( !retpath )
+		{
+			PRINT_ERROR("build_full_path : Can't resolve the object path !");
+			return NULL;
+		}
+
 		if( strncmp(root_path, retpath, root_path_len ) )
 		{
 			// Different Storage root path ! System path traversal attempt ?
