@@ -277,7 +277,7 @@ const profile_property properties[]=
 
 const profile_property dev_properties[]=
 {   // prop_code                                           data_type         getset    default value          group code
-	//{MTP_DEVICE_PROPERTY_SYNCHRONIZATION_PARTNER,          MTP_TYPE_UINT32,    0x00,   0x00000000           , 0x000000000 , 0x00 },
+	{MTP_DEVICE_PROPERTY_SYNCHRONIZATION_PARTNER,          MTP_TYPE_STR,       0x00,   0x00000000           , 0x000000000 , 0x00 },
 	//{MTP_DEVICE_PROPERTY_IMAGE_SIZE,                       MTP_TYPE_UINT32,    0x00,   0x00000000           , 0x000000000 , 0x00 },
 	{MTP_DEVICE_PROPERTY_BATTERY_LEVEL,                    MTP_TYPE_UINT8,     0x00,   0x00000000           , 0x000000000 , 0x01 },
 	{MTP_DEVICE_PROPERTY_DEVICE_FRIENDLY_NAME,             MTP_TYPE_STR,       0x00,   0x00000000           , 0x000000000 , 0x00 },
@@ -749,6 +749,10 @@ int build_DevicePropValue_dataset(mtp_ctx * ctx,void * buffer, int maxsize,uint3
 
 		case MTP_DEVICE_PROPERTY_DEVICE_FRIENDLY_NAME:
 			ofs = poke_string(buffer, ofs, maxsize, ctx->usb_cfg.usb_string_product);
+		break;
+
+		case MTP_DEVICE_PROPERTY_SYNCHRONIZATION_PARTNER:
+			ofs = poke_string(buffer, ofs, maxsize, ctx->usb_cfg.synchronization_partner);
 		break;
 
 		default:

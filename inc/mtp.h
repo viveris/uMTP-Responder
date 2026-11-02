@@ -71,6 +71,8 @@ typedef struct mtp_usb_cfg_
 
 	char usb_string_interface[MAX_CFG_STRING_SIZE + 1];
 
+	char synchronization_partner[MAX_CFG_STRING_SIZE + 1];
+
 	char battery_capacity[MAX_CFG_STRING_SIZE + 1];
 	uint32_t perceived_device_type;
 
@@ -185,6 +187,6 @@ int build_response(mtp_ctx * ctx, uint32_t tx_id, uint16_t type, uint16_t status
 int check_and_send_USB_ZLP(mtp_ctx * ctx , int size);
 int parse_incoming_dataset(mtp_ctx * ctx,void * datain,int size,uint32_t * newhandle, uint32_t parent_handle, uint32_t storage_id);
 
-#define APP_VERSION "v1.10.1"
+#define APP_VERSION "v1.10.2"
 
 #endif

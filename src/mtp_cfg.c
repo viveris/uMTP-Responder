@@ -70,6 +70,7 @@ enum
 	SERIAL_STRING_CMD,
 	VERSION_STRING_CMD,
 	MTP_EXTENSIONS_STRING_CMD,
+	MTP_SYNC_PARTNER_STRING_CMD,
 	INTERFACE_STRING_CMD,
 
 	BATTERY_CAPACITY_CMD,
@@ -546,6 +547,10 @@ static int get_str_param(mtp_ctx * context, char * line,int cmd)
 				strncpy(context->usb_cfg.usb_string_mtp_extensions,tmp_txt,MAX_CFG_STRING_SIZE);
 			break;
 
+			case MTP_SYNC_PARTNER_STRING_CMD:
+				strncpy(context->usb_cfg.synchronization_partner,tmp_txt,MAX_CFG_STRING_SIZE);
+			break;
+
 			case INTERFACE_STRING_CMD:
 				strncpy(context->usb_cfg.usb_string_interface,tmp_txt,MAX_CFG_STRING_SIZE);
 			break;
@@ -630,6 +635,7 @@ kw_list kwlist[] =
 	{"firmware_version",       get_str_param,   VERSION_STRING_CMD},
 	{"interface",              get_str_param,   INTERFACE_STRING_CMD},
 	{"mtp_extensions",         get_str_param,   MTP_EXTENSIONS_STRING_CMD},
+	{"mtp_sync_partner",       get_str_param,   MTP_SYNC_PARTNER_STRING_CMD},
 
 	{"battery_capacity",       get_str_param,   BATTERY_CAPACITY_CMD},
 	{"perceived_device_type",  get_hex_param,   PERCEIVED_DEVICE_TYPE_CMD},
@@ -711,6 +717,7 @@ int mtp_load_config_file(mtp_ctx * context, const char * conffile)
 	strncpy(context->usb_cfg.usb_string_version,      "Rev A",                MAX_CFG_STRING_SIZE);
 	strncpy(context->usb_cfg.usb_string_mtp_extensions, "",                   MAX_CFG_STRING_SIZE);
 	strncpy(context->usb_cfg.usb_string_interface,    "MTP",                  MAX_CFG_STRING_SIZE);
+	strncpy(context->usb_cfg.synchronization_partner, "",                     MAX_CFG_STRING_SIZE);
 
 	context->usb_cfg.usb_vendor_id       = USB_DEV_VENDOR_ID;
 	context->usb_cfg.usb_product_id      = USB_DEV_PRODUCT_ID;
@@ -769,6 +776,7 @@ int mtp_load_config_file(mtp_ctx * context, const char * conffile)
 	PRINT_MSG("Serial string : %s",context->usb_cfg.usb_string_serial);
 	PRINT_MSG("Firmware Version string : %s", context->usb_cfg.usb_string_version);
 	PRINT_MSG("MTP Exstensions string : %s", context->usb_cfg.usb_string_mtp_extensions);
+	PRINT_MSG("Synchronisation Partner string : %s",context->usb_cfg.synchronization_partner);
 	PRINT_MSG("Interface string : %s",context->usb_cfg.usb_string_interface);
 	if(context->usb_cfg.battery_capacity[0])
 		PRINT_MSG("Battery capacity file : %s",context->usb_cfg.battery_capacity);
