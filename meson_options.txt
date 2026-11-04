@@ -1,0 +1,7 @@
+option('systemd', type: 'boolean', value: false, description: 'Enable systemd support')
+option('use_syslog', type: 'boolean', value: false, description: 'Enable syslog support')
+option('old_functionfs_descriptors', type: 'boolean', value: false, description: 'Enable old-style FunctionFS descriptors')
+
+option('usb_fs_support', type: 'boolean', value: true, description: 'Enable USB Full-Speed support')
+option('usb_hs_support', type: 'boolean', value: true, description: 'Enable USB High-Speed support')
+option('usb_ss_support', type: 'boolean', value: false, description: 'Enable USB Super-Speed support')
