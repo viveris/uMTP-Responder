@@ -63,19 +63,19 @@ This may work with earlier kernels (v3.x.x and some v2.6.x versions) but without
 
 ### Successfully tested boards
 
-- Atmel Sama5D2 Xplained.
+- [Atmel Sama5D2 Xplained](https://www.microchip.com/en-us/development-tool/ATSAMA5D2C-XULT)
 
-- Raspberry PI Zero (W).
+- [Raspberry PI Zero (W)](https://www.raspberrypi.com/products/raspberry-pi-zero-w/)
 
-- BeagleBone Black.
+- [BeagleBone Black](https://www.beagleboard.org/boards/beaglebone-black)
 
-- Allwinner SoC based board.
+- [Allwinner SoC based board](https://linux-sunxi.org/Table_of_Allwinner_based_boards).
 
-- Freescale i.MX6 SabreSD. (Kernel v4.14)
+- [NXP (Formerly Freescale) i.MX6 SabreSD](https://www.nxp.com/design/design-center/development-boards/i-mx-evaluation-and-development-boards/sabre-board-for-smart-devices-based-on-the-i-mx-6quad-applications-processors:RD-IMX6Q-SABRE). (Kernel v4.14)
 
-- Samsung Artik710. (FunctionFS mode)
+- [Samsung Artik710 (Discontinued)](https://www.cnx-software.com/2019/03/14/samsung-artik-discontinued-iot-graveyard/) (FunctionFS mode)
 
-- Ultra96-V2 (Zynq UltraScale+, FunctionFS mode, SuperSpeed USB)
+- [Ultra96-V2](https://www.avnet.com/wps/portal/us/products/avnet-boards/avnet-board-families/ultra96-v2/) (Zynq UltraScale+, FunctionFS mode, SuperSpeed USB)
 
 ### Successfully tested client operating systems
 
