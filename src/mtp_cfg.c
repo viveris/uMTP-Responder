@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <dirent.h>
 #include <unistd.h>
 
 #include "mtp.h"
@@ -698,11 +699,62 @@ int execute_line(mtp_ctx * context,char * line)
 	return 0;
 }
 
+static int load_config_file(mtp_ctx * context, const char * conffile)
+{
+	FILE * f;
+	char line[MAX_CFG_STRING_SIZE];
+
+	f = fopen(conffile, "r");
+	if(!f)
+		return -1;
+
+	while(fgets(line, sizeof(line), f))
+	{
+		execute_line(context, line);
+	}
+
+	fclose(f);
+
+	return 0;
+}
+
+static int conf_name_filter(const struct dirent * entry)
+{
+	size_t len = strlen(entry->d_name);
+
+	return len > 5 && !strcmp(&entry->d_name[len - 5], ".conf");
+}
+
+// Load every "<conffile>.d/*.conf" (sorted by name) after the main
+// configuration file: they add to / override the base configuration.
+static void load_config_dir(mtp_ctx * context, const char * conffile)
+{
+	struct dirent ** namelist;
+	char dirpath[MAX_CFG_STRING_SIZE];
+	char path[MAX_CFG_STRING_SIZE * 2];
+	int n, i;
+
+	if(snprintf(dirpath, sizeof(dirpath), "%s.d", conffile) >= (int)sizeof(dirpath))
+		return;
+
+	n = scandir(dirpath, &namelist, conf_name_filter, alphasort);
+	if(n < 0)
+		return;
+
+	for(i = 0; i < n; i++)
+	{
+		snprintf(path, sizeof(path), "%s/%s", dirpath, namelist[i]->d_name);
+		PRINT_MSG("Loading config file %s", path);
+		if(load_config_file(context, path))
+			PRINT_ERROR("Can't open %s !", path);
+		free(namelist[i]);
+	}
+	free(namelist);
+}
+
 int mtp_load_config_file(mtp_ctx * context, const char * conffile)
 {
 	int err = 0;
-	FILE * f;
-	char line[MAX_CFG_STRING_SIZE];
 
 	memset((void*)&context->usb_cfg,0x00, sizeof(mtp_usb_cfg));
 
@@ -741,26 +793,12 @@ int mtp_load_config_file(mtp_ctx * context, const char * conffile)
 	context->no_inotify = 0;
 	context->sync_when_close = 0;
 
-	f = fopen(conffile, "r");
-	if(f)
-	{
-		do
-		{
-			if(!fgets(line,sizeof(line),f))
-				break;
-
-			if(feof(f))
-				break;
-
-			execute_line(context, line);
-		}while(1);
-
-		fclose(f);
-	}
-	else
+	if(load_config_file(context, conffile))
 	{
 		PRINT_ERROR("Can't open %s ! Using default settings...", conffile);
 	}
+
+	load_config_dir(context, conffile);
 
 	PRINT_MSG("USB Device path : %s",context->usb_cfg.usb_device_path);
 	PRINT_MSG("USB In End point path : %s",context->usb_cfg.usb_endpoint_in);

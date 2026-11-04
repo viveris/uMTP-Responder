@@ -131,6 +131,8 @@ A config file should copied into the folder /etc/umtprd/umtprd.conf
 This file defines the storage entries (host path and name), the MTP device name, the USB vendor & product IDs and the USB device configuration.
 Check the file [umtprd.conf](conf/umtprd.conf) file for details on available options.
 
+Optional drop-in files can be placed in `/etc/umtprd/umtprd.conf.d/*.conf` (the config file path followed by `.d`). They are read in alphabetical order after the main file and add to / override its settings.
+
 ## How to launch it ?
 
 Once you have configured the correct settings in umtprd.conf, you can use umtprd_ffs.sh or umtprd_gfs.sh to launch it in FunctionFS/GadgetFS mode or use udev to launch the deamon when the usb device port is connected.
